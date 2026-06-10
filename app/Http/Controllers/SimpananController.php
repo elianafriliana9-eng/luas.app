@@ -1,0 +1,705 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Anggota;
+use App\Models\RekeningSimpanan;
+use App\Models\ProdukSimpanan;
+use App\Models\TransaksiSimpanan;
+use App\Models\Pinbuk;
+use App\Models\Jurnal;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class SimpananController extends Controller
+{
+    /**
+     * a. Input simpanan — form setor/tarik
+     */
+    public function create(Request $request)
+    {
+        $jenis = $request->input('jenis', 'setoran');
+        $search = $request->input('anggota');
+
+        $anggota = null;
+        $rekeningList = [];
+        $anggotaResults = [];
+
+        if ($search) {
+            // Try UUID first (direct link from rekening page)
+            $anggota = Anggota::find($search);
+
+            if (!$anggota) {
+                // Search by name, no_anggota, or NIK
+                $anggotaResults = Anggota::where('status', 'aktif')
+                    ->where(function ($q) use ($search) {
+                        $q->where('nama_lengkap', 'like', "%{$search}%")
+                          ->orWhere('no_anggota', 'like', "%{$search}%")
+                          ->orWhere('nik', 'like', "%{$search}%");
+                    })
+                    ->limit(10)
+                    ->get();
+
+                // Auto-select if only one result
+                if ($anggotaResults->count() === 1) {
+                    $anggota = $anggotaResults->first();
+                    $anggotaResults = [];
+                }
+            }
+
+            if ($anggota) {
+                $rekeningList = RekeningSimpanan::where('anggota_id', $anggota->id)
+                    ->where('status', 'aktif')
+                    ->with('produk')
+                    ->get();
+            }
+        }
+
+        return view('simpanan.create', compact('jenis', 'anggota', 'rekeningList', 'anggotaResults'));
+    }
+
+    /**
+     * a. & b. Proses transaksi simpanan
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'anggota_id' => 'required|uuid|exists:anggota,id',
+            'rekening_id' => 'required|uuid|exists:rekening_simpanan,id',
+            'jenis' => 'required|in:setoran,penarikan',
+            'nominal' => 'required|numeric|min:1000',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        $rekening = RekeningSimpanan::with('produk')->findOrFail($validated['rekening_id']);
+
+        // Validasi rekening aktif
+        if ($rekening->status !== 'aktif') {
+            return back()->withErrors(['rekening_id' => 'Rekening dalam status ' . $rekening->status . '. Tidak bisa transaksi.'])->withInput();
+        }
+
+        // Validasi penarikan
+        if ($validated['jenis'] === 'penarikan' && $rekening->saldo < $validated['nominal']) {
+            return back()->withErrors(['nominal' => 'Saldo tidak cukup. Saldo saat ini: Rp ' . number_format($rekening->saldo, 0, ',', '.')])->withInput();
+        }
+
+        // Validasi minimal saldo dan produk
+        $produk = $rekening->produk;
+        if ($validated['jenis'] === 'penarikan') {
+            if ($produk && in_array($produk->jenis, ['pokok', 'wajib'])) {
+                return back()->withErrors(['nominal' => 'Simpanan Pokok dan Wajib tidak dapat ditarik selama Anda masih menjadi anggota aktif.'])->withInput();
+            }
+
+            $sisa = $rekening->saldo - $validated['nominal'];
+            if ($produk && $produk->jenis !== 'pokok' && $produk->minimal_saldo > 0 && $sisa < $produk->minimal_saldo) {
+                return back()->withErrors(['nominal' => 'Penarikan gagal. Saldo tidak boleh di bawah minimal Rp ' . number_format($produk->minimal_saldo, 0, ',', '.')])->withInput();
+            }
+        }
+
+        // Approval logic: penarikan > 1jt perlu approval
+        $needApproval = ($validated['jenis'] === 'penarikan' && $validated['nominal'] > 1000000);
+
+        DB::beginTransaction();
+        try {
+            $saldoSebelum = $rekening->saldo;
+            $saldoSesudah = $validated['jenis'] === 'setoran'
+                ? $saldoSebelum + $validated['nominal']
+                : $saldoSebelum - $validated['nominal'];
+
+            // Update saldo
+            $rekening->saldo = $saldoSesudah;
+            $rekening->save();
+
+            // Create transaksi record
+            $transaksi = TransaksiSimpanan::create([
+                'rekening_id' => $rekening->id,
+                'user_id' => auth()->id(),
+                'no_transaksi' => 'TRX-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
+                'jenis' => $validated['jenis'],
+                'nominal' => $validated['nominal'],
+                'saldo_sebelum' => $saldoSebelum,
+                'saldo_sesudah' => $saldoSesudah,
+                'keterangan' => $validated['keterangan'] ?? ($validated['jenis'] === 'setoran' ? 'Setoran tunai' : 'Penarikan tunai'),
+                'channel' => 'teller',
+                'status_approval' => $needApproval ? 'pending' : 'approved',
+                'approved_by' => $needApproval ? null : auth()->id(),
+                'approved_at' => $needApproval ? null : now(),
+            ]);
+
+            DB::commit();
+
+            $message = $validated['jenis'] === 'setoran'
+                ? 'Setoran berhasil diproses!'
+                : ($needApproval ? 'Penarikan diajukan, menunggu approval.' : 'Penarikan berhasil diproses!');
+
+            return redirect()->route('simpanan.create', ['anggota' => $validated['anggota_id'], 'jenis' => $validated['jenis']])
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Gagal memproses: ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    /**
+     * b. List semua transaksi simpanan
+     */
+    public function index(Request $request)
+    {
+        $query = TransaksiSimpanan::with(['rekening.anggota', 'rekening.produk', 'user', 'approvedBy']);
+
+        // Filter jenis
+        if ($jenis = $request->input('jenis')) {
+            $query->where('jenis', $jenis);
+        }
+
+        // Filter status
+        if ($status = $request->input('status')) {
+            if ($status === 'dibatalkan') {
+                $query->where('dibatalkan', true);
+            } else {
+                $query->where('dibatalkan', false)->where('status_approval', $status);
+            }
+        }
+
+        // Filter tanggal
+        if ($from = $request->input('from')) {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if ($to = $request->input('to')) {
+            $query->whereDate('created_at', '<=', $to);
+        }
+
+        // Filter rekening/anggota
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('no_transaksi', 'like', "%{$search}%")
+                  ->orWhereHas('rekening.anggota', fn($q2) => $q2->where('nama_lengkap', 'like', "%{$search}%"));
+            });
+        }
+
+        $transaksi = $query->latest('created_at')->paginate(15)->withQueryString();
+
+        return view('simpanan.index', compact('transaksi'));
+    }
+
+    /**
+     * c. Approval penarikan
+     */
+    public function approval()
+    {
+        abort_if(auth()->user()->role !== 'super_admin', 403, 'Akses ditolak. Hanya Super Admin yang dapat mengakses halaman ini.');
+
+        $pending = TransaksiSimpanan::where('dibatalkan', false)
+            ->where('status_approval', 'pending')
+            ->with(['rekening.anggota', 'rekening.produk', 'user'])
+            ->latest('created_at')
+            ->get();
+
+        return view('simpanan.approval', compact('pending'));
+    }
+
+    /**
+     * c. Approve / Reject penarikan
+     */
+    public function approveTransaksi(Request $request, $id)
+    {
+        abort_if(auth()->user()->role !== 'super_admin', 403, 'Akses ditolak. Hanya Super Admin yang dapat melakukan approval.');
+
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+        ]);
+
+        $transaksi = TransaksiSimpanan::with('rekening')->findOrFail($id);
+
+        DB::beginTransaction();
+        try {
+            if ($request->action === 'approve') {
+                $transaksi->status_approval = 'approved';
+                $transaksi->approved_by = auth()->id();
+                $transaksi->approved_at = now();
+                $transaksi->save();
+                $message = 'Transaksi disetujui.';
+            } else {
+                // Reject — reverse saldo
+                $rekening = $transaksi->rekening;
+                $saldoSebelum = $rekening->saldo;
+                $saldoSesudah = $transaksi->jenis === 'setoran'
+                    ? $saldoSebelum - $transaksi->nominal
+                    : $saldoSebelum + $transaksi->nominal;
+
+                $rekening->saldo = $saldoSesudah;
+                $rekening->save();
+
+                $transaksi->status_approval = 'rejected';
+                $transaksi->saldo_sebelum = $saldoSebelum;
+                $transaksi->saldo_sesudah = $saldoSesudah;
+                $transaksi->approved_by = auth()->id();
+                $transaksi->approved_at = now();
+                $transaksi->save();
+
+                $message = 'Transaksi ditolak. Saldo dikembalikan.';
+            }
+
+            DB::commit();
+            return back()->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * d. Pinbuk — form & proses
+     */
+    public function pinbukForm()
+    {
+        $anggota = Anggota::where('status', 'aktif')->orderBy('nama_lengkap')->get();
+        return view('simpanan.pinbuk', compact('anggota'));
+    }
+
+    public function pinbukStore(Request $request)
+    {
+        $validated = $request->validate([
+            'rekening_sumber_id' => 'required|uuid|exists:rekening_simpanan,id',
+            'rekening_tujuan_id' => 'required|uuid|exists:rekening_simpanan,id|different:rekening_sumber_id',
+            'nominal' => 'required|numeric|min:1000',
+            'keterangan' => 'nullable|string|max:500',
+        ]);
+
+        $sumber = RekeningSimpanan::with('produk')->findOrFail($validated['rekening_sumber_id']);
+        $tujuan = RekeningSimpanan::findOrFail($validated['rekening_tujuan_id']);
+
+        if ($sumber->produk && in_array($sumber->produk->jenis, ['pokok', 'wajib'])) {
+            return back()->withErrors(['rekening_sumber_id' => 'Simpanan Pokok dan Wajib tidak dapat dipindahbukukan selama Anda masih menjadi anggota aktif.'])->withInput();
+        }
+
+        if ($sumber->status !== 'aktif') {
+            return back()->withErrors(['rekening_sumber_id' => 'Rekening sumber tidak aktif.'])->withInput();
+        }
+        if ($tujuan->status !== 'aktif') {
+            return back()->withErrors(['rekening_tujuan_id' => 'Rekening tujuan tidak aktif.'])->withInput();
+        }
+        if ($sumber->saldo < $validated['nominal']) {
+            return back()->withErrors(['nominal' => 'Saldo tidak cukup. Saldo sumber: Rp ' . number_format($sumber->saldo, 0, ',', '.')])->withInput();
+        }
+
+        $needApproval = $validated['nominal'] > 1000000;
+
+        DB::beginTransaction();
+        try {
+            // Kurangi sumber
+            $sumberSaldoSebelum = $sumber->saldo;
+            $sumber->saldo = $sumberSaldoSebelum - $validated['nominal'];
+            $sumber->save();
+
+            // Tambah tujuan
+            $tujuanSaldoSebelum = $tujuan->saldo;
+            $tujuan->saldo = $tujuanSaldoSebelum + $validated['nominal'];
+            $tujuan->save();
+
+            // Create pinbuk record
+            $pinbuk = Pinbuk::create([
+                'rekening_sumber_id' => $sumber->id,
+                'rekening_tujuan_id' => $tujuan->id,
+                'user_id' => auth()->id(),
+                'no_transaksi' => 'PMB-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
+                'nominal' => $validated['nominal'],
+                'keterangan' => $validated['keterangan'] ?? 'Pemindahbukuan',
+                'status_approval' => $needApproval ? 'pending' : 'approved',
+                'approved_by' => $needApproval ? null : auth()->id(),
+                'approved_at' => $needApproval ? null : now(),
+            ]);
+
+            // Create transaksi simpanan for both
+            TransaksiSimpanan::create([
+                'rekening_id' => $sumber->id,
+                'user_id' => auth()->id(),
+                'no_transaksi' => $pinbuk->no_transaksi . '-K',
+                'jenis' => 'pinbuk_keluar',
+                'nominal' => $validated['nominal'],
+                'saldo_sebelum' => $sumberSaldoSebelum,
+                'saldo_sesudah' => $sumber->saldo,
+                'keterangan' => 'Pinbuk ke ' . $tujuan->no_rekening . ' — ' . ($validated['keterangan'] ?? ''),
+                'channel' => 'teller',
+                'status_approval' => $needApproval ? 'pending' : 'approved',
+                'approved_by' => $needApproval ? null : auth()->id(),
+                'approved_at' => $needApproval ? null : now(),
+            ]);
+
+            TransaksiSimpanan::create([
+                'rekening_id' => $tujuan->id,
+                'user_id' => auth()->id(),
+                'no_transaksi' => $pinbuk->no_transaksi . '-M',
+                'jenis' => 'pinbuk_masuk',
+                'nominal' => $validated['nominal'],
+                'saldo_sebelum' => $tujuanSaldoSebelum,
+                'saldo_sesudah' => $tujuan->saldo,
+                'keterangan' => 'Pinbuk dari ' . $sumber->no_rekening . ' — ' . ($validated['keterangan'] ?? ''),
+                'channel' => 'teller',
+                'status_approval' => $needApproval ? 'pending' : 'approved',
+                'approved_by' => $needApproval ? null : auth()->id(),
+                'approved_at' => $needApproval ? null : now(),
+            ]);
+
+            DB::commit();
+
+            $message = $needApproval
+                ? 'Pemindahbukuan diajukan, menunggu approval.'
+                : 'Pemindahbukuan berhasil diproses!';
+
+            return redirect()->route('simpanan.transaksi')->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Gagal: ' . $e->getMessage()])->withInput();
+        }
+    }
+
+    /**
+     * e. Cancel transaksi
+     */
+    public function cancelForm($id)
+    {
+        $transaksi = TransaksiSimpanan::with(['rekening.anggota', 'rekening.produk', 'user'])->findOrFail($id);
+        return view('simpanan.cancel', compact('transaksi'));
+    }
+
+    public function cancelSubmit(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'alasan' => 'required|string|max:500',
+        ]);
+
+        $transaksi = TransaksiSimpanan::with('rekening')->findOrFail($id);
+
+        // Cannot cancel if already cancelled
+        if ($transaksi->dibatalkan) {
+            return back()->with('error', 'Transaksi sudah dibatalkan sebelumnya.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $rekening = $transaksi->rekening;
+
+            // Reverse saldo
+            $saldoSebelum = $rekening->saldo;
+            $saldoSesudah = $transaksi->jenis === 'setoran' || $transaksi->jenis === 'pinbuk_masuk'
+                ? $saldoSebelum - $transaksi->nominal
+                : $saldoSebelum + $transaksi->nominal;
+
+            $rekening->saldo = $saldoSesudah;
+            $rekening->save();
+
+            // Mark as cancelled
+            $transaksi->dibatalkan = true;
+            $transaksi->dibatalkan_by = auth()->id();
+            $transaksi->dibatalkan_at = now();
+            $transaksi->jenis_pembatalan = $transaksi->jenis;
+            $transaksi->saldo_sebelum = $saldoSebelum;
+            $transaksi->saldo_sesudah = $saldoSesudah;
+            $transaksi->save();
+
+            DB::commit();
+            return redirect()->route('simpanan.transaksi')->with('success', 'Transaksi berhasil dibatalkan. Saldo dikembalikan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * f. Upload data simpanan (CSV import)
+     */
+    public function uploadForm()
+    {
+        return view('simpanan.upload');
+    }
+
+    public function uploadProcess(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:10240',
+        ]);
+
+        $file = $request->file('file');
+        $data = array_map('str_getcsv', file($file->getPathname()));
+        $header = array_shift($data); // Remove header row
+
+        $berhasil = 0;
+        $gagal = 0;
+        $errors = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($data as $i => $row) {
+                // Expected: no_rekening, jenis, nominal, keterangan
+                if (count($row) < 3) {
+                    $gagal++;
+                    continue;
+                }
+
+                $noRekening = trim($row[0] ?? '');
+                $jenis = strtolower(trim($row[1] ?? 'setoran'));
+                $nominal = floatval($row[2] ?? 0);
+                $keterangan = trim($row[3] ?? 'Import CSV');
+
+                if (!$noRekening || $nominal <= 0) {
+                    $gagal++;
+                    continue;
+                }
+
+                $rekening = RekeningSimpanan::where('no_rekening', $noRekening)->first();
+                if (!$rekening || $rekening->status !== 'aktif') {
+                    $gagal++;
+                    continue;
+                }
+
+                $saldoSebelum = $rekening->saldo;
+                $saldoSesudah = in_array($jenis, ['setoran', 'pinbuk_masuk'])
+                    ? $saldoSebelum + $nominal
+                    : $saldoSebelum - $nominal;
+
+                if ($saldoSesudah < 0) {
+                    $gagal++;
+                    continue;
+                }
+
+                $rekening->saldo = $saldoSesudah;
+                $rekening->save();
+
+                TransaksiSimpanan::create([
+                    'rekening_id' => $rekening->id,
+                    'user_id' => auth()->id(),
+                    'no_transaksi' => 'CSV-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
+                    'jenis' => $jenis,
+                    'nominal' => $nominal,
+                    'saldo_sebelum' => $saldoSebelum,
+                    'saldo_sesudah' => $saldoSesudah,
+                    'keterangan' => $keterangan . ' (Import CSV)',
+                    'channel' => 'teller',
+                    'status_approval' => 'approved',
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]);
+
+                $berhasil++;
+            }
+
+            DB::commit();
+            return back()->with('success', "Import selesai. Berhasil: {$berhasil}, Gagal: {$gagal}");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Blokir tabungan
+     */
+    public function blokirForm($id)
+    {
+        $rekening = RekeningSimpanan::with(['anggota', 'produk'])->findOrFail($id);
+        return view('simpanan.blokir', compact('rekening'));
+    }
+
+    public function blokirSubmit(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'alasan' => 'required|string|max:500',
+        ]);
+
+        $rekening = RekeningSimpanan::findOrFail($id);
+        $rekening->status = 'blokir';
+        $rekening->save();
+
+        return back()->with('success', 'Rekening berhasil diblokir.');
+    }
+
+    public function bukaBlokir($id)
+    {
+        $rekening = RekeningSimpanan::findOrFail($id);
+        $rekening->status = 'aktif';
+        $rekening->save();
+
+        return back()->with('success', 'Blokir rekening dibuka.');
+    }
+
+    /**
+     * Tutup rekening
+     */
+    public function tutupForm($id)
+    {
+        $rekening = RekeningSimpanan::with(['anggota', 'produk'])->findOrFail($id);
+        return view('simpanan.tutup', compact('rekening'));
+    }
+
+    public function tutupSubmit(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'alasan' => 'required|string|max:500',
+        ]);
+
+        $rekening = RekeningSimpanan::findOrFail($id);
+
+        if ($rekening->saldo > 0) {
+            return back()->withErrors(['saldo' => 'Rekening masih memiliki saldo Rp ' . number_format($rekening->saldo, 0, ',', '.') . '. Tarik terlebih dahulu.']);
+        }
+
+        $rekening->status = 'tutup';
+        $rekening->tanggal_tutup = now();
+        $rekening->save();
+
+        return back()->with('success', 'Rekening berhasil ditutup.');
+    }
+
+    /**
+     * g. Laporan — Statement simpanan per rekening
+     */
+    public function statement($id, Request $request)
+    {
+        $rekening = RekeningSimpanan::with(['anggota', 'produk'])->findOrFail($id);
+
+        $query = TransaksiSimpanan::where('rekening_id', $id)
+            ->where('dibatalkan', false)
+            ->with(['user']);
+
+        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+        $transaksi = $query->orderBy('created_at', 'desc')->get();
+
+        return view('simpanan.laporan.statement', compact('rekening', 'transaksi'));
+    }
+
+    /**
+     * g. Laporan rekap simpanan
+     */
+    public function laporanRekap(Request $request)
+    {
+        $query = RekeningSimpanan::with(['anggota', 'produk'])->where('status', 'aktif');
+
+        if ($produkId = $request->input('produk_id')) {
+            $query->where('produk_id', $produkId);
+        }
+        if ($cabangId = $request->input('cabang_id')) {
+            $query->whereHas('anggota', fn($q) => $q->where('cabang_id', $cabangId));
+        }
+
+        $rekening = $query->orderBy('no_rekening')->get();
+        $produkList = ProdukSimpanan::where('aktif', true)->get();
+        $cabangList = \App\Models\Cabang::where('aktif', true)->get();
+
+        return view('simpanan.laporan.rekap', compact('rekening', 'produkList', 'cabangList'));
+    }
+
+    /**
+     * g. Laporan penarikan
+     */
+    public function laporanPenarikan(Request $request)
+    {
+        $query = TransaksiSimpanan::where('jenis', 'penarikan')
+            ->where('dibatalkan', false)
+            ->with(['rekening.anggota']);
+
+        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+        $transaksi = $query->orderByDesc('created_at')->get();
+        $title = 'Penarikan';
+
+        return view('simpanan.laporan.generic', compact('transaksi', 'title'));
+    }
+
+    /**
+     * g. Laporan regist simpanan
+     */
+    public function laporanRegist()
+    {
+        $rekening = RekeningSimpanan::with(['anggota', 'produk'])->orderBy('tanggal_buka', 'desc')->get();
+        return view('simpanan.laporan.regist', compact('rekening'));
+    }
+
+    /**
+     * g. Laporan setoran
+     */
+    public function laporanSetoran(Request $request)
+    {
+        $query = TransaksiSimpanan::where('jenis', 'setoran')
+            ->where('dibatalkan', false)
+            ->with(['rekening.anggota']);
+
+        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+        $transaksi = $query->orderByDesc('created_at')->get();
+        $title = 'Setoran';
+
+        return view('simpanan.laporan.generic', compact('transaksi', 'title'));
+    }
+
+    /**
+     * g. Laporan pinbuk
+     */
+    public function laporanPinbuk(Request $request)
+    {
+        $query = Pinbuk::with(['rekeningSumber.anggota', 'rekeningTujuan.anggota', 'approvedBy']);
+
+        if ($status = $request->input('status')) {
+            $query->where('status_approval', $status);
+        }
+        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+        $pinbukList = $query->orderByDesc('created_at')->get();
+
+        return view('simpanan.laporan.pinbuk', compact('pinbukList'));
+    }
+
+    /**
+     * List rekening
+     */
+    public function rekening(Request $request)
+    {
+        $query = RekeningSimpanan::with(['anggota', 'produk']);
+
+        if ($search = $request->input('search')) {
+            $query->where('no_rekening', 'like', "%{$search}%")
+                  ->orWhereHas('anggota', fn($q) => $q->where('nama_lengkap', 'like', "%{$search}%"));
+        }
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $rekening = $query->latest()->paginate(15)->withQueryString();
+        $totalSaldo = RekeningSimpanan::where('status', 'aktif')->sum('saldo');
+        $totalRekening = RekeningSimpanan::where('status', 'aktif')->count();
+
+        return view('simpanan.rekening', compact('rekening', 'totalSaldo', 'totalRekening'));
+    }
+
+    /**
+     * List transaksi
+     */
+    public function transaksi(Request $request)
+    {
+        $query = TransaksiSimpanan::with(['rekening.anggota', 'rekening.produk', 'user', 'approvedBy']);
+
+        if ($search = $request->input('search')) {
+            $query->where('no_transaksi', 'like', "%{$search}%")
+                  ->orWhereHas('rekening.anggota', fn($q) => $q->where('nama_lengkap', 'like', "%{$search}%"));
+        }
+        if ($jenis = $request->input('jenis')) {
+            $query->where('jenis', $jenis);
+        }
+        if ($status = $request->input('status')) {
+            if ($status === 'dibatalkan') {
+                $query->where('dibatalkan', true);
+            } else {
+                $query->where('dibatalkan', false)->where('status_approval', $status);
+            }
+        }
+
+        $transaksi = $query->latest('created_at')->paginate(15)->withQueryString();
+
+        return view('simpanan.transaksi', compact('transaksi'));
+    }
+}
