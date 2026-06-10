@@ -16,26 +16,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/anggota', [AnggotaController::class, 'index'])->name('anggota.index');
     Route::get('/anggota/create', [AnggotaController::class, 'create'])->name('anggota.create');
     Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store');
-    Route::get('/anggota/{id}', [AnggotaController::class, 'show'])->name('anggota.show');
-    Route::get('/anggota/{id}/edit', [AnggotaController::class, 'edit'])->name('anggota.edit');
-    Route::put('/anggota/{id}', [AnggotaController::class, 'update'])->name('anggota.update');
 
-    // Anggota keluar
-    Route::get('/anggota/{id}/keluar', [AnggotaController::class, 'keluarForm'])->name('anggota.keluar');
-    Route::post('/anggota/{id}/keluar', [AnggotaController::class, 'keluarSubmit'])->name('anggota.keluar.submit');
+    // Static routes (No ID)
     Route::get('/anggota/approval-keluar', [AnggotaController::class, 'approvalKeluar'])->name('anggota.approval_keluar');
-    Route::post('/anggota/{id}/approve-keluar', [AnggotaController::class, 'approveKeluar'])->name('anggota.approve_keluar');
-    Route::post('/anggota/{id}/reject-keluar', [AnggotaController::class, 'rejectKeluar'])->name('anggota.reject_keluar');
-
-    // Saldo & History
     Route::get('/anggota/saldo', [AnggotaController::class, 'saldo'])->name('anggota.saldo');
-    Route::get('/anggota/{id}/history', [AnggotaController::class, 'historyTransaksi'])->name('anggota.history');
-
-    // Laporan
     Route::get('/anggota/laporan/saldo', [AnggotaController::class, 'laporanSaldo'])->name('anggota.laporan.saldo');
     Route::get('/anggota/laporan/profil', [AnggotaController::class, 'laporanProfil'])->name('anggota.laporan.profil');
     Route::get('/anggota/laporan/rekap', [AnggotaController::class, 'laporanRekap'])->name('anggota.laporan.rekap');
     Route::get('/anggota/laporan/keluar', [AnggotaController::class, 'laporanKeluar'])->name('anggota.laporan.keluar');
+
+    // Routes with {id} parameter (MUST BE AT THE BOTTOM)
+    Route::get('/anggota/{id}', [AnggotaController::class, 'show'])->name('anggota.show');
+    Route::get('/anggota/{id}/edit', [AnggotaController::class, 'edit'])->name('anggota.edit');
+    Route::put('/anggota/{id}', [AnggotaController::class, 'update'])->name('anggota.update');
+    Route::get('/anggota/{id}/keluar', [AnggotaController::class, 'keluarForm'])->name('anggota.keluar');
+    Route::post('/anggota/{id}/keluar', [AnggotaController::class, 'keluarSubmit'])->name('anggota.keluar.submit');
+    Route::post('/anggota/{id}/approve-keluar', [AnggotaController::class, 'approveKeluar'])->name('anggota.approve_keluar');
+    Route::post('/anggota/{id}/reject-keluar', [AnggotaController::class, 'rejectKeluar'])->name('anggota.reject_keluar');
+    Route::get('/anggota/{id}/history', [AnggotaController::class, 'historyTransaksi'])->name('anggota.history');
     Route::get('/anggota/{id}/export-keluar', [AnggotaController::class, 'exportDataKeluar'])->name('anggota.export_keluar');
 
     // Simpanan Routes

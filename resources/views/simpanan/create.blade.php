@@ -64,11 +64,11 @@
             </section>
 
             {{-- Search Results: multiple matches --}}
-            @if(isset($anggotaResults) && $anggotaResults->count() > 0)
+            @if(isset($anggotaResults) && count($anggotaResults) > 0)
                 <section class="bg-white rounded-xl shadow-sm p-6">
                     <h3 class="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
                         <span class="material-symbols-outlined text-[18px] text-primary">group</span>
-                        Pilih Anggota ({{ $anggotaResults->count() }} hasil)
+                        Pilih Anggota ({{ count($anggotaResults) }} hasil)
                     </h3>
                     <div class="space-y-2">
                         @foreach($anggotaResults as $result)

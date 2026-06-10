@@ -92,6 +92,36 @@
             </div>
         </section>
 
+        @php
+            $rekeningPokok = $anggota->rekeningSimpanan->filter(function($rek) {
+                return $rek->produk && $rek->produk->jenis === 'pokok';
+            })->first();
+            $saldoPokok = $rekeningPokok ? $rekeningPokok->saldo : 0;
+            $targetPokok = 150000;
+            $persenPokok = $targetPokok > 0 ? min(100, round(($saldoPokok / $targetPokok) * 100)) : 0;
+        @endphp
+        
+        @if($anggota->status === 'aktif' && $saldoPokok < $targetPokok)
+        <!-- Progress Simpanan Pokok -->
+        <section class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-tertiary">
+            <h3 class="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px] text-tertiary-dark">savings</span>
+                Progress Simpanan Pokok
+            </h3>
+            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                <span>Terkumpul: <strong class="text-blue-900 font-data">Rp {{ number_format($saldoPokok, 0, ',', '.') }}</strong></span>
+                <span>Target: <strong class="font-data">Rp {{ number_format($targetPokok, 0, ',', '.') }}</strong></span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5">
+                <div class="bg-tertiary h-2.5 rounded-full transition-all duration-1000" style="width: {{ $persenPokok }}%"></div>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[12px]">info</span>
+                Kekurangan Simpanan Pokok akan dipotong otomatis dari jadwal payroll (potongan gaji) bulanan.
+            </p>
+        </section>
+        @endif
+
         <!-- Data Pribadi -->
         <section class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="text-sm font-bold text-slate-700 mb-5 flex items-center gap-2">

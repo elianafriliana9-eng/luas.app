@@ -20,6 +20,7 @@ class SimpananController extends Controller
     {
         $jenis = $request->input('jenis', 'setoran');
         $search = $request->input('anggota');
+        $jenisSimpanan = $request->input('jenis_simpanan');
 
         $anggota = null;
         $rekeningList = [];
@@ -48,14 +49,19 @@ class SimpananController extends Controller
             }
 
             if ($anggota) {
-                $rekeningList = RekeningSimpanan::where('anggota_id', $anggota->id)
+                $rekeningQuery = RekeningSimpanan::where('anggota_id', $anggota->id)
                     ->where('status', 'aktif')
-                    ->with('produk')
-                    ->get();
+                    ->with('produk');
+                
+                if ($jenisSimpanan) {
+                    $rekeningQuery->whereHas('produk', fn($q) => $q->where('jenis', $jenisSimpanan));
+                }
+                
+                $rekeningList = $rekeningQuery->get();
             }
         }
 
-        return view('simpanan.create', compact('jenis', 'anggota', 'rekeningList', 'anggotaResults'));
+        return view('simpanan.create', compact('jenis', 'anggota', 'rekeningList', 'anggotaResults', 'jenisSimpanan'));
     }
 
     /**
@@ -146,6 +152,11 @@ class SimpananController extends Controller
     public function index(Request $request)
     {
         $query = TransaksiSimpanan::with(['rekening.anggota', 'rekening.produk', 'user', 'approvedBy']);
+
+        // Filter jenis_simpanan (pokok, wajib, sukarela)
+        if ($jenisSimpanan = $request->input('jenis_simpanan')) {
+            $query->whereHas('rekening.produk', fn($q) => $q->where('jenis', $jenisSimpanan));
+        }
 
         // Filter jenis
         if ($jenis = $request->input('jenis')) {
@@ -660,6 +671,10 @@ class SimpananController extends Controller
     public function rekening(Request $request)
     {
         $query = RekeningSimpanan::with(['anggota', 'produk']);
+
+        if ($jenisSimpanan = $request->input('jenis_simpanan')) {
+            $query->whereHas('produk', fn($q) => $q->where('jenis', $jenisSimpanan));
+        }
 
         if ($search = $request->input('search')) {
             $query->where('no_rekening', 'like', "%{$search}%")

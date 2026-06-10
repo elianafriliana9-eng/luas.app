@@ -138,6 +138,12 @@
             $isSimpananOps = request()->routeIs('simpanan.approval') || request()->routeIs('simpanan.upload') || request()->routeIs('simpanan.blokir*') || request()->routeIs('simpanan.tutup*') || request()->routeIs('simpanan.cancel*');
             $isSimpananLap = request()->routeIs('simpanan.laporan.*');
             $pendingApproval = \App\Models\TransaksiSimpanan::where('status_approval', 'pending')->where('dibatalkan', false)->count();
+            
+            $jenisSimp = request()->query('jenis_simpanan');
+            $isPokok = $isSimpanan && $jenisSimp === 'pokok';
+            $isWajib = $isSimpanan && $jenisSimp === 'wajib';
+            $isSukarela = $isSimpanan && $jenisSimp === 'sukarela';
+            $isOpsLap = $isSimpananOps || $isSimpananLap || request()->routeIs('simpanan.pinbuk');
         @endphp
 
         <!-- Navigation -->
@@ -155,53 +161,93 @@
                 Anggota
             </a>
 
-            <!-- ═══ SIMPANAN (Accordion) ═══ -->
-            <div x-data="{
-                open: {{ $isSimpanan ? 'true' : 'false' }},
-                trx: {{ $isSimpananTrx ? 'true' : 'false' }},
-                ops: {{ $isSimpananOps ? 'true' : 'false' }},
-                lap: {{ $isSimpananLap ? 'true' : 'false' }}
-            }">
-                {{-- Main toggle --}}
-                <button @click="open = !open" type="button"
-                        class="nav-link w-full justify-between {{ $isSimpanan ? 'active' : '' }}">
+            <!-- ═══ SIMPANAN POKOK ═══ -->
+            <div x-data="{ open: {{ $isPokok ? 'true' : 'false' }} }">
+                <button @click="open = !open" type="button" class="nav-link w-full justify-between {{ $isPokok ? 'active' : '' }}">
                     <span class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-[20px]" style="{{ $isSimpanan ? 'font-variation-settings: \'FILL\' 1;' : '' }}">savings</span>
-                        Simpanan
+                        <span class="material-symbols-outlined text-[20px]" style="{{ $isPokok ? 'font-variation-settings: \'FILL\' 1;' : '' }}">lock</span>
+                        Simpanan Pokok
                     </span>
                     <span class="material-symbols-outlined text-[16px] accord-chevron" :class="open && 'open'">expand_more</span>
                 </button>
-
-                {{-- Accordion body --}}
                 <div class="accord-body" :class="open && 'open'">
                     <div class="pt-1 pb-0.5 space-y-0.5">
+                        <a href="{{ route('simpanan.rekening', ['jenis_simpanan' => 'pokok']) }}" class="sub-link {{ $isPokok && request()->routeIs('simpanan.rekening') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span> Rekening Pokok
+                        </a>
+                        <a href="{{ route('simpanan.transaksi', ['jenis_simpanan' => 'pokok']) }}" class="sub-link {{ $isPokok && request()->routeIs('simpanan.transaksi') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">swap_horiz</span> Riwayat Transaksi
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-                        {{-- ▸ Transaksi --}}
-                        <button @click="trx = !trx" type="button" class="sub-header {{ $isSimpananTrx ? 'active' : '' }}">
-                            <span>Transaksi</span>
-                            <span class="material-symbols-outlined text-[12px] accord-chevron" :class="trx && 'open'">expand_more</span>
-                        </button>
-                        <div class="accord-body" :class="trx && 'open'">
-                            <a href="{{ route('simpanan.rekening') }}" class="sub-link {{ request()->routeIs('simpanan.rekening') || request()->routeIs('simpanan.statement') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
-                                Rekening
-                            </a>
-                            <a href="{{ route('simpanan.transaksi') }}" class="sub-link {{ request()->routeIs('simpanan.transaksi') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">swap_horiz</span>
-                                Riwayat Transaksi
-                            </a>
-                            <a href="{{ route('simpanan.create', ['jenis' => 'setoran']) }}" class="sub-link {{ request()->routeIs('simpanan.create') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">add_circle</span>
-                                Transaksi Baru
-                            </a>
-                            <a href="{{ route('simpanan.pinbuk') }}" class="sub-link {{ request()->routeIs('simpanan.pinbuk') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">compare_arrows</span>
-                                Pemindahbukuan
-                            </a>
-                        </div>
+            <!-- ═══ SIMPANAN WAJIB ═══ -->
+            <div x-data="{ open: {{ $isWajib ? 'true' : 'false' }} }">
+                <button @click="open = !open" type="button" class="nav-link w-full justify-between {{ $isWajib ? 'active' : '' }}">
+                    <span class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-[20px]" style="{{ $isWajib ? 'font-variation-settings: \'FILL\' 1;' : '' }}">trending_up</span>
+                        Simpanan Wajib
+                    </span>
+                    <span class="material-symbols-outlined text-[16px] accord-chevron" :class="open && 'open'">expand_more</span>
+                </button>
+                <div class="accord-body" :class="open && 'open'">
+                    <div class="pt-1 pb-0.5 space-y-0.5">
+                        <a href="{{ route('simpanan.rekening', ['jenis_simpanan' => 'wajib']) }}" class="sub-link {{ $isWajib && request()->routeIs('simpanan.rekening') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span> Rekening Wajib
+                        </a>
+                        <a href="{{ route('simpanan.transaksi', ['jenis_simpanan' => 'wajib']) }}" class="sub-link {{ $isWajib && request()->routeIs('simpanan.transaksi') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">swap_horiz</span> Riwayat Transaksi
+                        </a>
+                        <a href="{{ route('simpanan.create', ['jenis' => 'setoran', 'jenis_simpanan' => 'wajib']) }}" class="sub-link {{ $isWajib && request()->routeIs('simpanan.create') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">add_circle</span> Setoran Baru
+                        </a>
+                    </div>
+                </div>
+            </div>
 
+            <!-- ═══ SIMPANAN SUKARELA ═══ -->
+            <div x-data="{ open: {{ $isSukarela ? 'true' : 'false' }} }">
+                <button @click="open = !open" type="button" class="nav-link w-full justify-between {{ $isSukarela ? 'active' : '' }}">
+                    <span class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-[20px]" style="{{ $isSukarela ? 'font-variation-settings: \'FILL\' 1;' : '' }}">savings</span>
+                        Simpanan Sukarela
+                    </span>
+                    <span class="material-symbols-outlined text-[16px] accord-chevron" :class="open && 'open'">expand_more</span>
+                </button>
+                <div class="accord-body" :class="open && 'open'">
+                    <div class="pt-1 pb-0.5 space-y-0.5">
+                        <a href="{{ route('simpanan.rekening', ['jenis_simpanan' => 'sukarela']) }}" class="sub-link {{ $isSukarela && request()->routeIs('simpanan.rekening') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span> Rekening Sukarela
+                        </a>
+                        <a href="{{ route('simpanan.transaksi', ['jenis_simpanan' => 'sukarela']) }}" class="sub-link {{ $isSukarela && request()->routeIs('simpanan.transaksi') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">swap_horiz</span> Riwayat Transaksi
+                        </a>
+                        <a href="{{ route('simpanan.create', ['jenis' => 'setoran', 'jenis_simpanan' => 'sukarela']) }}" class="sub-link {{ $isSukarela && request()->routeIs('simpanan.create') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px]">add_circle</span> Transaksi Baru
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ OPERASIONAL SIMPANAN ═══ -->
+            <div x-data="{
+                open: {{ $isOpsLap ? 'true' : 'false' }},
+                ops: {{ $isSimpananOps || request()->routeIs('simpanan.pinbuk') ? 'true' : 'false' }},
+                lap: {{ $isSimpananLap ? 'true' : 'false' }}
+            }">
+                <button @click="open = !open" type="button" class="nav-link w-full justify-between {{ $isOpsLap ? 'active' : '' }}">
+                    <span class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-[20px]" style="{{ $isOpsLap ? 'font-variation-settings: \'FILL\' 1;' : '' }}">settings_applications</span>
+                        Operasional & Laporan
+                    </span>
+                    <span class="material-symbols-outlined text-[16px] accord-chevron" :class="open && 'open'">expand_more</span>
+                </button>
+                <div class="accord-body" :class="open && 'open'">
+                    <div class="pt-1 pb-0.5 space-y-0.5">
+                        
                         {{-- ▸ Operasional --}}
-                        <button @click="ops = !ops" type="button" class="sub-header {{ $isSimpananOps ? 'active' : '' }}">
+                        <button @click="ops = !ops" type="button" class="sub-header {{ $isSimpananOps || request()->routeIs('simpanan.pinbuk') ? 'active' : '' }}">
                             <span>Operasional</span>
                             <span class="material-symbols-outlined text-[12px] accord-chevron" :class="ops && 'open'">expand_more</span>
                         </button>
@@ -215,6 +261,10 @@
                                 @endif
                             </a>
                             @endif
+                            <a href="{{ route('simpanan.pinbuk') }}" class="sub-link {{ request()->routeIs('simpanan.pinbuk') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px]">compare_arrows</span>
+                                Pemindahbukuan
+                            </a>
                             <a href="{{ route('simpanan.upload') }}" class="sub-link {{ request()->routeIs('simpanan.upload') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px]">upload_file</span>
                                 Upload CSV
@@ -228,24 +278,19 @@
                         </button>
                         <div class="accord-body" :class="lap && 'open'">
                             <a href="{{ route('simpanan.laporan.rekap') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.rekap') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">summarize</span>
-                                Rekap Simpanan
+                                <span class="material-symbols-outlined text-[16px]">summarize</span> Rekap Simpanan
                             </a>
                             <a href="{{ route('simpanan.laporan.setoran') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.setoran') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">north_east</span>
-                                Laporan Setoran
+                                <span class="material-symbols-outlined text-[16px]">north_east</span> Laporan Setoran
                             </a>
                             <a href="{{ route('simpanan.laporan.penarikan') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.penarikan') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">south_west</span>
-                                Laporan Penarikan
+                                <span class="material-symbols-outlined text-[16px]">south_west</span> Laporan Penarikan
                             </a>
                             <a href="{{ route('simpanan.laporan.regist') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.regist') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">playlist_add</span>
-                                Registrasi
+                                <span class="material-symbols-outlined text-[16px]">playlist_add</span> Registrasi
                             </a>
                             <a href="{{ route('simpanan.laporan.pinbuk') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.pinbuk') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px]">swap_calls</span>
-                                Laporan Pinbuk
+                                <span class="material-symbols-outlined text-[16px]">swap_calls</span> Laporan Pinbuk
                             </a>
                         </div>
 

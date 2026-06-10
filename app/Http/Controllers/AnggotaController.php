@@ -479,5 +479,18 @@ class AnggotaController extends Controller
                 'status' => 'aktif',
             ]);
         }
+
+        // Generate Jadwal Potongan Gaji untuk Simpanan Pokok (150.000 dicicil 3x @ 50.000)
+        $bulanMulai = now()->startOfMonth();
+        for ($i = 1; $i <= 3; $i++) {
+            \App\Models\PotonganGaji::create([
+                'anggota_id' => $anggota->id,
+                'periode' => $bulanMulai->copy()->addMonths($i - 1)->format('Y-m-d'),
+                'nominal_potongan' => 50000,
+                'jenis_potongan' => 'simpanan',
+                'status' => 'pending',
+                'keterangan' => 'Cicilan Simpanan Pokok (' . $i . '/3)',
+            ]);
+        }
     }
 }
