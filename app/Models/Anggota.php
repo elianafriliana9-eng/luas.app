@@ -122,10 +122,19 @@ class Anggota extends Authenticatable
     // Total potongan per bulan
     public function getTotalPotonganPerBulanAttribute(): float
     {
-        return $this->pembiayaan()
+        $potonganPembiayaan = $this->pembiayaan()
             ->where('auto_potong_gaji', true)
             ->where('status', 'aktif')
             ->sum('nominal_potongan');
+            
+        $potonganSimpanan = $this->potonganGaji()
+            ->where('status', 'pending')
+            ->whereMonth('periode', now()->month)
+            ->whereYear('periode', now()->year)
+            ->where('jenis_potongan', 'simpanan')
+            ->sum('nominal_potongan');
+            
+        return $potonganPembiayaan + $potonganSimpanan;
     }
 
     // Gaji yang diterima setelah potongan

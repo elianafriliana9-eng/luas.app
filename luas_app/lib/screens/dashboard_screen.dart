@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'payment_screen.dart';
-import 'profile_screen.dart';
 import '../services/api_service.dart';
+import '../widgets/custom_bottom_nav.dart';
+import 'simpanan_pokok_screen.dart';
+import 'simpanan_sukarela_screen.dart';
+import 'simpanan_wajib_screen.dart';
+import 'data_anggota_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,25 +16,56 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with SingleTickerProviderStateMixin {
   Map<String, dynamic>? _dashboardData;
   String _userName = '';
   bool _isLoading = true;
-  int _selectedIndex = 0;
 
-  // Colors from Design
-  static const Color primaryBlue = Color(0xFF0037B0);
-  static const Color primaryContainer = Color(0xFF1D4ED8);
-  static const Color secondaryGreen = Color(0xFF006C4A);
-  static const Color tertiaryOrange = Color(0xFF825100);
-  static const Color surfaceColor = Color(0xFFF9F9FF);
-  static const Color onSurfaceVariant = Color(0xFF434655);
-  static const Color outlineColor = Color(0xFF747686);
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  // Web Palette
+  static const Color primary = Color(0xFF1D4ED8);
+  static const Color primaryLight = Color(0xFF3B82F6);
+  static const Color secondary = Color(0xFF059669);
+  static const Color tertiary = Color(0xFFF59E0B);
+  static const Color danger = Color(0xFFDC2626);
+  static const Color neutralDark = Color(0xFF0F172A);
+  static const Color neutral = Color(0xFF1E293B);
+  static const Color surface = Color(0xFFF8FAFC);
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
+      ),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0.0, 0.05),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
+      ),
+    );
+
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -50,6 +84,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _dashboardData = result['data'];
         _isLoading = false;
       });
+      _animationController.forward();
     } else {
       setState(() => _isLoading = false);
       if (mounted) {
@@ -61,924 +96,493 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _formatCurrency(dynamic value) {
-    if (value == null) return 'Rp 0';
+    if (value == null) return '0';
     final number = double.tryParse(value.toString()) ?? 0;
     return NumberFormat.currency(
       locale: 'id_ID',
-      symbol: 'Rp ',
+      symbol: '',
       decimalDigits: 0,
-    ).format(number);
+    ).format(number).trim();
+  }
+
+  int _getSaldoByProduk(String keyword) {
+    if (_dashboardData == null || _dashboardData!['rekening'] == null) return 0;
+    final rekenings = _dashboardData!['rekening'] as List;
+    double total = 0;
+    for (var rek in rekenings) {
+      if ((rek['produk'] as String).toLowerCase().contains(keyword.toLowerCase())) {
+        total += double.tryParse(rek['saldo'].toString()) ?? 0;
+      }
+    }
+    return total.toInt();
+  }
+
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget body;
-    if (_selectedIndex == 2) {
-      body = const PaymentScreen(isTab: true);
-    } else if (_selectedIndex == 3) {
-      body = const ProfileScreen();
-    } else {
-      body = _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: primaryContainer),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchDashboard,
-              child: SingleChildScrollView(
-                child: Column(children: [_buildHeader(), _buildMainContent()]),
-              ),
-            );
-    }
-
-    return PopScope(
-      canPop: _selectedIndex == 0,
-      onPopInvoked: (didPop) {
-        if (didPop) return;
-        setState(() {
-          _selectedIndex = 0;
-        });
-      },
-      child: Scaffold(
-        backgroundColor: surfaceColor,
-        body: body,
-        floatingActionButton: Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [primaryContainer, primaryBlue],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: primaryBlue.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                Navigator.pushNamed(context, '/loan-application');
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: const Icon(
-                Icons.add_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
-            ),
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(primary),
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        bottomNavigationBar: _buildBottomNav(),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      bottomNavigationBar: CustomBottomNav(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ),
+      body: Stack(
+        children: [
+          // Dynamic Header Background (Primary Web Palette)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: MediaQuery.of(context).size.height * 0.45,
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [primary, primaryLight],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: _buildMainContent(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 280,
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [primaryContainer, primaryBlue],
-            ),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(32),
-              bottomRight: Radius.circular(32),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
+        children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.settings_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
           ),
-          padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
-          child: Column(
+          Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            width: 2,
-                          ),
-                          image: const DecorationImage(
-                            image: NetworkImage(
-                              'https://i.pravatar.cc/150?u=siti',
-                            ),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Selamat pagi,',
-                            style: GoogleFonts.inter(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            _userName.split(' ')[0],
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+              Container(
+                width: 76,
+                height: 76,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
-                    child: const Icon(
-                      Icons.notifications_outlined,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
+                child: Image.network(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Koperasi_Indonesia_Logo.svg/1200px-Koperasi_Indonesia_Logo.svg.png',
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.sync, color: tertiary, size: 40),
+                ),
               ),
-              const SizedBox(height: 24),
-              // Mini Stats Row
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PEMBIAYAAN AKTIF',
-                          style: GoogleFonts.inter(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _formatCurrency(_dashboardData?['total_tagihan']),
-                          style: GoogleFonts.jetBrainsMono(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'ANGSURAN BERIKUTNYA',
-                          style: GoogleFonts.inter(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              _dashboardData?['next_installment']?['tanggal'] ??
-                                  '-',
-                              style: GoogleFonts.jetBrainsMono(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            if (_dashboardData?['next_installment'] != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFDDB8),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  _dashboardData?['next_installment']?['status'] ??
-                                      '',
-                                  style: GoogleFonts.inter(
-                                    color: const Color(0xFF2A1700),
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 12),
+              Text(
+                'KOPERASI',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2,
+                ),
+              ),
+              Text(
+                'MAJU BERSAMA',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                'Mobile KOPERASI',
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Dashboard',
+                style: GoogleFonts.inter(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
-        ),
-        Positioned(
-          bottom: -40,
-          left: 24,
-          right: 24,
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 32,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 4,
-                    decoration: const BoxDecoration(
-                      color: primaryBlue,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(4),
-                        bottomLeft: Radius.circular(4),
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'TOTAL SALDO SIMPANAN',
-                            style: GoogleFonts.inter(
-                              color: onSurfaceVariant,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                          const Icon(
-                            Icons.visibility_outlined,
-                            size: 18,
-                            color: outlineColor,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            'Rp',
-                            style: GoogleFonts.plusJakartaSans(
-                              color: primaryBlue,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            NumberFormat('#,###', 'id_ID').format(
-                              double.tryParse(
-                                    (_dashboardData?['total_simpanan'] ?? 0)
-                                        .toString(),
-                                  ) ??
-                                  0,
-                            ),
-                            style: GoogleFonts.plusJakartaSans(
-                              color: primaryBlue,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        'Saldo per ${DateFormat('d MMMM yyyy', 'id_ID').format(DateTime.now())}',
-                        style: GoogleFonts.jetBrainsMono(
-                          color: outlineColor,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildMainContent() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 64, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildPayrollInfo(),
-          const SizedBox(height: 24),
-          _buildQuickActions(),
-          const SizedBox(height: 32),
-          _buildRekeningSection(),
-          const SizedBox(height: 32),
-          _buildTransactionSection(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPayrollInfo() {
-    final payrollInfo = _dashboardData?['payroll_info'];
-    if (payrollInfo == null) return const SizedBox.shrink();
-
-    final gajiPokok =
-        double.tryParse(payrollInfo['gaji_pokok'].toString()) ?? 0;
-    final totalPotongan =
-        double.tryParse(payrollInfo['total_potongan'].toString()) ?? 0;
-    final gajiDiterima =
-        double.tryParse(payrollInfo['gaji_diterima'].toString()) ?? 0;
-    final tanggalGajian = payrollInfo['tanggal_gajian'] ?? 25;
-    final autoPotongAktif = payrollInfo['auto_potong_aktif'] ?? false;
-    final departemen = payrollInfo['departemen'] ?? '-';
-    final jabatan = payrollInfo['jabatan'] ?? '-';
-
-    final now = DateTime.now();
-    DateTime nextPayday = DateTime(now.year, now.month, tanggalGajian);
-    if (now.day >= tanggalGajian) {
-      // Next month
-      final nextMonth = now.month + 1;
-      if (nextMonth > 12) {
-        nextPayday = DateTime(now.year + 1, 1, tanggalGajian);
-      } else {
-        nextPayday = DateTime(now.year, nextMonth, tanggalGajian);
-      }
-    }
-    final daysUntilPayday = nextPayday.difference(now).inDays;
-
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF006C4A), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(40),
+          topRight: Radius.circular(40),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
+          child: Column(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF006C4A).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(
-                      Icons.badge_outlined,
-                      color: Color(0xFF006C4A),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'INFO KARYAWAN',
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF434655),
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      Text(
-                        '$departemen — $jabatan',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF111C2D),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              if (autoPotongAktif)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF006C4A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.autorenew,
-                        color: Colors.white,
-                        size: 12,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'AUTO POTONG',
-                        style: GoogleFonts.inter(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              _buildProfileCard(),
+              const SizedBox(height: 40),
+              _buildGridMenu(),
             ],
           ),
-          const SizedBox(height: 16),
-          // Salary breakdown
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F3FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                _salaryRow('Gaji Pokok', _formatCurrency(gajiPokok)),
-                const SizedBox(height: 8),
-                if (totalPotongan > 0) ...[
-                  _salaryRow(
-                    'Potongan Angsuran',
-                    '-${_formatCurrency(totalPotongan)}',
-                    valueColor: const Color(0xFFBA1A1A),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                const Divider(height: 1, color: Color(0xFFDCE1FF)),
-                const SizedBox(height: 8),
-                _salaryRow(
-                  'Gaji Diterima',
-                  _formatCurrency(gajiDiterima),
-                  isBold: true,
-                  valueColor: const Color(0xFF006C4A),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Gajian berikutnya: ${DateFormat('d MMMM yyyy', 'id_ID').format(nextPayday)}',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: const Color(0xFF434655),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFDDB8),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$daysUntilPayday hari lagi',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF623C00),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _salaryRow(
-    String label,
-    String value, {
-    bool isBold = false,
-    Color valueColor = const Color(0xFF111C2D),
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
-            color: const Color(0xFF434655),
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.jetBrainsMono(
-            fontSize: 13,
-            fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-            color: valueColor,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _buildProfileCard() {
+    final saldo = _dashboardData?['total_simpanan'] ?? 0;
+    final firstName = _userName.split(' ')[0].toUpperCase();
 
-  Widget _buildQuickActions() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(32),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 20,
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 10),
           ),
         ],
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1), // slate-100
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildActionItem(Icons.add_card, 'Setor', () {}),
-          _buildActionItem(Icons.account_balance_wallet, 'Tarik', () {}),
-          _buildActionItem(Icons.payments_outlined, 'Bayar', () {
-            Navigator.pushNamed(context, '/payment');
-          }),
-          _buildActionItem(Icons.send_rounded, 'Transfer', () {}),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionItem(IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFDCE1FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: primaryBlue),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRekeningSection() {
-    final rekenings = _dashboardData?['rekening'] as List? ?? [];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Rekening Saya',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF111C2D),
-          ),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 130,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: rekenings.length,
-            clipBehavior: Clip.none,
-            itemBuilder: (context, index) {
-              final rek = rekenings[index];
-              if (rek == null) return const SizedBox();
-              final produkName = (rek['produk'] ?? 'Simpanan').toString();
-              final isSukarela = produkName.toLowerCase().contains('sukarela');
-              final isWajib = produkName.toLowerCase().contains('wajib');
-
-              Color bgColor = tertiaryOrange;
-              if (isSukarela) bgColor = primaryBlue;
-              if (isWajib) bgColor = secondaryGreen;
-
-              return Container(
-                width: 200,
-                margin: const EdgeInsets.only(right: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: bgColor.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -20,
-                      right: -20,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
+          Expanded(
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: primaryLight, width: 2),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        image: NetworkImage(
+                          'https://ui-avatars.com/api/?name=$firstName&background=1D4ED8&color=ffffff&bold=true&size=150',
                         ),
+                        fit: BoxFit.cover,
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          produkName.toUpperCase(),
-                          style: GoogleFonts.inter(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Saldo Tersedia',
-                              style: GoogleFonts.jetBrainsMono(
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontSize: 10,
-                              ),
-                            ),
-                            Text(
-                              _formatCurrency(rek['saldo']),
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTransactionSection() {
-    final transactions = _dashboardData?['recent_transactions'] as List? ?? [];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Transaksi Terkini',
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF111C2D),
-              ),
-            ),
-            Text(
-              'Lihat Semua',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: primaryBlue,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: transactions.length,
-          separatorBuilder: (context, index) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final trx = transactions[index];
-            final isDebit = trx['is_debit'] ?? false;
-
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F3FF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isDebit
-                          ? const Color(0xFFFFDAD6)
-                          : const Color(0xFF82F5C1).withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      isDebit
-                          ? Icons.arrow_outward_rounded
-                          : Icons.trending_up_rounded,
-                      color: isDebit
-                          ? const Color(0xFFBA1A1A)
-                          : const Color(0xFF006C4A),
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          trx['keterangan'] ??
-                              (isDebit ? 'Tarik Tunai' : 'Setor Tunai'),
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF111C2D),
-                          ),
-                        ),
-                        Text(
-                          trx['tanggal'],
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            color: outlineColor,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${isDebit ? '-' : '+'}${_formatCurrency(trx['nominal'])}',
-                        style: GoogleFonts.jetBrainsMono(
-                          fontSize: 13,
+                        'Hi, $firstName',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: neutralDark,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: isDebit
-                              ? const Color(0xFFBA1A1A)
-                              : const Color(0xFF006C4A),
                         ),
                       ),
-                      const Text(
-                        'Sukses',
-                        style: TextStyle(fontSize: 10, color: outlineColor),
+                      const SizedBox(height: 4),
+                      Text(
+                        'DOMPET KOPERASI',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF64748B), // slate-500
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Rp. ${_formatCurrency(saldo)}',
+                        style: GoogleFonts.jetBrainsMono(
+                          color: primary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEE2E2), // red-100
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.exit_to_app_rounded,
+                color: danger,
+                size: 22,
               ),
+              onPressed: () {},
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGridMenu() {
+    // Menu colors precisely adapted from web Tailwind palette
+    final menus = [
+      {
+        'title': 'Simpanan\nPokok',
+        'value': 'Rp ${_formatCurrency(_getSaldoByProduk('Pokok'))}',
+        'icon_path': 'assets/icons/pokok.png',
+        'iconColor': primary,
+        'bgColor': const Color(0xFFEFF6FF), // blue-50
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SimpananPokokScreen(dashboardData: _dashboardData),
+          ),
+        ),
+      },
+      {
+        'title': 'Simpanan\nWajib',
+        'value': 'Rp ${_formatCurrency(_getSaldoByProduk('Wajib'))}',
+        'icon_path': 'assets/icons/wajib.png',
+        'iconColor': secondary,
+        'bgColor': const Color(0xFFECFDF5), // emerald-50
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SimpananWajibScreen(dashboardData: _dashboardData),
+          ),
+        ),
+      },
+      {
+        'title': 'Simpanan\nSukarela',
+        'value': 'Rp ${_formatCurrency(_getSaldoByProduk('Sukarela'))}',
+        'icon_path': 'assets/icons/sukarela.png',
+        'iconColor': tertiary,
+        'bgColor': const Color(0xFFFFFBEB), // amber-50
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SimpananSukarelaScreen(dashboardData: _dashboardData),
+          ),
+        ),
+      },
+      {
+        'title': 'History\nTransaksi',
+        'value': null,
+        'icon_path': 'assets/icons/history.png',
+        'iconColor': danger,
+        'bgColor': const Color(0xFFFEF2F2), // red-50
+      },
+      {
+        'title': 'Data\nAnggota',
+        'value': null,
+        'icon_path': 'assets/icons/profile.png',
+        'iconColor': const Color(0xFF7C3AED), // violet-600
+        'bgColor': const Color(0xFFF5F3FF), // violet-50
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const DataAnggotaScreen(),
+          ),
+        ),
+      },
+    ];
+
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      padding: EdgeInsets.zero,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 0.72,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 24,
+      ),
+      itemCount: menus.length,
+      itemBuilder: (context, index) {
+        final menu = menus[index];
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOutBack,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: child,
             );
           },
-        ),
-      ],
+          child: AnimatedMenuCard(menu: menu),
+        );
+      },
     );
   }
+}
 
-  Widget _buildBottomNav() {
-    return BottomAppBar(
-      height: 85,
-      color: Colors.white,
-      shape: const AutomaticNotchedShape(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-        ),
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20)),
-        ),
-      ),
-      notchMargin: 8,
-      padding: EdgeInsets.zero,
-      child: Row(
-        children: [
-          Expanded(child: _buildNavitem(Icons.home_rounded, 'Beranda', 0)),
-          Expanded(
-            child: _buildNavitem(
-              Icons.account_balance_wallet_outlined,
-              'Dompet Saya',
-              1,
-            ),
-          ),
-          const SizedBox(width: 70), // Center space for FAB
-          Expanded(
-            child: _buildNavitem(Icons.payments_outlined, 'Pembayaran', 2),
-          ),
-          Expanded(
-            child: _buildNavitem(Icons.person_outline_rounded, 'Profil', 3),
-          ),
-        ],
-      ),
-    );
-  }
+class AnimatedMenuCard extends StatefulWidget {
+  final Map<String, dynamic> menu;
 
-  Widget _buildNavitem(IconData icon, String label, int index) {
-    bool isSelected = _selectedIndex == index;
+  const AnimatedMenuCard({super.key, required this.menu});
+
+  @override
+  State<AnimatedMenuCard> createState() => _AnimatedMenuCardState();
+}
+
+class _AnimatedMenuCardState extends State<AnimatedMenuCard> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = widget.menu['bgColor'] as Color;
+    final iconColor = widget.menu['iconColor'] as Color;
+
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: isSelected ? primaryBlue : outlineColor, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? primaryBlue : outlineColor,
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      onTap: widget.menu['onTap'] as void Function()?,
+      child: AnimatedScale(
+        scale: _isPressed ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        child: Column(
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: iconColor.withValues(alpha: 0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                widget.menu['icon_path'] as String,
+                width: 10,
+                height: 10,
+                fit: BoxFit.contain,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Text(
+              widget.menu['title'] as String,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF475569), // slate-600
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                height: 1.2,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (widget.menu['value'] != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                widget.menu['value'] as String,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.jetBrainsMono(
+                  color: iconColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

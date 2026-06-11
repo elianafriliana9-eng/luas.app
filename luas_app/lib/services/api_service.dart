@@ -2,9 +2,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'dart:io';
+
 class ApiService {
-  // Use http://10.0.2.2:8000 for Android Emulator to communicate with Mac localhost
-  static const String baseUrl = 'http://10.0.2.2:8000/api/v1';
+  // Use 10.0.2.2 for Android Emulator, and 127.0.0.1 for iOS Simulator to communicate with Mac localhost
+  static String get baseUrl {
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000/api/v1';
+    } else {
+      return 'http://127.0.0.1:8000/api/v1';
+    }
+  }
 
   static Future<Map<String, dynamic>> login(String nik, String password) async {
     try {

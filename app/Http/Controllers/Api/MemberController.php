@@ -42,9 +42,9 @@ class MemberController extends Controller
         }
 
         // 5. Payroll Info
-        $hasAutoPotongGaji = $pembiayaan->contains('auto_potong_gaji', true);
-        $totalPotonganGaji = $pembiayaan->where('auto_potong_gaji', true)->sum('nominal_potongan');
-        $gajiDiterima = ($anggota->gaji_pokok ?? 0) - $totalPotonganGaji;
+        $hasAutoPotongGaji = $anggota->hasPotonganGajiAktif() || $anggota->potonganGaji()->where('status', 'pending')->whereMonth('periode', now()->month)->exists();
+        $totalPotonganGaji = $anggota->total_potongan_per_bulan;
+        $gajiDiterima = $anggota->gaji_diterima;
 
         return response()->json([
             'status' => 'success',

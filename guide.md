@@ -634,3 +634,9 @@ graph TB
 - [ ] Deploy ke Play Store & App Store
 - [ ] UAT & migrasi data dari sistem lama
 - [ ] Go-live
+
+Kamu ada 3 akun terdaftar. Switch pake:
+gh auth switch -u srtcreativedesign-web
+gh auth switch -u elianafriliana9-eng
+Atau untuk login akun baru:
+gh auth login
