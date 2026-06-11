@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\Anggota\AnggotaExport;
+use App\Exports\Anggota\SaldoExport;
+use App\Exports\Anggota\ProfilExport;
+use App\Imports\AnggotaImport;
 
 class AnggotaController extends Controller
 {
@@ -473,8 +478,8 @@ class AnggotaController extends Controller
         foreach ($produkSimpanan as $produk) {
             RekeningSimpanan::create([
                 'anggota_id' => $anggota->id,
-                'produk_simpanan_id' => $produk->id,
-                'no_rekening' => 'REK-' . strtoupper(substr($produk->kode_produk, 0, 3)) . '-' . $anggota->no_anggota,
+                'produk_id' => $produk->id,
+                'no_rekening' => 'REK-' . strtoupper(substr($produk->kode, 0, 3)) . '-' . $anggota->no_anggota,
                 'saldo' => 0,
                 'status' => 'aktif',
             ]);
@@ -492,5 +497,92 @@ class AnggotaController extends Controller
                 'keterangan' => 'Cicilan Simpanan Pokok (' . $i . '/3)',
             ]);
         }
+    }
+
+    /**
+     * Export Data Anggota ke Excel
+     */
+    public function exportAnggota(Request $request)
+    {
+        $filters = $request->only(['search', 'status', 'cabang_id', 'departemen']);
+        return $this->excelDownload(new AnggotaExport($filters), 'data-anggota-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Saldo Anggota ke Excel
+     */
+    public function exportSaldo(Request $request)
+    {
+        $filters = $request->only(['search', 'cabang_id']);
+        return $this->excelDownload(new SaldoExport($filters), 'saldo-anggota-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Profil Anggota ke Excel
+     */
+    public function exportProfil(Request $request)
+    {
+        $filters = $request->only(['status', 'departemen']);
+        return $this->excelDownload(new ProfilExport($filters), 'profil-anggota-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Rekap Anggota ke Excel
+     */
+    public function exportRekap(Request $request)
+    {
+        return $this->excelDownload(new \App\Exports\Anggota\RekapAnggotaExport(), 'rekap-anggota-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Anggota Keluar ke Excel
+     */
+    public function exportKeluar(Request $request)
+    {
+        $filters = $request->only(['from', 'to']);
+        return $this->excelDownload(new \App\Exports\Anggota\KeluarAnggotaExport($filters), 'anggota-keluar-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Form Import Anggota dari Excel
+     */
+    public function importForm()
+    {
+        return view('anggota.import');
+    }
+
+    /**
+     * Proses Import Anggota dari Excel
+     */
+    public function importProcess(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:10240',
+        ]);
+
+        try {
+            $import = new AnggotaImport();
+            Excel::import($import, $request->file('file'));
+            $hasil = $import->getHasil();
+
+            $message = "Import selesai. Berhasil: {$hasil['berhasil']}, Gagal: {$hasil['gagal']}.";
+
+            return back()
+                ->with('import_hasil', $hasil['hasil'])
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal import: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download Template Import Anggota
+     */
+    public function downloadTemplate()
+    {
+        return $this->excelDownload(
+            new \App\Exports\Anggota\TemplateAnggotaExport(),
+            'template-import-anggota.xlsx'
+        );
     }
 }

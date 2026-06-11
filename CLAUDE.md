@@ -12,7 +12,7 @@ This is a **Koperasi Karyawan** (Employee Cooperative) where the **primary loan 
 ## Tech Stack
 
 - **Backend + Web Admin**: PHP Laravel 12 with REST API
-- **Mobile App**: Flutter (`luas_app/`)
+- **Mobile App**: Flutter (belum dikembangkan, fokus ke web dulu)
 - **Database**: MySQL (XAMPP local development)
 - **Server**: XAMPP local development environment at `/Applications/XAMPP/xamppfiles/htdocs/kopsaku`
 

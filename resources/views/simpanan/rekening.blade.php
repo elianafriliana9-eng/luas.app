@@ -8,6 +8,10 @@
                 <p class="text-slate-500 text-sm mt-1">Kelola seluruh rekening simpanan anggota koperasi</p>
             </div>
             <div class="flex gap-2">
+                <a href="{{ route('simpanan.export.rekening', request()->query()) }}" class="flex items-center gap-2 px-4 py-2.5 bg-secondary text-white text-sm font-semibold rounded-xl hover:bg-secondary-dark transition-all shadow-sm">
+                    <span class="material-symbols-outlined text-[18px]">file_download</span>
+                    Export Excel
+                </a>
                 <a href="{{ route('simpanan.laporan.rekap') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
                     <span class="material-symbols-outlined text-[18px]">summarize</span>
                     Laporan Rekap
@@ -49,7 +53,7 @@
             <div class="bg-white p-6 rounded-xl border-l-4 border-tertiary shadow-sm flex items-center justify-center">
                 <a href="{{ route('simpanan.upload') }}" class="flex items-center gap-2 px-4 py-2.5 bg-tertiary/10 text-tertiary-dark text-sm font-semibold rounded-xl hover:bg-tertiary/20 transition-all">
                     <span class="material-symbols-outlined text-[18px]">upload_file</span>
-                    Upload CSV
+                    Upload Excel
                 </a>
             </div>
         </section>
@@ -63,6 +67,15 @@
                         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="No. rekening atau nama anggota..." class="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     </div>
+                </div>
+                <div class="min-w-[140px]">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Jenis Simpanan</label>
+                    <select name="jenis_simpanan" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                        <option value="">Semua Jenis</option>
+                        <option value="pokok" {{ request('jenis_simpanan')=='pokok'?'selected':'' }}>Pokok</option>
+                        <option value="wajib" {{ request('jenis_simpanan')=='wajib'?'selected':'' }}>Wajib</option>
+                        <option value="sukarela" {{ request('jenis_simpanan')=='sukarela'?'selected':'' }}>Sukarela</option>
+                    </select>
                 </div>
                 <div class="min-w-[140px]">
                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status</label>

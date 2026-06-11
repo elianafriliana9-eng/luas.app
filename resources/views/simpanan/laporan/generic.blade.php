@@ -6,10 +6,16 @@
                 <h2 class="text-2xl font-bold font-headline tracking-tight text-blue-900">Laporan {{ ucfirst($title ?? 'Transaksi') }}</h2>
                 <p class="text-slate-500 text-sm mt-1">Riwayat {{ strtolower($title ?? 'transaksi') }} simpanan anggota</p>
             </div>
-            <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all no-print">
-                <span class="material-symbols-outlined text-[18px]">print</span>
-                Cetak
-            </button>
+            <div class="flex gap-2">
+                <a href="{{ ($title ?? '') === 'Setoran' ? route('simpanan.export.setoran', request()->query()) : route('simpanan.export.penarikan', request()->query()) }}" class="flex items-center gap-2 px-4 py-2.5 bg-secondary text-white text-sm font-semibold rounded-xl hover:bg-secondary-dark transition-all no-print">
+                    <span class="material-symbols-outlined text-[18px]">file_download</span>
+                    Excel
+                </a>
+                <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all no-print">
+                    <span class="material-symbols-outlined text-[18px]">print</span>
+                    Cetak
+                </button>
+            </div>
         </section>
 
         <!-- Filter -->

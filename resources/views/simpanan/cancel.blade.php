@@ -7,7 +7,7 @@
                 <h2 class="text-2xl font-bold font-headline tracking-tight text-blue-900">Batalkan Transaksi</h2>
                 <p class="text-slate-500 text-sm mt-1">Pembatalan akan mengembalikan saldo ke keadaan sebelumnya</p>
             </div>
-            <a href="{{ route('simpanan.transaksi') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
+            <a href="{{ route('simpanan.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
                 <span class="material-symbols-outlined text-[18px]">arrow_back</span>
                 Kembali
             </a>
@@ -48,7 +48,7 @@
                         <textarea name="alasan" rows="3" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="Jelaskan alasan pembatalan..."></textarea>
                     </div>
                     <div class="flex justify-end gap-3 mt-6 pt-5 border-t border-slate-100">
-                        <a href="{{ route('simpanan.transaksi') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
+                        <a href="{{ route('simpanan.index') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
                         <button type="submit" class="flex items-center gap-2 px-6 py-2.5 bg-tertiary-dark text-white text-sm font-semibold rounded-xl shadow-md shadow-tertiary/20 hover:opacity-90 transition-all active:scale-95">
                             <span class="material-symbols-outlined text-[18px]">block</span>
                             Batalkan Transaksi

@@ -192,10 +192,10 @@
             <!-- Tab: Rekening Simpanan -->
             <div x-show="activeTab === 'rekening'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" class="space-y-6">
                 @php
-                    $rekPokok = $anggota->rekeningSimpanan->where('produk.kode_produk', 'SP')->first();
-                    $rekWajib = $anggota->rekeningSimpanan->where('produk.kode_produk', 'SW')->first();
-                    $rekSukarela = $anggota->rekeningSimpanan->where('produk.kode_produk', 'SS')->first();
-                    $rekDeposito = $anggota->rekeningSimpanan->where('produk.kode_produk', 'SB')->first();
+                    $rekPokok = $anggota->rekeningSimpanan->where('produk.kode', 'SP')->first();
+                    $rekWajib = $anggota->rekeningSimpanan->where('produk.kode', 'SW')->first();
+                    $rekSukarela = $anggota->rekeningSimpanan->where('produk.kode', 'SS')->first();
+                    $rekDeposito = $anggota->rekeningSimpanan->where('produk.kode', 'SB')->first();
                 @endphp
 
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -436,11 +436,11 @@
                             </div>
                         @endif
 
-                        <!-- Placeholder -->
-                        <div class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group">
+                        <!-- Tambah Dokumen -->
+                        <a href="{{ route('anggota.edit', $anggota->id) }}" class="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 hover:bg-primary/5 hover:border-primary/30 transition-all cursor-pointer group">
                             <span class="material-symbols-outlined text-slate-300 group-hover:text-primary text-[32px] mb-2 transition-colors">add_a_photo</span>
                             <p class="text-[11px] font-bold text-slate-400 group-hover:text-primary uppercase tracking-wider transition-colors">Tambah Dokumen</p>
-                        </div>
+                        </a>
                     </div>
                 </section>
             </div>

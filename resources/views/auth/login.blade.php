@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>LUAS Apps - Masuk ke Sistem</title>
+    <title>KopSaku - Masuk ke Sistem</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -110,8 +110,8 @@
     
     <div class="relative z-10 p-16 flex flex-col items-start max-w-2xl">
         <div class="flex items-center gap-3">
-            <img src="{{ asset('images/Desain tanpa judul-4.png') }}" alt="Logo LUAS Apps" class="h-16 w-auto object-contain">
-            <span class="text-3xl font-bold tracking-tight text-white headline">LUAS Apps</span>
+            <img src="{{ asset('images/Desain tanpa judul-4.png') }}" alt="Logo KopSaku" class="h-16 w-auto object-contain">
+            <span class="text-3xl font-bold tracking-tight text-white headline">KopSaku</span>
         </div>
         
         <h2 class="text-5xl font-bold text-white mb-6 leading-tight">Membangun Kesejahteraan Bersama Melalui Ekonomi Digital.</h2>
@@ -154,8 +154,8 @@
         <div class="mb-10 text-center lg:text-left">
             <div class="text-center mb-10">
                 <div class="flex items-center justify-center gap-2 mb-4 md:hidden">
-                    <img src="{{ asset('images/Desain tanpa judul-4.png') }}" alt="Logo LUAS Apps" class="h-12 w-auto object-contain">
-                    <span class="text-2xl font-bold tracking-tight text-primary headline">LUAS Apps</span>
+                    <img src="{{ asset('images/Desain tanpa judul-4.png') }}" alt="Logo KopSaku" class="h-12 w-auto object-contain">
+                    <span class="text-2xl font-bold tracking-tight text-primary headline">KopSaku</span>
                 </div>
             </div>
             <h1 class="text-4xl font-bold text-on-surface mb-3 tracking-tight">Selamat Datang</h1>

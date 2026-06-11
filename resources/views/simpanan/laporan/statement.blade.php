@@ -8,6 +8,10 @@
                 <p class="text-slate-500 text-sm mt-1">Riwayat mutasi lengkap per rekening</p>
             </div>
             <div class="flex gap-2">
+                <a href="{{ route('simpanan.export.statement', [$rekening->id, 'from' => request('from'), 'to' => request('to')]) }}" class="flex items-center gap-2 px-4 py-2.5 bg-secondary text-white text-sm font-semibold rounded-xl hover:bg-secondary-dark transition-all no-print">
+                    <span class="material-symbols-outlined text-[18px]">file_download</span>
+                    Excel
+                </a>
                 <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all no-print">
                     <span class="material-symbols-outlined text-[18px]">print</span>
                     Cetak

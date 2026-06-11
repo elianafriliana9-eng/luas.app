@@ -2,7 +2,14 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800">Saldo Anggota</h2>
-            <a href="{{ route('anggota.index') }}" class="text-indigo-600 hover:text-indigo-900">← Kembali</a>
+            <div class="flex gap-2">
+                <a href="{{ route('anggota.export.saldo', request()->query()) }}"
+                   class="inline-flex items-center px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Export Excel
+                </a>
+                <a href="{{ route('anggota.index') }}" class="text-indigo-600 hover:text-indigo-900">← Kembali</a>
+            </div>
         </div>
     </x-slot>
     <div class="py-6"><div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -36,9 +43,9 @@
                 <tbody class="divide-y">
                     @forelse($anggota as $a)
                         @php
-                            $pokok = $a->rekeningSimpanan->where('produk.kode_produk', 'SP')->sum('saldo');
-                            $wajib = $a->rekeningSimpanan->where('produk.kode_produk', 'SW')->sum('saldo');
-                            $sukarela = $a->rekeningSimpanan->where('produk.kode_produk', 'SS')->sum('saldo');
+                            $pokok = $a->rekeningSimpanan->where('produk.kode', 'SP')->sum('saldo');
+                            $wajib = $a->rekeningSimpanan->where('produk.kode', 'SW')->sum('saldo');
+                            $sukarela = $a->rekeningSimpanan->where('produk.kode', 'SS')->sum('saldo');
                             $total = $a->rekeningSimpanan->sum('saldo');
                         @endphp
                         <tr class="hover:bg-indigo-50">

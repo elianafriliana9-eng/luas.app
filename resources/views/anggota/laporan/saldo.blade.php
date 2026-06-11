@@ -34,9 +34,9 @@
                     @php $grandTotal = 0; @endphp
                     @foreach($anggota as $i => $a)
                         @php
-                            $pokok = $a->rekeningSimpanan->where('produk.kode_produk', 'SP')->sum('saldo');
-                            $wajib = $a->rekeningSimpanan->where('produk.kode_produk', 'SW')->sum('saldo');
-                            $sukarela = $a->rekeningSimpanan->where('produk.kode_produk', 'SS')->sum('saldo');
+                            $pokok = $a->rekeningSimpanan->where('produk.kode', 'SP')->sum('saldo');
+                            $wajib = $a->rekeningSimpanan->where('produk.kode', 'SW')->sum('saldo');
+                            $sukarela = $a->rekeningSimpanan->where('produk.kode', 'SS')->sum('saldo');
                             $total = $a->rekeningSimpanan->sum('saldo');
                             $grandTotal += $total;
                         @endphp

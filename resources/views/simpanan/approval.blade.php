@@ -7,7 +7,7 @@
                 <h2 class="text-2xl font-bold font-headline tracking-tight text-blue-900">Approval Transaksi</h2>
                 <p class="text-slate-500 text-sm mt-1">Transaksi yang membutuhkan persetujuan (penarikan &gt; Rp 1.000.000)</p>
             </div>
-            <a href="{{ route('simpanan.transaksi') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
+            <a href="{{ route('simpanan.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
                 <span class="material-symbols-outlined text-[18px]">arrow_back</span>
                 Kembali
             </a>

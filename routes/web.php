@@ -25,6 +25,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/anggota/laporan/rekap', [AnggotaController::class, 'laporanRekap'])->name('anggota.laporan.rekap');
     Route::get('/anggota/laporan/keluar', [AnggotaController::class, 'laporanKeluar'])->name('anggota.laporan.keluar');
 
+    // Anggota Export & Import (must be before {id} routes)
+    Route::get('/anggota/export/data', [AnggotaController::class, 'exportAnggota'])->name('anggota.export.data');
+    Route::get('/anggota/export/saldo', [AnggotaController::class, 'exportSaldo'])->name('anggota.export.saldo');
+    Route::get('/anggota/export/profil', [AnggotaController::class, 'exportProfil'])->name('anggota.export.profil');
+    Route::get('/anggota/export/rekap', [AnggotaController::class, 'exportRekap'])->name('anggota.export.rekap');
+    Route::get('/anggota/export/keluar', [AnggotaController::class, 'exportKeluar'])->name('anggota.export.keluar');
+    Route::get('/anggota/import', [AnggotaController::class, 'importForm'])->name('anggota.import');
+    Route::post('/anggota/import', [AnggotaController::class, 'importProcess'])->name('anggota.import.process');
+    Route::get('/anggota/download-template', [AnggotaController::class, 'downloadTemplate'])->name('anggota.download_template');
+
     // Routes with {id} parameter (MUST BE AT THE BOTTOM)
     Route::get('/anggota/{id}', [AnggotaController::class, 'show'])->name('anggota.show');
     Route::get('/anggota/{id}/edit', [AnggotaController::class, 'edit'])->name('anggota.edit');
@@ -44,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Input & Transaksi
     Route::get('/simpanan/create', [\App\Http\Controllers\SimpananController::class, 'create'])->name('simpanan.create');
     Route::post('/simpanan', [\App\Http\Controllers\SimpananController::class, 'store'])->name('simpanan.store');
+    Route::get('/simpanan/rekening-baru', [\App\Http\Controllers\SimpananController::class, 'rekeningBaruForm'])->name('simpanan.rekening_baru');
+    Route::post('/simpanan/rekening-baru', [\App\Http\Controllers\SimpananController::class, 'rekeningBaruStore'])->name('simpanan.rekening_baru.store');
 
     // Approval
     Route::get('/simpanan/approval', [\App\Http\Controllers\SimpananController::class, 'approval'])->name('simpanan.approval');
@@ -52,14 +64,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Pinbuk
     Route::get('/simpanan/pinbuk', [\App\Http\Controllers\SimpananController::class, 'pinbukForm'])->name('simpanan.pinbuk');
     Route::post('/simpanan/pinbuk', [\App\Http\Controllers\SimpananController::class, 'pinbukStore'])->name('simpanan.pinbuk.store');
+    Route::get('/simpanan/pinbuk/approval', [\App\Http\Controllers\SimpananController::class, 'pinbukApproval'])->name('simpanan.pinbuk.approval');
+    Route::post('/simpanan/pinbuk/approval/{id}/approve', [\App\Http\Controllers\SimpananController::class, 'pinbukApprove'])->name('simpanan.pinbuk.approve');
+    Route::post('/simpanan/pinbuk/approval/{id}/reject', [\App\Http\Controllers\SimpananController::class, 'pinbukReject'])->name('simpanan.pinbuk.reject');
 
     // Cancel
     Route::get('/simpanan/cancel/{id}', [\App\Http\Controllers\SimpananController::class, 'cancelForm'])->name('simpanan.cancel');
     Route::post('/simpanan/cancel/{id}', [\App\Http\Controllers\SimpananController::class, 'cancelSubmit'])->name('simpanan.cancel.submit');
 
-    // Upload
+    // Upload & Export
     Route::get('/simpanan/upload', [\App\Http\Controllers\SimpananController::class, 'uploadForm'])->name('simpanan.upload');
     Route::post('/simpanan/upload', [\App\Http\Controllers\SimpananController::class, 'uploadProcess'])->name('simpanan.upload.process');
+    Route::get('/simpanan/export/rekening', [\App\Http\Controllers\SimpananController::class, 'exportRekening'])->name('simpanan.export.rekening');
+    Route::get('/simpanan/export/transaksi', [\App\Http\Controllers\SimpananController::class, 'exportTransaksi'])->name('simpanan.export.transaksi');
+    Route::get('/simpanan/export/rekap', [\App\Http\Controllers\SimpananController::class, 'exportRekap'])->name('simpanan.export.rekap');
+    Route::get('/simpanan/export/setoran', [\App\Http\Controllers\SimpananController::class, 'exportSetoran'])->name('simpanan.export.setoran');
+    Route::get('/simpanan/export/penarikan', [\App\Http\Controllers\SimpananController::class, 'exportPenarikan'])->name('simpanan.export.penarikan');
+    Route::get('/simpanan/export/regist', [\App\Http\Controllers\SimpananController::class, 'exportRegist'])->name('simpanan.export.regist');
+    Route::get('/simpanan/export/pinbuk', [\App\Http\Controllers\SimpananController::class, 'exportPinbuk'])->name('simpanan.export.pinbuk');
+    Route::get('/simpanan/export/statement/{id}', [\App\Http\Controllers\SimpananController::class, 'exportStatement'])->name('simpanan.export.statement');
+    Route::get('/simpanan/download-template', [\App\Http\Controllers\SimpananController::class, 'downloadTemplate'])->name('simpanan.download_template');
 
     // Blokir & Tutup
     Route::get('/simpanan/blokir/{id}', [\App\Http\Controllers\SimpananController::class, 'blokirForm'])->name('simpanan.blokir');

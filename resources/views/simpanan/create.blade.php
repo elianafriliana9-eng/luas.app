@@ -11,7 +11,7 @@
                     {{ $jenis === 'setoran' ? 'Input setoran tunai ke rekening anggota' : 'Proses penarikan dana dari rekening anggota' }}
                 </p>
             </div>
-            <a href="{{ route('simpanan.transaksi') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
+            <a href="{{ route('simpanan.index') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all">
                 <span class="material-symbols-outlined text-[18px]">arrow_back</span>
                 Kembali
             </a>
@@ -148,7 +148,7 @@
                         @endif
 
                         <div class="flex justify-end gap-3 mt-8 pt-5 border-t border-slate-100">
-                            <a href="{{ route('simpanan.transaksi') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
+                            <a href="{{ route('simpanan.index') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
                             <button type="submit" class="flex items-center gap-2 px-6 py-2.5 {{ $jenis === 'setoran' ? 'bg-secondary shadow-secondary/20' : 'bg-danger shadow-danger/20' }} text-white text-sm font-semibold rounded-xl shadow-md hover:opacity-90 transition-all active:scale-95">
                                 <span class="material-symbols-outlined text-[18px]">{{ $jenis === 'setoran' ? 'savings' : 'money_off' }}</span>
                                 {{ $jenis === 'setoran' ? 'Proses Setoran' : 'Proses Penarikan' }}

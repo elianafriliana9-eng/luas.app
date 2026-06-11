@@ -34,7 +34,7 @@ class CabangSeeder extends Seeder
         ];
 
         foreach ($cabangs as $cabang) {
-            Cabang::create($cabang);
+            Cabang::updateOrCreate(['kode' => $cabang['kode']], $cabang);
         }
     }
 }

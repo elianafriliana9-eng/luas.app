@@ -10,6 +10,16 @@ use App\Models\Pinbuk;
 use App\Models\Jurnal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\Simpanan\RekeningExport;
+use App\Exports\Simpanan\TransaksiExport;
+use App\Exports\Simpanan\RekapExport;
+use App\Exports\Simpanan\SetoranExport;
+use App\Exports\Simpanan\PenarikanExport;
+use App\Exports\Simpanan\RegistSimpananExport;
+use App\Exports\Simpanan\PinbukExport;
+use App\Exports\Simpanan\StatementExport;
+use App\Imports\TransaksiImport;
 
 class SimpananController extends Controller
 {
@@ -358,11 +368,148 @@ class SimpananController extends Controller
                 ? 'Pemindahbukuan diajukan, menunggu approval.'
                 : 'Pemindahbukuan berhasil diproses!';
 
-            return redirect()->route('simpanan.transaksi')->with('success', $message);
+            return redirect()->route('simpanan.index')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Gagal: ' . $e->getMessage()])->withInput();
         }
+    }
+
+    /**
+     * Pinbuk Approval List
+     */
+    public function pinbukApproval()
+    {
+        $pending = Pinbuk::with(['rekeningSumber.anggota', 'rekeningTujuan.anggota', 'user'])
+            ->where('status_approval', 'pending')
+            ->latest()
+            ->paginate(15);
+
+        return view('simpanan.pinbuk_approval', compact('pending'));
+    }
+
+    /**
+     * Approve Pinbuk
+     */
+    public function pinbukApprove($id)
+    {
+        $pinbuk = Pinbuk::with(['rekeningSumber', 'rekeningTujuan'])->findOrFail($id);
+
+        if ($pinbuk->status_approval !== 'pending') {
+            return back()->with('error', 'Pinbuk sudah diproses sebelumnya.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $pinbuk->update([
+                'status_approval' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+
+            TransaksiSimpanan::where('no_transaksi', 'like', $pinbuk->no_transaksi . '%')
+                ->where('status_approval', 'pending')
+                ->update([
+                    'status_approval' => 'approved',
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]);
+
+            DB::commit();
+            return back()->with('success', 'Pinbuk disetujui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reject Pinbuk (reverse saldo)
+     */
+    public function pinbukReject($id)
+    {
+        $pinbuk = Pinbuk::with(['rekeningSumber', 'rekeningTujuan'])->findOrFail($id);
+
+        if ($pinbuk->status_approval !== 'pending') {
+            return back()->with('error', 'Pinbuk sudah diproses sebelumnya.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Reverse saldo (sumber gets back, tujuan gives back)
+            $pinbuk->rekeningSumber->saldo += $pinbuk->nominal;
+            $pinbuk->rekeningSumber->save();
+
+            $pinbuk->rekeningTujuan->saldo -= $pinbuk->nominal;
+            $pinbuk->rekeningTujuan->save();
+
+            $pinbuk->update([
+                'status_approval' => 'rejected',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+
+            TransaksiSimpanan::where('no_transaksi', 'like', $pinbuk->no_transaksi . '%')
+                ->where('status_approval', 'pending')
+                ->update([
+                    'status_approval' => 'rejected',
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now(),
+                ]);
+
+            DB::commit();
+            return back()->with('success', 'Pinbuk ditolak, saldo dikembalikan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Form Buka Rekening Baru
+     */
+    public function rekeningBaruForm()
+    {
+        $anggota = Anggota::where('status', 'aktif')->orderBy('nama_lengkap')->get();
+        $produk = ProdukSimpanan::where('aktif', true)->get();
+        return view('simpanan.rekening_baru', compact('anggota', 'produk'));
+    }
+
+    /**
+     * Proses Buka Rekening Baru
+     */
+    public function rekeningBaruStore(Request $request)
+    {
+        $validated = $request->validate([
+            'anggota_id' => 'required|uuid|exists:anggota,id',
+            'produk_id' => 'required|uuid|exists:produk_simpanan,id',
+        ]);
+
+        $anggota = Anggota::findOrFail($validated['anggota_id']);
+        $produk = ProdukSimpanan::findOrFail($validated['produk_id']);
+
+        $exists = RekeningSimpanan::where('anggota_id', $anggota->id)
+            ->where('produk_id', $produk->id)
+            ->whereIn('status', ['aktif', 'blokir'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['produk_id' => 'Anggota sudah memiliki rekening ' . $produk->nama . ' yang aktif.'])->withInput();
+        }
+
+        $noRekening = 'REK-' . strtoupper(substr($produk->kode, 0, 3)) . '-' . $anggota->no_anggota;
+
+        RekeningSimpanan::create([
+            'anggota_id' => $anggota->id,
+            'produk_id' => $produk->id,
+            'no_rekening' => $noRekening,
+            'saldo' => 0,
+            'status' => 'aktif',
+            'tanggal_buka' => now(),
+        ]);
+
+        return redirect()->route('simpanan.rekening')
+            ->with('success', 'Rekening ' . $produk->nama . ' berhasil dibuka untuk ' . $anggota->nama_lengkap);
     }
 
     /**
@@ -418,7 +565,7 @@ class SimpananController extends Controller
     }
 
     /**
-     * f. Upload data simpanan (CSV import)
+     * f. Upload data simpanan (Excel import)
      */
     public function uploadForm()
     {
@@ -428,77 +575,21 @@ class SimpananController extends Controller
     public function uploadProcess(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:10240',
+            'file' => 'required|file|mimes:xlsx,xls|max:10240',
         ]);
 
-        $file = $request->file('file');
-        $data = array_map('str_getcsv', file($file->getPathname()));
-        $header = array_shift($data); // Remove header row
-
-        $berhasil = 0;
-        $gagal = 0;
-        $errors = [];
-
-        DB::beginTransaction();
         try {
-            foreach ($data as $i => $row) {
-                // Expected: no_rekening, jenis, nominal, keterangan
-                if (count($row) < 3) {
-                    $gagal++;
-                    continue;
-                }
+            $import = new TransaksiImport();
+            Excel::import($import, $request->file('file'));
+            $hasil = $import->getHasil();
 
-                $noRekening = trim($row[0] ?? '');
-                $jenis = strtolower(trim($row[1] ?? 'setoran'));
-                $nominal = floatval($row[2] ?? 0);
-                $keterangan = trim($row[3] ?? 'Import CSV');
-
-                if (!$noRekening || $nominal <= 0) {
-                    $gagal++;
-                    continue;
-                }
-
-                $rekening = RekeningSimpanan::where('no_rekening', $noRekening)->first();
-                if (!$rekening || $rekening->status !== 'aktif') {
-                    $gagal++;
-                    continue;
-                }
-
-                $saldoSebelum = $rekening->saldo;
-                $saldoSesudah = in_array($jenis, ['setoran', 'pinbuk_masuk'])
-                    ? $saldoSebelum + $nominal
-                    : $saldoSebelum - $nominal;
-
-                if ($saldoSesudah < 0) {
-                    $gagal++;
-                    continue;
-                }
-
-                $rekening->saldo = $saldoSesudah;
-                $rekening->save();
-
-                TransaksiSimpanan::create([
-                    'rekening_id' => $rekening->id,
-                    'user_id' => auth()->id(),
-                    'no_transaksi' => 'CSV-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
-                    'jenis' => $jenis,
-                    'nominal' => $nominal,
-                    'saldo_sebelum' => $saldoSebelum,
-                    'saldo_sesudah' => $saldoSesudah,
-                    'keterangan' => $keterangan . ' (Import CSV)',
-                    'channel' => 'teller',
-                    'status_approval' => 'approved',
-                    'approved_by' => auth()->id(),
-                    'approved_at' => now(),
-                ]);
-
-                $berhasil++;
+            $message = "Import selesai. Berhasil: {$hasil['berhasil']}, Gagal: {$hasil['gagal']}.";
+            if (!empty($hasil['errors'])) {
+                $message .= ' ' . implode(' | ', array_slice($hasil['errors'], 0, 5));
             }
 
-            DB::commit();
-            return back()->with('success', "Import selesai. Berhasil: {$berhasil}, Gagal: {$gagal}");
+            return back()->with('success', $message);
         } catch (\Exception $e) {
-            DB::rollBack();
             return back()->with('error', 'Gagal import: ' . $e->getMessage());
         }
     }
@@ -666,6 +757,88 @@ class SimpananController extends Controller
     }
 
     /**
+     * h. Export Rekening Simpanan ke Excel
+     */
+    public function exportRekening(Request $request)
+    {
+        $filters = $request->only(['search', 'status']);
+        return $this->excelDownload(new RekeningExport($filters), 'rekening-simpanan-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * h. Export Transaksi Simpanan ke Excel
+     */
+    public function exportTransaksi(Request $request)
+    {
+        $filters = $request->only(['search', 'jenis', 'status', 'jenis_simpanan', 'from', 'to']);
+        return $this->excelDownload(new TransaksiExport($filters), 'transaksi-simpanan-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * h. Export Rekap Simpanan ke Excel
+     */
+    public function exportRekap(Request $request)
+    {
+        $filters = $request->only(['produk_id', 'cabang_id']);
+        return $this->excelDownload(new RekapExport($filters), 'rekap-simpanan-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Laporan Setoran
+     */
+    public function exportSetoran(Request $request)
+    {
+        $filters = $request->only(['from', 'to']);
+        return $this->excelDownload(new SetoranExport($filters), 'laporan-setoran-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Laporan Penarikan
+     */
+    public function exportPenarikan(Request $request)
+    {
+        $filters = $request->only(['from', 'to']);
+        return $this->excelDownload(new PenarikanExport($filters), 'laporan-penarikan-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Laporan Registrasi Simpanan
+     */
+    public function exportRegist()
+    {
+        return $this->excelDownload(new RegistSimpananExport(), 'registrasi-simpanan-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Laporan Pinbuk
+     */
+    public function exportPinbuk(Request $request)
+    {
+        $filters = $request->only(['status', 'from', 'to']);
+        return $this->excelDownload(new PinbukExport($filters), 'laporan-pinbuk-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * Export Statement Rekening
+     */
+    public function exportStatement($id, Request $request)
+    {
+        $filters = $request->only(['from', 'to']);
+        return $this->excelDownload(new StatementExport($id, $filters), 'statement-' . $id . '-' . date('Y-m-d') . '.xlsx');
+    }
+
+    /**
+     * i. Download template Excel untuk import transaksi
+     */
+    public function downloadTemplate()
+    {
+        return $this->excelDownload(
+            new \App\Exports\Simpanan\TemplateTransaksiExport(),
+            'template-import-transaksi.xlsx'
+        );
+    }
+
+    /**
      * List rekening
      */
     public function rekening(Request $request)
@@ -692,29 +865,10 @@ class SimpananController extends Controller
     }
 
     /**
-     * List transaksi
+     * List transaksi (redirect to index)
      */
     public function transaksi(Request $request)
     {
-        $query = TransaksiSimpanan::with(['rekening.anggota', 'rekening.produk', 'user', 'approvedBy']);
-
-        if ($search = $request->input('search')) {
-            $query->where('no_transaksi', 'like', "%{$search}%")
-                  ->orWhereHas('rekening.anggota', fn($q) => $q->where('nama_lengkap', 'like', "%{$search}%"));
-        }
-        if ($jenis = $request->input('jenis')) {
-            $query->where('jenis', $jenis);
-        }
-        if ($status = $request->input('status')) {
-            if ($status === 'dibatalkan') {
-                $query->where('dibatalkan', true);
-            } else {
-                $query->where('dibatalkan', false)->where('status_approval', $status);
-            }
-        }
-
-        $transaksi = $query->latest('created_at')->paginate(15)->withQueryString();
-
-        return view('simpanan.transaksi', compact('transaksi'));
+        return redirect()->route('simpanan.index', $request->query());
     }
 }

@@ -8,6 +8,10 @@
                 <p class="text-slate-500 text-sm mt-1">Seluruh riwayat setoran, penarikan, dan pemindahbukuan</p>
             </div>
             <div class="flex gap-2">
+                <a href="{{ route('simpanan.export.transaksi', request()->query()) }}" class="flex items-center gap-2 px-4 py-2.5 bg-secondary text-white text-sm font-semibold rounded-xl hover:bg-secondary-dark transition-all shadow-sm">
+                    <span class="material-symbols-outlined text-[18px]">file_download</span>
+                    Export Excel
+                </a>
                 @php $pendingCount = \App\Models\TransaksiSimpanan::where('status_approval', 'pending')->where('dibatalkan', false)->count(); @endphp
                 <a href="{{ route('simpanan.approval') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all relative">
                     <span class="material-symbols-outlined text-[18px]">pending_actions</span>
@@ -43,6 +47,15 @@
                         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="No. transaksi atau nama..." class="w-full border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     </div>
+                </div>
+                <div class="min-w-[130px]">
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Jenis Simpanan</label>
+                    <select name="jenis_simpanan" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                        <option value="">Semua</option>
+                        <option value="pokok" {{ request('jenis_simpanan')=='pokok'?'selected':'' }}>Pokok</option>
+                        <option value="wajib" {{ request('jenis_simpanan')=='wajib'?'selected':'' }}>Wajib</option>
+                        <option value="sukarela" {{ request('jenis_simpanan')=='sukarela'?'selected':'' }}>Sukarela</option>
+                    </select>
                 </div>
                 <div class="min-w-[130px]">
                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Jenis</label>
