@@ -45,16 +45,16 @@ class AnggotaController extends Controller
             $query->where('cabang_id', $cabangId);
         }
 
-        // Filter departemen
-        if ($departemen = $request->input('departemen')) {
-            $query->where('departemen', $departemen);
+        // Filter perusahaan
+        if ($perusahaanId = $request->input('perusahaan_id')) {
+            $query->where('perusahaan_id', $perusahaanId);
         }
 
         $anggota = $query->latest('tanggal_masuk')->paginate(15)->withQueryString();
         $cabangs = Cabang::where('aktif', true)->get();
-        $departemenList = Anggota::whereNotNull('departemen')->distinct()->pluck('departemen')->sort()->values();
+        $perusahaans = \App\Models\Perusahaan::where('aktif', true)->orderBy('nama')->get();
 
-        return view('anggota.index', compact('anggota', 'cabangs', 'departemenList'));
+        return view('anggota.index', compact('anggota', 'cabangs', 'perusahaans'));
     }
 
     /**
@@ -87,7 +87,8 @@ class AnggotaController extends Controller
     public function create()
     {
         $cabangs = Cabang::where('aktif', true)->get();
-        return view('anggota.create', compact('cabangs'));
+        $perusahaans = \App\Models\Perusahaan::where('aktif', true)->orderBy('nama')->get();
+        return view('anggota.create', compact('cabangs', 'perusahaans'));
     }
 
     /**
@@ -106,10 +107,9 @@ class AnggotaController extends Controller
             'no_hp' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
             // Karyawan fields
+            'perusahaan_id' => 'nullable|uuid|exists:perusahaan,id',
             'gaji_pokok' => 'nullable|numeric|min:0',
             'tanggal_gajian' => 'nullable|integer|min:1|max:31',
-            'departemen' => 'nullable|string|max:100',
-            'jabatan' => 'nullable|string|max:100',
             'tanggal_mulai_kerja' => 'nullable|date',
             'no_pegawai' => 'nullable|string|max:50',
             // Files
@@ -142,9 +142,11 @@ class AnggotaController extends Controller
 
             return redirect()->route('anggota.show', $anggota->id)
                 ->with('success', 'Anggota berhasil ditambahkan!');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Gagal menyimpan: ' . $e->getMessage()])->withInput();
+            return redirect()->route('anggota.create')
+                ->withErrors(['error' => 'Gagal menyimpan: ' . $e->getMessage()])
+                ->withInput();
         }
     }
 
@@ -155,7 +157,8 @@ class AnggotaController extends Controller
     {
         $anggota = Anggota::findOrFail($id);
         $cabangs = Cabang::where('aktif', true)->get();
-        return view('anggota.edit', compact('anggota', 'cabangs'));
+        $perusahaans = \App\Models\Perusahaan::where('aktif', true)->orderBy('nama')->get();
+        return view('anggota.edit', compact('anggota', 'cabangs', 'perusahaans'));
     }
 
     /**
@@ -175,10 +178,9 @@ class AnggotaController extends Controller
             'alamat' => 'required|string',
             'no_hp' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
+            'perusahaan_id' => 'nullable|uuid|exists:perusahaan,id',
             'gaji_pokok' => 'nullable|numeric|min:0',
             'tanggal_gajian' => 'nullable|integer|min:1|max:31',
-            'departemen' => 'nullable|string|max:100',
-            'jabatan' => 'nullable|string|max:100',
             'tanggal_mulai_kerja' => 'nullable|date',
             'no_pegawai' => 'nullable|string|max:50',
             'foto_ktp' => 'nullable|image|max:2048',
@@ -408,14 +410,14 @@ class AnggotaController extends Controller
         if ($status = $request->input('status')) {
             $query->where('status', $status);
         }
-        if ($departemen = $request->input('departemen')) {
-            $query->where('departemen', $departemen);
+        if ($perusahaanId = $request->input('perusahaan_id')) {
+            $query->where('perusahaan_id', $perusahaanId);
         }
 
         $anggota = $query->orderBy('nama_lengkap')->get();
-        $departemenList = Anggota::whereNotNull('departemen')->distinct()->pluck('departemen')->sort()->values();
+        $perusahaans = \App\Models\Perusahaan::where('aktif', true)->orderBy('nama')->get();
 
-        return view('anggota.laporan.profil', compact('anggota', 'departemenList'));
+        return view('anggota.laporan.profil', compact('anggota', 'perusahaans'));
     }
 
     /**
@@ -435,15 +437,13 @@ class AnggotaController extends Controller
             ->with('cabang')
             ->get();
 
-        $perDepartemen = Anggota::selectRaw('departemen, COUNT(*) as total')
-            ->whereNotNull('departemen')
-            ->groupBy('departemen')
-            ->orderByDesc('total')
-            ->get();
+        $perPerusahaan = \App\Models\Perusahaan::withCount(['anggota' => function ($q) {
+            $q->where('status', '!=', 'keluar');
+        }])->orderByDesc('anggota_count')->get();
 
         return view('anggota.laporan.rekap', compact(
             'totalAnggota', 'anggotaAktif', 'anggotaKeluar', 'totalSimpanan',
-            'perCabang', 'perDepartemen'
+            'perCabang', 'perPerusahaan'
         ));
     }
 
@@ -475,26 +475,46 @@ class AnggotaController extends Controller
     {
         $produkSimpanan = \App\Models\ProdukSimpanan::where('aktif', true)->get();
 
+        $kodeMap = [
+            'SIMPOK' => 'POKOK',
+            'SIMWA' => 'WAJIB',
+            'SIMSUKA' => 'SUKARELA',
+        ];
+
         foreach ($produkSimpanan as $produk) {
+            $prefix = $kodeMap[$produk->kode] ?? strtoupper(substr($produk->kode, 0, 3));
             RekeningSimpanan::create([
                 'anggota_id' => $anggota->id,
                 'produk_id' => $produk->id,
-                'no_rekening' => 'REK-' . strtoupper(substr($produk->kode, 0, 3)) . '-' . $anggota->no_anggota,
+                'no_rekening' => 'REK-' . $prefix . '-' . $anggota->no_anggota,
                 'saldo' => 0,
                 'status' => 'aktif',
+                'tanggal_buka' => now()->format('Y-m-d'),
             ]);
         }
 
         // Generate Jadwal Potongan Gaji untuk Simpanan Pokok (150.000 dicicil 3x @ 50.000)
-        $bulanMulai = now()->startOfMonth();
-        for ($i = 1; $i <= 3; $i++) {
+        // Periode cicilan mengacu ke tanggal gajian (jika ada) atau akhir bulan
+        $gaji = $anggota->gaji_pokok ?? 0;
+        $tglGajian = $anggota->tanggal_gajian;
+        $bulanMulai = now()->startOfMonth()->addMonth();
+        for ($i = 0; $i < 3; $i++) {
+            $periode = $bulanMulai->copy()->addMonths($i);
+            if ($tglGajian) {
+                $hari = (int) $tglGajian;
+                $periode->day(min($hari, $periode->daysInMonth));
+            } else {
+                $periode->endOfMonth();
+            }
             \App\Models\PotonganGaji::create([
                 'anggota_id' => $anggota->id,
-                'periode' => $bulanMulai->copy()->addMonths($i - 1)->format('Y-m-d'),
+                'periode' => $periode->format('Y-m-d'),
+                'gaji_bruto' => $gaji,
                 'nominal_potongan' => 50000,
+                'gaji_diterima' => max(0, $gaji - 50000),
                 'jenis_potongan' => 'simpanan',
                 'status' => 'pending',
-                'keterangan' => 'Cicilan Simpanan Pokok (' . $i . '/3)',
+                'keterangan' => 'Cicilan Simpanan Pokok (' . ($i + 1) . '/3)',
             ]);
         }
     }
@@ -504,7 +524,7 @@ class AnggotaController extends Controller
      */
     public function exportAnggota(Request $request)
     {
-        $filters = $request->only(['search', 'status', 'cabang_id', 'departemen']);
+        $filters = $request->only(['search', 'status', 'cabang_id', 'perusahaan_id']);
         return $this->excelDownload(new AnggotaExport($filters), 'data-anggota-' . date('Y-m-d') . '.xlsx');
     }
 
@@ -522,7 +542,7 @@ class AnggotaController extends Controller
      */
     public function exportProfil(Request $request)
     {
-        $filters = $request->only(['status', 'departemen']);
+        $filters = $request->only(['status', 'perusahaan_id']);
         return $this->excelDownload(new ProfilExport($filters), 'profil-anggota-' . date('Y-m-d') . '.xlsx');
     }
 

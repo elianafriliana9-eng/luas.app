@@ -94,8 +94,7 @@ class MemberController extends Controller
                     'total_potongan' => $totalPotonganGaji,
                     'gaji_diterima' => $gajiDiterima,
                     'auto_potong_aktif' => $hasAutoPotongGaji,
-                    'departemen' => $anggota->departemen ?? '-',
-                    'jabatan' => $anggota->jabatan ?? '-',
+                    'perusahaan' => $anggota->perusahaan?->nama ?? '-',
                 ],
             ]
         ]);
@@ -327,8 +326,7 @@ class MemberController extends Controller
                 'no_pegawai' => $anggota->no_pegawai ?? '-',
                 'status' => $anggota->status == 'aktif' ? 'Anggota Aktif' : 'Tidak Aktif',
                 'cabang' => $anggota->cabang?->nama ?? 'Pusat',
-                'departemen' => $anggota->departemen ?? '-',
-                'jabatan' => $anggota->jabatan ?? '-',
+                'perusahaan' => $anggota->perusahaan?->nama ?? '-',
                 'tanggal_masuk' => $joinDate ? $joinDate->format('d M Y') : '-',
                 'tanggal_mulai_kerja' => $anggota->tanggal_mulai_kerja ? $anggota->tanggal_mulai_kerja->format('d M Y') : '-',
                 'masa_kerja' => $anggota->masa_kerja,

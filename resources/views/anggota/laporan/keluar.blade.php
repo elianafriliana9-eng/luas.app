@@ -24,7 +24,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Anggota</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departemen</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perusahaan</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tgl Keluar</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Alasan</th>
                 </tr></thead>
@@ -34,7 +34,7 @@
                             <td class="px-6 py-3 text-sm">{{ $i + 1 }}</td>
                             <td class="px-6 py-3 text-sm font-mono">{{ $a->no_anggota }}</td>
                             <td class="px-6 py-3 text-sm font-medium">{{ $a->nama_lengkap }}</td>
-                            <td class="px-6 py-3 text-sm">{{ $a->departemen ?? '-' }}</td>
+                            <td class="px-6 py-3 text-sm">{{ $a->perusahaan?->nama ?? '-' }}</td>
                             <td class="px-6 py-3 text-sm">{{ $a->tanggal_keluar?->format('d M Y') }}</td>
                             <td class="px-6 py-3 text-sm text-gray-600 max-w-xs truncate">{{ $a->alasan_keluar ?? '-' }}</td>
                         </tr>

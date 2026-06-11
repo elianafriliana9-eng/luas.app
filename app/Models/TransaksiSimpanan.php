@@ -19,6 +19,7 @@ class TransaksiSimpanan extends Model
         'saldo_sebelum', 'saldo_sesudah', 'keterangan', 'channel', 'ref_payment',
         'status_approval', 'approved_by', 'approved_at',
         'dibatalkan', 'dibatalkan_by', 'dibatalkan_at', 'jenis_pembatalan',
+        'created_at',
     ];
 
     protected $casts = [

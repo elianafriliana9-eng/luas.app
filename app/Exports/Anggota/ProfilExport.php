@@ -38,8 +38,8 @@ class ProfilExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
         if (!empty($this->filters['status'])) {
             $query->where('status', $this->filters['status']);
         }
-        if (!empty($this->filters['departemen'])) {
-            $query->where('departemen', $this->filters['departemen']);
+        if (!empty($this->filters['perusahaan_id'])) {
+            $query->where('perusahaan_id', $this->filters['perusahaan_id']);
         }
 
         return $query->orderBy('nama_lengkap');
@@ -55,8 +55,7 @@ class ProfilExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
             'No. HP',
             'Email',
             'Cabang',
-            'Departemen',
-            'Jabatan',
+            'Perusahaan',
             'Tanggal Masuk',
             'Status',
         ];
@@ -75,8 +74,7 @@ class ProfilExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
             $anggota->no_hp ?? '-',
             $anggota->email ?? '-',
             $anggota->cabang?->nama ?? '-',
-            $anggota->departemen ?? '-',
-            $anggota->jabatan ?? '-',
+            $anggota->perusahaan?->nama ?? '-',
             $anggota->tanggal_masuk?->format('d/m/Y') ?? '-',
             ucfirst(str_replace('_', ' ', $anggota->status)),
         ];
@@ -85,7 +83,7 @@ class ProfilExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $lastCol = 'K';
+        $lastCol = 'J';
 
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],

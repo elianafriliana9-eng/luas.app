@@ -11,6 +11,7 @@ class PotonganGaji extends Model
     use HasUuid;
 
     protected $table = 'potongan_gaji';
+    public $timestamps = false;
 
     protected $fillable = [
         'anggota_id', 'pembiayaan_id', 'jadwal_angsuran_id',

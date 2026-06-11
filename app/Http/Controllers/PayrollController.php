@@ -24,7 +24,6 @@ class PayrollController extends Controller
                 $q->where('status', 'aktif')
                   ->where('auto_potong_gaji', true);
             }])
-            ->orderBy('departemen')
             ->orderBy('nama_lengkap')
             ->paginate(20);
 

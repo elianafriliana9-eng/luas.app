@@ -43,11 +43,9 @@ class RekapAnggotaExport implements FromArray, WithHeadings, WithStyles, ShouldA
             ->with('cabang')
             ->get();
 
-        $perDepartemen = Anggota::selectRaw('departemen, COUNT(*) as total')
-            ->whereNotNull('departemen')
-            ->groupBy('departemen')
-            ->orderByDesc('total')
-            ->get();
+        $perPerusahaan = \App\Models\Perusahaan::withCount(['anggota' => function ($q) {
+            $q->where('status', '!=', 'keluar');
+        }])->orderByDesc('anggota_count')->get();
 
         $rows = [];
         $rows[] = ['', '', ''];
@@ -69,10 +67,10 @@ class RekapAnggotaExport implements FromArray, WithHeadings, WithStyles, ShouldA
 
         $rows[] = ['', '', ''];
 
-        // Per Departemen
-        $rows[] = ['REKAP PER DEPARTEMEN', '', ''];
-        foreach ($perDepartemen as $d) {
-            $rows[] = [$d->departemen ?? '-', '', (string) $d->total];
+        // Per Perusahaan
+        $rows[] = ['REKAP PER PERUSAHAAN', '', ''];
+        foreach ($perPerusahaan as $p) {
+            $rows[] = [$p->nama ?? '-', '', (string) $p->anggota_count];
         }
 
         return $rows;

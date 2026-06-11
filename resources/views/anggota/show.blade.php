@@ -57,8 +57,8 @@
                                 <p class="text-xs font-semibold text-blue-900">{{ $anggota->cabang?->nama ?? '-' }}</p>
                             </div>
                             <div>
-                                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Departemen</p>
-                                <p class="text-xs font-semibold text-blue-900">{{ $anggota->departemen ?? '-' }}</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Perusahaan</p>
+                                <p class="text-xs font-semibold text-blue-900">{{ $anggota->perusahaan?->nama ?? '-' }}</p>
                             </div>
                             <div>
                                 <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">No. HP</p>
@@ -138,8 +138,8 @@
                     <p class="text-sm font-semibold text-blue-900 font-data mt-0.5">{{ $anggota->no_pegawai ?? '-' }}</p>
                 </div>
                 <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Jabatan</p>
-                    <p class="text-sm font-semibold text-blue-900 mt-0.5">{{ $anggota->jabatan ?? '-' }}</p>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Perusahaan</p>
+                    <p class="text-sm font-semibold text-blue-900 mt-0.5">{{ $anggota->perusahaan?->nama ?? '-' }}</p>
                 </div>
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gaji Pokok</p>
@@ -195,10 +195,9 @@
                     $rekPokok = $anggota->rekeningSimpanan->where('produk.kode', 'SP')->first();
                     $rekWajib = $anggota->rekeningSimpanan->where('produk.kode', 'SW')->first();
                     $rekSukarela = $anggota->rekeningSimpanan->where('produk.kode', 'SS')->first();
-                    $rekDeposito = $anggota->rekeningSimpanan->where('produk.kode', 'SB')->first();
                 @endphp
 
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     <!-- Simpanan Pokok -->
                     <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-slate-400">
                         <div class="flex justify-between items-start mb-3">
@@ -251,21 +250,6 @@
                         <p class="text-lg font-extrabold font-data text-primary">Rp {{ number_format($rekSukarela?->saldo ?? 0, 0, ',', '.') }}</p>
                         @if($rekSukarela)
                             <p class="text-[10px] text-slate-400 font-data mt-1.5">{{ $rekSukarela->no_rekening }}</p>
-                        @endif
-                    </div>
-
-                    <!-- Deposito / Berjangka -->
-                    <div class="bg-white rounded-xl p-5 shadow-sm border-l-4 border-tertiary">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="p-2 bg-tertiary/10 text-tertiary-dark rounded-lg">
-                                <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">stars</span>
-                            </span>
-                            <span class="text-[10px] font-bold text-tertiary-dark uppercase tracking-widest">Berjangka</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-blue-900 mb-1">Deposito / Berjangka</h4>
-                        <p class="text-lg font-extrabold font-data text-blue-900">Rp {{ number_format($rekDeposito?->saldo ?? 0, 0, ',', '.') }}</p>
-                        @if($rekDeposito)
-                            <p class="text-[10px] text-slate-400 font-data mt-1.5">{{ $rekDeposito->no_rekening }}</p>
                         @endif
                     </div>
                 </div>

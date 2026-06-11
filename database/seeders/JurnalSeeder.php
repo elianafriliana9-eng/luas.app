@@ -19,84 +19,127 @@ class JurnalSeeder extends Seeder
         $user = User::first();
         if (!$cabang || !$user) return;
 
-        // Get commonly used accounts
-        $kas = ChartOfAccount::where('kode_akun', '11010')->first();
-        $simpananPokok = ChartOfAccount::where('kode_akun', '21010')->first();
-        $pendapatanAdmin = ChartOfAccount::where('kode_akun', '42010')->first();
-        
-        $bank = ChartOfAccount::where('kode_akun', '12010')->first();
-        $piutangPembiayaan = ChartOfAccount::where('kode_akun', '13010')->first();
+        $akun = function (string $kode) {
+            return ChartOfAccount::where('kode_akun', $kode)->first();
+        };
 
-        // 1. Transaction: Modal Awal Kas Teller (from Bank)
-        if ($kas && $bank) {
-            $jurnal1 = Jurnal::create([
-                'id' => Str::uuid(),
+        $kas = $akun('11010');
+        $bank = $akun('12010');
+        $modal = $akun('31010');
+        $simpananPokok = $akun('21010');
+        $simpananWajib = $akun('21020');
+        $simpananSukarela = $akun('21030');
+        $piutangPembiayaan = $akun('13010');
+        $pendapatanBunga = $akun('41010');
+        $pendapatanAdmin = $akun('42010');
+        $bebanOperasional = $akun('52010');
+
+        $noJurnal = 0;
+
+        $buatJurnal = function (string $tanggal, string $keterangan, string $jenis, array $details) use ($cabang, $user, &$noJurnal) {
+            $noJurnal++;
+            $jurnal = Jurnal::create([
                 'cabang_id' => $cabang->id,
-                'no_jurnal' => 'JU-' . date('Ymd') . '-001',
-                'tanggal' => Carbon::now()->subDays(5)->format('Y-m-d'),
-                'keterangan' => 'Tarik Tunai dari Bank Mandiri untuk Kas Teller',
-                'jenis' => 'manual',
+                'no_jurnal' => 'JU-' . Carbon::parse($tanggal)->format('Ymd') . '-' . str_pad($noJurnal, 3, '0', STR_PAD_LEFT),
+                'tanggal' => $tanggal,
+                'keterangan' => $keterangan,
+                'jenis' => $jenis,
                 'dibuat_oleh' => $user->id,
             ]);
 
-            JurnalDetail::create([
-                'id' => Str::uuid(),
-                'jurnal_id' => $jurnal1->id,
-                'akun_id' => $kas->id,
-                'debet' => 100000000, // 100jt
-                'kredit' => 0,
-                'keterangan' => 'Kas bertambah'
-            ]);
+            foreach ($details as $detail) {
+                JurnalDetail::create([
+                    'jurnal_id' => $jurnal->id,
+                    'akun_id' => $detail['akun']->id,
+                    'debet' => $detail['debet'] ?? 0,
+                    'kredit' => $detail['kredit'] ?? 0,
+                    'keterangan' => $detail['keterangan'] ?? '',
+                ]);
+            }
 
-            JurnalDetail::create([
-                'id' => Str::uuid(),
-                'jurnal_id' => $jurnal1->id,
-                'akun_id' => $bank->id,
-                'debet' => 0,
-                'kredit' => 100000000, 
-                'keterangan' => 'Bank berkurang'
-            ]);
-        }
+            return $jurnal;
+        };
 
-        // 2. Transaction: Setoran Simpanan Anggota Baru
-        if ($kas && $simpananPokok && $pendapatanAdmin) {
-            $jurnal2 = Jurnal::create([
-                'id' => Str::uuid(),
-                'cabang_id' => $cabang->id,
-                'no_jurnal' => 'JU-' . date('Ymd') . '-002',
-                'tanggal' => Carbon::now()->subDays(2)->format('Y-m-d'),
-                'keterangan' => 'Setoran Simpanan Pokok Anggota Baru Budi',
-                'jenis' => 'otomatis',
-                'dibuat_oleh' => $user->id,
-            ]);
+        if ($kas && $bank && $modal) {
+            // 1. Setoran modal awal
+            $buatJurnal(
+                now()->subMonths(6)->format('Y-m-d'),
+                'Setoran Modal Awal Koperasi Lumbung Artha Sejahtera',
+                'manual',
+                [
+                    ['akun' => $bank, 'debet' => 500000000, 'kredit' => 0, 'keterangan' => 'Setoran modal ke Bank Mandiri'],
+                    ['akun' => $modal, 'debet' => 0, 'kredit' => 500000000, 'keterangan' => 'Modal disetor anggota'],
+                ]
+            );
 
-            // Total uang masuk ke kas: 1.050.000 (1jt POKOK + 50k Admin)
-            JurnalDetail::create([
-                'id' => Str::uuid(),
-                'jurnal_id' => $jurnal2->id,
-                'akun_id' => $kas->id,
-                'debet' => 1050000,
-                'kredit' => 0,
-                'keterangan' => 'Penerimaan tunai'
-            ]);
+            // 2. Tarik tunai untuk kas teller
+            $buatJurnal(
+                now()->subMonths(6)->addDays(1)->format('Y-m-d'),
+                'Tarik Tunai dari Bank Mandiri untuk Kas Teller Cabang Utama',
+                'manual',
+                [
+                    ['akun' => $kas, 'debet' => 100000000, 'kredit' => 0, 'keterangan' => 'Kas teller bertambah'],
+                    ['akun' => $bank, 'debet' => 0, 'kredit' => 100000000, 'keterangan' => 'Bank Mandiri berkurang'],
+                ]
+            );
 
-            JurnalDetail::create([
-                'id' => Str::uuid(),
-                'jurnal_id' => $jurnal2->id,
-                'akun_id' => $simpananPokok->id,
-                'debet' => 0,
-                'kredit' => 1000000,
-                'keterangan' => 'Kewajiban simpanan bertambah'
-            ]);
+            // 3. Pencairan pembiayaan Budi Santoso
+            $buatJurnal(
+                now()->subMonths(4)->format('Y-m-d'),
+                'Pencairan Pembiayaan Budi Santoso Rp 10.000.000 (PMB-26040001)',
+                'otomatis',
+                [
+                    ['akun' => $piutangPembiayaan, 'debet' => 10000000, 'kredit' => 0, 'keterangan' => 'Piutang pembiayaan bertambah'],
+                    ['akun' => $kas, 'debet' => 0, 'kredit' => 10000000, 'keterangan' => 'Kas teller berkurang (pencairan)'],
+                ]
+            );
 
-            JurnalDetail::create([
-                'id' => Str::uuid(),
-                'jurnal_id' => $jurnal2->id,
-                'akun_id' => $pendapatanAdmin->id,
-                'debet' => 0,
-                'kredit' => 50000,
-                'keterangan' => 'Biaya administrasi anggota baru'
-            ]);
+            // 4. Penerimaan angsuran Budi Santoso (bulan 1)
+            $buatJurnal(
+                now()->subMonths(3)->format('Y-m-d'),
+                'Angsuran Pembiayaan Budi Santoso ke-1 (potong gaji)',
+                'otomatis',
+                [
+                    ['akun' => $kas, 'debet' => 916666, 'kredit' => 0, 'keterangan' => 'Penerimaan angsuran'],
+                    ['akun' => $piutangPembiayaan, 'debet' => 0, 'kredit' => 833333, 'keterangan' => 'Pengurangan piutang pokok'],
+                    ['akun' => $pendapatanBunga, 'debet' => 0, 'kredit' => 83333, 'keterangan' => 'Pendapatan bunga'],
+                ]
+            );
+
+            // 5. Penerimaan angsuran Budi Santoso (bulan 2)
+            $buatJurnal(
+                now()->subMonths(2)->format('Y-m-d'),
+                'Angsuran Pembiayaan Budi Santoso ke-2 (potong gaji)',
+                'otomatis',
+                [
+                    ['akun' => $kas, 'debet' => 916666, 'kredit' => 0, 'keterangan' => 'Penerimaan angsuran'],
+                    ['akun' => $piutangPembiayaan, 'debet' => 0, 'kredit' => 833333, 'keterangan' => 'Pengurangan piutang pokok'],
+                    ['akun' => $pendapatanBunga, 'debet' => 0, 'kredit' => 83333, 'keterangan' => 'Pendapatan bunga'],
+                ]
+            );
+
+            // 6. Penerimaan angsuran Budi Santoso (bulan 3)
+            $buatJurnal(
+                now()->subMonth()->format('Y-m-d'),
+                'Angsuran Pembiayaan Budi Santoso ke-3 (potong gaji)',
+                'otomatis',
+                [
+                    ['akun' => $kas, 'debet' => 916666, 'kredit' => 0, 'keterangan' => 'Penerimaan angsuran'],
+                    ['akun' => $piutangPembiayaan, 'debet' => 0, 'kredit' => 833333, 'keterangan' => 'Pengurangan piutang pokok'],
+                    ['akun' => $pendapatanBunga, 'debet' => 0, 'kredit' => 83333, 'keterangan' => 'Pendapatan bunga'],
+                ]
+            );
+
+            // 7. Beban operasional bulan ini
+            $buatJurnal(
+                now()->format('Y-m-d'),
+                'Beban Operasional Bulan ' . now()->format('M Y'),
+                'manual',
+                [
+                    ['akun' => $bebanOperasional, 'debet' => 15000000, 'kredit' => 0, 'keterangan' => 'Gaji karyawan dan operasional'],
+                    ['akun' => $kas, 'debet' => 0, 'kredit' => 15000000, 'keterangan' => 'Pembayaran beban operasional'],
+                ]
+            );
         }
     }
 }

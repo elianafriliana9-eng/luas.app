@@ -54,16 +54,10 @@ class TemplatePetunjukAnggotaSheet implements FromArray, WithTitle, WithStyles, 
             ['Kolom I - Email (Opsional)'],
             ['Isi dengan alamat email.'],
             [''],
-            ['Kolom J - Departemen (Opsional)'],
-            ['Isi dengan nama departemen/bagian.'],
-            [''],
-            ['Kolom K - Jabatan (Opsional)'],
-            ['Isi dengan jabatan/posisi.'],
-            [''],
-            ['Kolom L - Tanggal Mulai Kerja (Opsional)'],
+            ['Kolom J - Tanggal Mulai Kerja (Opsional)'],
             ['Format: YYYY-MM-DD'],
             [''],
-            ['Kolom M - No. Pegawai (Opsional)'],
+            ['Kolom K - No. Pegawai (Opsional)'],
             ['Isi dengan nomor pegawai/NIP jika ada.'],
             [''],
             ['KETERANGAN PENTING:'],
@@ -85,7 +79,7 @@ class TemplatePetunjukAnggotaSheet implements FromArray, WithTitle, WithStyles, 
 
         $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
-        $boldSections = ['A3:A4', 'A7:A8', 'A11:A12', 'A14:A15', 'A17:A18', 'A20:A21', 'A23:A24', 'A26:A27', 'A29:A30', 'A32:A33', 'A35:A36', 'A38:A39', 'A41:A42'];
+        $boldSections = ['A3:A4', 'A7:A8', 'A11:A12', 'A14:A15', 'A17:A18', 'A20:A21', 'A23:A24', 'A26:A27', 'A29:A30', 'A32:A33', 'A35:A36'];
         foreach ($boldSections as $range) {
             $sheet->getStyle($range)->applyFromArray([
                 'font' => ['bold' => true, 'size' => 11],

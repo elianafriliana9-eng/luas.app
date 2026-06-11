@@ -47,8 +47,15 @@
                                 </select>
                             </div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-1">No. Pegawai</label><input type="text" name="no_pegawai" value="{{ old('no_pegawai', $anggota->no_pegawai) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Departemen</label><input type="text" name="departemen" value="{{ old('departemen', $anggota->departemen) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
-                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Jabatan</label><input type="text" name="jabatan" value="{{ old('jabatan', $anggota->jabatan) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Perusahaan</label>
+                                <select name="perusahaan_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                    <option value="">Pilih Perusahaan</option>
+                                    @foreach($perusahaans as $p)
+                                        <option value="{{ $p->id }}" {{ old('perusahaan_id', $anggota->perusahaan_id) == $p->id ? 'selected' : '' }}>{{ $p->nama }} ({{ $p->kode }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok</label><input type="number" name="gaji_pokok" value="{{ old('gaji_pokok', $anggota->gaji_pokok) }}" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Gajian</label><input type="number" name="tanggal_gajian" value="{{ old('tanggal_gajian', $anggota->tanggal_gajian) }}" min="1" max="31" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai Kerja</label><input type="date" name="tanggal_mulai_kerja" value="{{ old('tanggal_mulai_kerja', $anggota->tanggal_mulai_kerja?->format('Y-m-d')) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>

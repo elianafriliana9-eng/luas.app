@@ -3,160 +3,401 @@
 namespace Database\Seeders;
 
 use App\Models\Anggota;
+use App\Models\Cabang;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AnggotaSeeder extends Seeder
 {
-    private array $departemenList = [
-        'Produksi', 'Marketing', 'Finance', 'HRD', 'IT', 'Operasional', 'Purchasing', 'Warehouse',
-    ];
-
-    private array $jabatanList = [
-        'Staff', 'Senior Staff', 'Supervisor', 'Asisten Manager', 'Manager',
-        'Koordinator', 'Admin', 'Operator', 'Teknisi', 'Analyst',
-    ];
-
     public function run(): void
     {
-        // Demo accounts first (the ones from CLAUDE.md)
-        $this->createDemoAccounts();
+        $cabangJkt = Cabang::where('kode', 'CBG-JKT')->first()->id;
+        $cabangTgr = Cabang::where('kode', 'CBG-TGR')->first()->id;
+        $cabangBks = Cabang::where('kode', 'CBG-BKS')->first()->id;
 
-        // Create additional employees
-        for ($i = 3; $i <= 50; $i++) {
-            $this->createEmployee($i);
+        $data = [
+            // Demo accounts
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2023-001',
+                'nik' => '3171012304900001', 'nama_lengkap' => 'Budi Santoso',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1990-04-23',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Merdeka No. 45, RT 05 RW 03, Kel. Menteng, Jakarta Pusat',
+                'no_hp' => '081234567890', 'email' => 'budi.santoso@kopsaku.com',
+                'gaji_pokok' => 8500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2020-03-15', 'no_pegawai' => 'EMP-2020-0045',
+                'status' => 'aktif', 'tanggal_masuk' => '2023-01-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2023-002',
+                'nik' => '3271012405920002', 'nama_lengkap' => 'Siti Rahayu',
+                'tempat_lahir' => 'Tangerang', 'tanggal_lahir' => '1992-05-24',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Sudirman No. 12, RT 02 RW 01, Kel. Ciputat, Tangerang Selatan',
+                'no_hp' => '082345678901', 'email' => 'siti.rahayu@kopsaku.com',
+                'gaji_pokok' => 7200000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2021-06-01', 'no_pegawai' => 'EMP-2021-0112',
+                'status' => 'aktif', 'tanggal_masuk' => '2023-02-01',
+                'password' => Hash::make('123456'),
+            ],
+            // Real employees — Cabang Jakarta
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-003',
+                'nik' => '3172010505880003', 'nama_lengkap' => 'Ahmad Fauzi',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1988-05-05',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Rasuna Said Kav. 8, RT 03 RW 02, Kel. Kuningan, Jakarta Selatan',
+                'no_hp' => '085611223344', 'email' => 'ahmad.fauzi@kopsaku.com',
+                'gaji_pokok' => 15000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2019-01-10', 'no_pegawai' => 'EMP-2019-0012',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-01-10',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-004',
+                'nik' => '3173011507920004', 'nama_lengkap' => 'Dewi Sartika',
+                'tempat_lahir' => 'Bandung', 'tanggal_lahir' => '1992-07-15',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Gatot Subroto No. 27, RT 08 RW 04, Kel. Karet Semanggi, Jakarta Selatan',
+                'no_hp' => '087812345678', 'email' => 'dewi.sartika@kopsaku.com',
+                'gaji_pokok' => 5500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2022-08-20', 'no_pegawai' => 'EMP-2022-0256',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-02-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-005',
+                'nik' => '3174011206930005', 'nama_lengkap' => 'Eko Prasetyo',
+                'tempat_lahir' => 'Surabaya', 'tanggal_lahir' => '1993-06-12',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. TB Simatupang No. 15, RT 01 RW 06, Kel. Cilandak, Jakarta Selatan',
+                'no_hp' => '081998877665', 'email' => 'eko.prasetyo@kopsaku.com',
+                'gaji_pokok' => 9000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2018-11-01', 'no_pegawai' => 'EMP-2018-0089',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-03-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-006',
+                'nik' => '3175012108940006', 'nama_lengkap' => 'Fitri Handayani',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1994-08-21',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Pangeran Antasari No. 33, RT 04 RW 02, Kel. Pela Mampang, Jakarta Selatan',
+                'no_hp' => '087712345679', 'email' => 'fitri.handayani@kopsaku.com',
+                'gaji_pokok' => 5000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-04-10', 'no_pegawai' => 'EMP-2023-0301',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-03-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-007',
+                'nik' => '3176011503900007', 'nama_lengkap' => 'Gunawan Wibowo',
+                'tempat_lahir' => 'Semarang', 'tanggal_lahir' => '1990-03-15',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Ampera Raya No. 7, RT 06 RW 05, Kel. Ragunan, Jakarta Selatan',
+                'no_hp' => '081334455667', 'email' => 'gunawan.wibowo@kopsaku.com',
+                'gaji_pokok' => 7800000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2017-05-15', 'no_pegawai' => 'EMP-2017-0056',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-04-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-008',
+                'nik' => '3177012201960008', 'nama_lengkap' => 'Hani Nurjanah',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1996-01-22',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Duren Tiga No. 11, RT 03 RW 07, Kel. Pancoran, Jakarta Selatan',
+                'no_hp' => '085511223388', 'email' => 'hani.nurjanah@kopsaku.com',
+                'gaji_pokok' => 5200000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2022-10-01', 'no_pegawai' => 'EMP-2022-0288',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-04-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-009',
+                'nik' => '3178011004890009', 'nama_lengkap' => 'Indra Lesmana',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1989-04-10',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Warung Buncit No. 19, RT 02 RW 01, Kel. Kalibata, Jakarta Selatan',
+                'no_hp' => '081234567891', 'email' => 'indra.lesmana@kopsaku.com',
+                'gaji_pokok' => 9500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2019-08-15', 'no_pegawai' => 'EMP-2019-0134',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-05-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2024-010',
+                'nik' => '3179013112950010', 'nama_lengkap' => 'Juniarti Simatupang',
+                'tempat_lahir' => 'Medan', 'tanggal_lahir' => '1995-12-31',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Mampang Prapatan No. 55, RT 05 RW 08, Kel. Mampang Prapatan, Jakarta Selatan',
+                'no_hp' => '082167891234', 'email' => 'juniarti.simatupang@kopsaku.com',
+                'gaji_pokok' => 4800000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-06-01', 'no_pegawai' => 'EMP-2023-0356',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-05-15',
+                'password' => Hash::make('123456'),
+            ],
+            // Cabang Tangerang
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2024-011',
+                'nik' => '3671011807910011', 'nama_lengkap' => 'Kurniawan Saputra',
+                'tempat_lahir' => 'Tangerang', 'tanggal_lahir' => '1991-07-18',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. BSD Raya No. 21, BSD City, Kec. Serpong, Tangerang Selatan',
+                'no_hp' => '081298765432', 'email' => 'kurniawan.saputra@kopsaku.com',
+                'gaji_pokok' => 16000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2018-02-20', 'no_pegawai' => 'EMP-2018-0023',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-06-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2024-012',
+                'nik' => '3672012508940012', 'nama_lengkap' => 'Lina Marlina',
+                'tempat_lahir' => 'Tangerang', 'tanggal_lahir' => '1994-08-25',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Gading Serpong No. 8, Kec. Kelapa Dua, Tangerang',
+                'no_hp' => '085712345680', 'email' => 'lina.marlina@kopsaku.com',
+                'gaji_pokok' => 4500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-09-01', 'no_pegawai' => 'EMP-2023-0412',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-06-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2024-013',
+                'nik' => '3673011406900013', 'nama_lengkap' => 'Mochamad Rizki',
+                'tempat_lahir' => 'Tangerang', 'tanggal_lahir' => '1990-06-14',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Alam Sutera No. 17, Kec. Pinang, Tangerang',
+                'no_hp' => '087898765432', 'email' => 'mochamad.rizki@kopsaku.com',
+                'gaji_pokok' => 6500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2020-01-15', 'no_pegawai' => 'EMP-2020-0099',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-07-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2024-014',
+                'nik' => '3674010305970014', 'nama_lengkap' => 'Nina Kurnia',
+                'tempat_lahir' => 'Bogor', 'tanggal_lahir' => '1997-05-03',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Villa Melati Mas No. 5, Kec. Cikupa, Tangerang',
+                'no_hp' => '081234567892', 'email' => 'nina.kurnia@kopsaku.com',
+                'gaji_pokok' => 5300000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2022-12-01', 'no_pegawai' => 'EMP-2022-0311',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-07-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2024-015',
+                'nik' => '3675012004890015', 'nama_lengkap' => 'Oscar Purnomo',
+                'tempat_lahir' => 'Manado', 'tanggal_lahir' => '1989-04-20',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Palem Semi No. 3, Kec. Kelapa Dua, Tangerang',
+                'no_hp' => '082112345678', 'email' => 'oscar.purnomo@kopsaku.com',
+                'gaji_pokok' => 8000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2018-09-01', 'no_pegawai' => 'EMP-2018-0078',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-08-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2024-016',
+                'nik' => '3676012809980016', 'nama_lengkap' => 'Putri Wulandari',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1998-09-28',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Bintaro Sektor 7 No. 12, Kec. Pondok Aren, Tangerang Selatan',
+                'no_hp' => '085811223344', 'email' => 'putri.wulandari@kopsaku.com',
+                'gaji_pokok' => 5100000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-03-01', 'no_pegawai' => 'EMP-2023-0322',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-08-15',
+                'password' => Hash::make('123456'),
+            ],
+            // Cabang Bekasi
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-017',
+                'nik' => '3275011105860017', 'nama_lengkap' => 'Rahmat Hidayat',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1986-05-11',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Grand Galaxy No. 15, Kec. Bekasi Selatan, Bekasi',
+                'no_hp' => '081234567893', 'email' => 'rahmat.hidayat@kopsaku.com',
+                'gaji_pokok' => 7500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2019-11-01', 'no_pegawai' => 'EMP-2019-0189',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-09-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-018',
+                'nik' => '3276012008950018', 'nama_lengkap' => 'Sari Dewi',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1995-08-20',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Harapan Indah No. 45, Kec. Bekasi Timur, Bekasi',
+                'no_hp' => '087834567890', 'email' => 'sari.dewi@kopsaku.com',
+                'gaji_pokok' => 5400000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2022-05-01', 'no_pegawai' => 'EMP-2022-0234',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-09-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-019',
+                'nik' => '3277010107870019', 'nama_lengkap' => 'Teguh Setiawan',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1987-01-01',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Pejuang No. 10, Kec. Medan Satria, Bekasi',
+                'no_hp' => '085612345679', 'email' => 'teguh.setiawan@kopsaku.com',
+                'gaji_pokok' => 14000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2017-07-15', 'no_pegawai' => 'EMP-2017-0034',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-10-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-020',
+                'nik' => '3278010909990020', 'nama_lengkap' => 'Umi Kalsum',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1999-09-09',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Kemang Pratama No. 22, Kec. Bekasi Barat, Bekasi',
+                'no_hp' => '082198765431', 'email' => 'umi.kalsum@kopsaku.com',
+                'gaji_pokok' => 4500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-11-01', 'no_pegawai' => 'EMP-2023-0423',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-10-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-021',
+                'nik' => '3279011306930021', 'nama_lengkap' => 'Wahyu Nugroho',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1993-06-13',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Raya Kaliabang No. 77, Kec. Bekasi Utara, Bekasi',
+                'no_hp' => '081387654321', 'email' => 'wahyu.nugroho@kopsaku.com',
+                'gaji_pokok' => 6000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2021-04-01', 'no_pegawai' => 'EMP-2021-0145',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-11-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-022',
+                'nik' => '3280012510970022', 'nama_lengkap' => 'Yuni Astuti',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1997-10-25',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Raya Narogong No. 5, Kec. Bekasi Selatan, Bekasi',
+                'no_hp' => '085734567891', 'email' => 'yuni.astuti@kopsaku.com',
+                'gaji_pokok' => 5500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2022-07-01', 'no_pegawai' => 'EMP-2022-0277',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-11-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-023',
+                'nik' => '3281011806880023', 'nama_lengkap' => 'Zainal Arifin',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1988-06-18',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Raya Hankam No. 30, Kec. Pondok Gede, Bekasi',
+                'no_hp' => '081234567894', 'email' => 'zainal.arifin@kopsaku.com',
+                'gaji_pokok' => 10000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2019-03-01', 'no_pegawai' => 'EMP-2019-0156',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-12-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2024-024',
+                'nik' => '3282010709960024', 'nama_lengkap' => 'Anita Permata',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1996-09-07',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Bumi Satria Kencana No. 3, Kec. Bekasi Timur, Bekasi',
+                'no_hp' => '082134567892', 'email' => 'anita.permata@kopsaku.com',
+                'gaji_pokok' => 5800000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2022-09-01', 'no_pegawai' => 'EMP-2022-0299',
+                'status' => 'aktif', 'tanggal_masuk' => '2024-12-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2025-025',
+                'nik' => '3283012204860025', 'nama_lengkap' => 'Bambang Sudrajat',
+                'tempat_lahir' => 'Tasikmalaya', 'tanggal_lahir' => '1986-04-22',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Satria Raya No. 1, Kec. Bekasi Utara, Bekasi',
+                'no_hp' => '085611223355', 'email' => 'bambang.sudrajat@kopsaku.com',
+                'gaji_pokok' => 15500000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2016-04-01', 'no_pegawai' => 'EMP-2016-0011',
+                'status' => 'aktif', 'tanggal_masuk' => '2025-01-01',
+                'password' => Hash::make('123456'),
+            ],
+            // Additional employees
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2025-026',
+                'nik' => '3171021505910026', 'nama_lengkap' => 'Rina Marlina',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1991-05-15',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Ciputat Raya No. 44, RT 03 RW 05, Kel. Pondok Pinang, Jakarta Selatan',
+                'no_hp' => '087898123456', 'email' => 'rina.marlina@kopsaku.com',
+                'gaji_pokok' => 5000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-08-15', 'no_pegawai' => 'EMP-2023-0389',
+                'status' => 'aktif', 'tanggal_masuk' => '2025-01-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2025-027',
+                'nik' => '3671021911920027', 'nama_lengkap' => 'Agus Supriyanto',
+                'tempat_lahir' => 'Tangerang', 'tanggal_lahir' => '1992-11-19',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Raya Serpong No. 25, Kec. Serpong Utara, Tangerang Selatan',
+                'no_hp' => '081223344556', 'email' => 'agus.supriyanto@kopsaku.com',
+                'gaji_pokok' => 7000000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2021-02-01', 'no_pegawai' => 'EMP-2021-0188',
+                'status' => 'aktif', 'tanggal_masuk' => '2025-02-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangBks, 'no_anggota' => 'ANG-2025-028',
+                'nik' => '3284010801930028', 'nama_lengkap' => 'Dian Puspita',
+                'tempat_lahir' => 'Bekasi', 'tanggal_lahir' => '1993-01-08',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Raya Tambun No. 12, Kec. Tambun Selatan, Bekasi',
+                'no_hp' => '085734568902', 'email' => 'dian.puspita@kopsaku.com',
+                'gaji_pokok' => 5200000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-05-01', 'no_pegawai' => 'EMP-2023-0345',
+                'status' => 'aktif', 'tanggal_masuk' => '2025-02-15',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2025-029',
+                'nik' => '3171033006980029', 'nama_lengkap' => 'Farid Maulana',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '1998-06-30',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Cilandak KKO No. 8, RT 01 RW 09, Kel. Cilandak Timur, Jakarta Selatan',
+                'no_hp' => '081998866554', 'email' => 'farid.maulana@kopsaku.com',
+                'gaji_pokok' => 4800000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2024-01-15', 'no_pegawai' => 'EMP-2024-0456',
+                'status' => 'aktif', 'tanggal_masuk' => '2025-03-01',
+                'password' => Hash::make('123456'),
+            ],
+            [
+                'cabang_id' => $cabangTgr, 'no_anggota' => 'ANG-2025-030',
+                'nik' => '3671031402940030', 'nama_lengkap' => 'Gita Permata Sari',
+                'tempat_lahir' => 'Tangerang', 'tanggal_lahir' => '1994-02-14',
+                'jenis_kelamin' => 'P', 'alamat' => 'Jl. Raya Cisauk No. 10, Kec. Cisauk, Tangerang',
+                'no_hp' => '082145678903', 'email' => 'gita.permatasari@kopsaku.com',
+                'gaji_pokok' => 5100000, 'tanggal_gajian' => 25,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => '2023-10-01', 'no_pegawai' => 'EMP-2023-0444',
+                'status' => 'aktif', 'tanggal_masuk' => '2025-03-15',
+                'password' => Hash::make('123456'),
+            ],
+            // Anggota baru — baru daftar, hanya bayar simpanan pokok
+            [
+                'cabang_id' => $cabangJkt, 'no_anggota' => 'ANG-2025-031',
+                'nik' => '3171041506000031', 'nama_lengkap' => 'Rizky Pratama',
+                'tempat_lahir' => 'Jakarta', 'tanggal_lahir' => '2000-06-15',
+                'jenis_kelamin' => 'L', 'alamat' => 'Jl. Tebet Raya No. 7, RT 04 RW 02, Kel. Tebet Barat, Jakarta Selatan',
+                'no_hp' => '081385792468', 'email' => 'rizky.pratama@kopsaku.com',
+                'gaji_pokok' => null, 'tanggal_gajian' => null,
+                'perusahaan_id' => null,
+                'tanggal_mulai_kerja' => null, 'no_pegawai' => null,
+                'status' => 'aktif', 'tanggal_masuk' => now()->format('Y-m-d'),
+                'password' => Hash::make('123456'),
+            ],
+        ];
+
+        foreach ($data as $anggota) {
+            Anggota::updateOrCreate(['nik' => $anggota['nik']], $anggota);
         }
-    }
-
-    private function createDemoAccounts(): void
-    {
-        $cabangIds = \App\Models\Cabang::pluck('id')->toArray();
-        $cabangPusat = \App\Models\Cabang::where('kode', 'CBG-JKT')->first();
-        $cabangId = $cabangPusat ? $cabangPusat->id : ($cabangIds[0] ?? null);
-
-        // Budi Santoso — Demo account 1
-        Anggota::updateOrCreate(
-            ['nik' => '3171012304900001'],
-            [
-                'cabang_id' => $cabangId,
-                'no_anggota' => 'ANG-2023-001',
-                'nama_lengkap' => 'Budi Santoso',
-                'tempat_lahir' => 'Jakarta',
-                'tanggal_lahir' => '1990-04-23',
-                'jenis_kelamin' => 'L',
-                'alamat' => 'Jl. Merdeka No. 45, Jakarta Selatan',
-                'no_hp' => '081234567890',
-                'email' => 'budi.santoso@kopsaku.com',
-                'gaji_pokok' => 8500000,
-                'tanggal_gajian' => 25,
-                'departemen' => 'Produksi',
-                'jabatan' => 'Supervisor',
-                'tanggal_mulai_kerja' => '2020-03-15',
-                'no_pegawai' => 'EMP-2020-0045',
-                'status' => 'aktif',
-                'tanggal_masuk' => '2023-01-15',
-                'password' => Hash::make('123456'),
-            ]
-        );
-
-        // Siti Rahayu — Demo account 2
-        Anggota::updateOrCreate(
-            ['nik' => '3271012405920002'],
-            [
-                'cabang_id' => $cabangId,
-                'no_anggota' => 'ANG-2023-002',
-                'nama_lengkap' => 'Siti Rahayu',
-                'tempat_lahir' => 'Tangerang',
-                'tanggal_lahir' => '1992-05-24',
-                'jenis_kelamin' => 'P',
-                'alamat' => 'Jl. Sudirman No. 12, Tangerang',
-                'no_hp' => '082345678901',
-                'email' => 'siti.rahayu@kopsaku.com',
-                'gaji_pokok' => 7200000,
-                'tanggal_gajian' => 25,
-                'departemen' => 'Finance',
-                'jabatan' => 'Senior Staff',
-                'tanggal_mulai_kerja' => '2021-06-01',
-                'no_pegawai' => 'EMP-2021-0112',
-                'status' => 'aktif',
-                'tanggal_masuk' => '2023-02-01',
-                'password' => Hash::make('123456'),
-            ]
-        );
-    }
-
-    private function createEmployee(int $index): void
-    {
-        $cabangIds = \App\Models\Cabang::pluck('id')->toArray();
-        if (empty($cabangIds)) return;
-
-        $namaDepan = $this->getRandomNamaDepan($index);
-        $namaBelakang = $this->getRandomNamaBelakang($index);
-        $namaLengkap = "{$namaDepan} {$namaBelakang}";
-        $jenisKelamin = $this->isFemale($index) ? 'P' : 'L';
-        $departemen = $this->departemenList[array_rand($this->departemenList)];
-        $jabatan = $this->jabatanList[array_rand($this->jabatanList)];
-        $tahunMulai = rand(2018, 2024);
-        $bulanMulai = rand(1, 12);
-        $tanggalMulai = "{$tahunMulai}-{$bulanMulai}-" . str_pad(rand(1, 28), 2, '0', STR_PAD_LEFT);
-        $tahunLahir = now()->year - rand(25, 55);
-        $bulanLahir = rand(1, 12);
-        $nik = sprintf('3171%02d%02d%02d000%d', rand(1, 12), rand(1, 28), $tahunLahir - 2000, $index);
-
-        $baseSalary = match ($jabatan) {
-            'Manager' => rand(12000000, 18000000),
-            'Asisten Manager' => rand(9000000, 14000000),
-            'Supervisor' => rand(7500000, 11000000),
-            'Koordinator' => rand(7000000, 10000000),
-            'Senior Staff' => rand(6000000, 9000000),
-            'Staff' => rand(5000000, 8000000),
-            default => rand(4500000, 7000000),
-        };
-
-        $tempatLahirList = ['Jakarta', 'Tangerang', 'Bekasi', 'Depok', 'Bogor', 'Bandung', 'Surabaya'];
-        $jalanList = ['Merdeka', 'Sudirman', 'Ahmad Yani', 'Gatot Subroto', 'Diponegoro', 'Imam Bonjol'];
-
-        Anggota::create([
-            'cabang_id' => $cabangIds[array_rand($cabangIds)],
-            'no_anggota' => sprintf('ANG-%d-%03d', now()->year, $index),
-            'nik' => $nik,
-            'nama_lengkap' => $namaLengkap,
-            'tempat_lahir' => $tempatLahirList[array_rand($tempatLahirList)],
-            'tanggal_lahir' => sprintf('%d-%02d-%02d', $tahunLahir, $bulanLahir, rand(1, 28)),
-            'jenis_kelamin' => $jenisKelamin,
-            'alamat' => 'Jl. ' . $jalanList[array_rand($jalanList)] . ' No. ' . rand(1, 200),
-            'no_hp' => '08' . rand(1, 9) . rand(10000000, 99999999),
-            'email' => strtolower(str_replace(' ', '.', $namaLengkap)) . '@kopsaku.com',
-            'gaji_pokok' => $baseSalary,
-            'tanggal_gajian' => 25,
-            'departemen' => $departemen,
-            'jabatan' => $jabatan,
-            'tanggal_mulai_kerja' => $tanggalMulai,
-            'no_pegawai' => sprintf('EMP-%d-%04d', $tahunMulai, $index * 7),
-            'status' => 'aktif',
-            'tanggal_masuk' => $tanggalMulai,
-            'password' => Hash::make('123456'),
-        ]);
-    }
-
-    private function getRandomNamaDepan(int $seed): string
-    {
-        $pria = ['Ahmad', 'Budi', 'Dedi', 'Eko', 'Fajar', 'Gunawan', 'Hendra', 'Iwan', 'Joko', 'Kurniawan', 'Lukman', 'Muhammad', 'Nugroho', 'Oscar', 'Putra', 'Rudi', 'Stefanus', 'Teguh', 'Umar', 'Wahyu', 'Yusuf', 'Zainal'];
-        $wanita = ['Ani', 'Bella', 'Citra', 'Dewi', 'Eka', 'Fitri', 'Gita', 'Hana', 'Indah', 'Julia', 'Kartika', 'Lina', 'Maya', 'Nia', 'Olivia', 'Putri', 'Rina', 'Sari', 'Tina', 'Umi', 'Vina', 'Wulan', 'Yuni', 'Zulaikha'];
-        return $this->isFemale($seed)
-            ? $wanita[$seed % count($wanita)]
-            : $pria[$seed % count($pria)];
-    }
-
-    private function getRandomNamaBelakang(int $seed): string
-    {
-        $names = ['Saputra', 'Wibowo', 'Prasetyo', 'Hidayat', 'Susanto', 'Kurniawan', 'Setiawan', 'Wicaksono', 'Purnomo', 'Hermawan', 'Suryadi', 'Utama', 'Firmansyah', 'Rahardjo', 'Subagyo', 'Wijaya', 'Nugraha', 'Santoso', 'Pambudi', 'Laksono'];
-        return $names[$seed % count($names)];
-    }
-
-    private function isFemale(int $seed): bool
-    {
-        return ($seed % 2) === 0;
     }
 }

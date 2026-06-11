@@ -17,8 +17,8 @@
             <form method="GET" action="{{ route('anggota.laporan.profil') }}" class="flex-1 flex flex-wrap gap-3 items-end">
                 <div class="min-w-[150px]"><label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
                     <select name="status" class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">Semua</option><option value="aktif" {{ request('status')=='aktif'?'selected':'' }}>Aktif</option><option value="keluar" {{ request('status')=='keluar'?'selected':'' }}>Keluar</option></select></div>
-                <div class="min-w-[150px]"><label class="block text-xs font-medium text-gray-500 mb-1">Departemen</label>
-                    <select name="departemen" class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">Semua</option>@foreach($departemenList as $d) <option value="{{ $d }}" {{ request('departemen')==$d?'selected':'' }}>{{ $d }}</option> @endforeach</select></div>
+                <div class="min-w-[150px]"><label class="block text-xs font-medium text-gray-500 mb-1">Perusahaan</label>
+                    <select name="perusahaan_id" class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">Semua</option>@foreach($perusahaans as $p) <option value="{{ $p->id }}" {{ request('perusahaan_id')==$p->id?'selected':'' }}>{{ $p->nama }}</option> @endforeach</select></div>
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">Filter</button>
             </form>
         </div>
@@ -30,8 +30,7 @@
                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIK</th>
                     <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. HP</th>
-                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departemen</th>
-                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jabatan</th>
+                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perusahaan</th>
                     <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                 </tr></thead>
                 <tbody class="divide-y">
@@ -42,8 +41,7 @@
                             <td class="px-3 py-2 text-sm font-medium">{{ $a->nama_lengkap }}</td>
                             <td class="px-3 py-2 text-sm font-mono">{{ $a->nik }}</td>
                             <td class="px-3 py-2 text-sm">{{ $a->no_hp }}</td>
-                            <td class="px-3 py-2 text-sm">{{ $a->departemen ?? '-' }}</td>
-                            <td class="px-3 py-2 text-sm">{{ $a->jabatan ?? '-' }}</td>
+                            <td class="px-3 py-2 text-sm">{{ $a->perusahaan?->nama ?? '-' }}</td>
                             <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 text-xs rounded-full {{ $a->status==='aktif'?'bg-green-100 text-green-800':'bg-red-100 text-red-800' }}">{{ $a->status }}</span></td>
                         </tr>
                     @endforeach

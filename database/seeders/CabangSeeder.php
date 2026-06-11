@@ -13,22 +13,22 @@ class CabangSeeder extends Seeder
             [
                 'kode' => 'CBG-JKT',
                 'nama' => 'Cabang Utama Jakarta',
-                'alamat' => 'Jl. Jend. Sudirman No. 1, Jakarta Pusat',
-                'telp' => '021-12345678',
+                'alamat' => 'Jl. Jend. Sudirman Kav. 52-53, SCBD, Jakarta Selatan 12190',
+                'telp' => '021-52961234',
                 'aktif' => true,
             ],
             [
                 'kode' => 'CBG-TGR',
                 'nama' => 'Cabang Tangerang',
-                'alamat' => 'Jl. Boulevard Gading Serpong, Tangerang',
-                'telp' => '021-87654321',
+                'alamat' => 'Jl. MH. Thamrin No. 8, CBD BSD, Tangerang Selatan 15321',
+                'telp' => '021-53156789',
                 'aktif' => true,
             ],
             [
                 'kode' => 'CBG-BKS',
                 'nama' => 'Cabang Bekasi',
-                'alamat' => 'Jl. Ahmad Yani No. 10, Bekasi',
-                'telp' => '021-11223344',
+                'alamat' => 'Jl. KH. Noer Alie No. 99, Grand Galaxy City, Bekasi 17147',
+                'telp' => '021-82674567',
                 'aktif' => true,
             ],
         ];

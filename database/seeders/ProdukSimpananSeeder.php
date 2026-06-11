@@ -37,15 +37,6 @@ class ProdukSimpananSeeder extends Seeder
                 'auto_bunga' => true,
                 'aktif' => true,
             ],
-            [
-                'kode' => 'DEPO6',
-                'nama' => 'Simpanan Berjangka 6 Bulan',
-                'jenis' => 'berjangka',
-                'bunga_pa' => 5.0,
-                'minimal_saldo' => 1000000,
-                'auto_bunga' => false,
-                'aktif' => true,
-            ],
         ];
 
         foreach ($produks as $produk) {

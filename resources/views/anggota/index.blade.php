@@ -65,11 +65,11 @@
                         </select>
                     </div>
                     <div class="min-w-[150px]">
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Departemen</label>
-                        <select name="departemen" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Perusahaan</label>
+                        <select name="perusahaan_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Semua</option>
-                            @foreach($departemenList as $d)
-                                <option value="{{ $d }}" {{ request('departemen') == $d ? 'selected' : '' }}>{{ $d }}</option>
+                            @foreach($perusahaans as $p)
+                                <option value="{{ $p->id }}" {{ request('perusahaan_id') == $p->id ? 'selected' : '' }}>{{ $p->nama }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -88,7 +88,7 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Anggota</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Pegawai</th>
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departemen</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perusahaan</th>
                             <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gaji Pokok</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
@@ -110,7 +110,7 @@
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-600">{{ $a->no_pegawai ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-gray-600">{{ $a->departemen ?? '-' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-600">{{ $a->perusahaan?->nama ?? '-' }}</td>
                                 <td class="px-4 py-3 text-sm text-right font-mono text-gray-900">
                                     {{ $a->gaji_pokok ? 'Rp ' . number_format($a->gaji_pokok, 0, ',', '.') : '-' }}
                                 </td>

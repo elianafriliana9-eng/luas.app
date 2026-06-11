@@ -52,19 +52,19 @@
             </table>
         </div>
 
-        <!-- Per Departemen -->
+        <!-- Per Perusahaan -->
         <div class="bg-white rounded-lg shadow-sm">
-            <div class="p-4 border-b"><h3 class="font-semibold text-gray-900">Rekap per Departemen</h3></div>
+            <div class="p-4 border-b"><h3 class="font-semibold text-gray-900">Rekap per Perusahaan</h3></div>
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50"><tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Departemen</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perusahaan</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah Aktif</th>
                 </tr></thead>
                 <tbody class="divide-y">
-                    @foreach($perDepartemen as $d)
+                    @foreach($perPerusahaan as $p)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-3 text-sm font-medium">{{ $d->departemen }}</td>
-                            <td class="px-6 py-3 text-sm text-center font-bold">{{ $d->total }}</td>
+                            <td class="px-6 py-3 text-sm font-medium">{{ $p->nama }}</td>
+                            <td class="px-6 py-3 text-sm text-center font-bold">{{ $p->anggota_count }}</td>
                         </tr>
                     @endforeach
                 </tbody>

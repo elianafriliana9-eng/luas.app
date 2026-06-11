@@ -50,7 +50,7 @@ class KeluarAnggotaExport implements FromQuery, WithHeadings, WithMapping, WithS
             'No',
             'No. Anggota',
             'Nama Lengkap',
-            'Departemen',
+            'Perusahaan',
             'Tanggal Keluar',
             'Alasan',
         ];
@@ -65,7 +65,7 @@ class KeluarAnggotaExport implements FromQuery, WithHeadings, WithMapping, WithS
             $i,
             $anggota->no_anggota,
             $anggota->nama_lengkap,
-            $anggota->departemen ?? '-',
+            $anggota->perusahaan?->nama ?? '-',
             $anggota->tanggal_keluar?->format('d/m/Y') ?? '-',
             $anggota->alasan_keluar ?? '-',
         ];

@@ -28,8 +28,6 @@ class TemplateAnggotaSheet implements FromArray, WithHeadings, WithStyles, Shoul
             'Alamat',
             'No. HP',
             'Email',
-            'Departemen',
-            'Jabatan',
             'Tanggal Mulai Kerja',
             'No. Pegawai',
         ];
@@ -38,15 +36,15 @@ class TemplateAnggotaSheet implements FromArray, WithHeadings, WithStyles, Shoul
     public function array(): array
     {
         return [
-            ['3171012304900001', 'Budi Santoso', 'CBG-JKT', 'Jakarta', '1990-04-23', 'L', 'Jl. Merdeka No. 10, Jakarta Pusat', '081234567890', 'budi@email.com', 'Keuangan', 'Staff', '2020-06-01', 'PEG-001'],
-            ['3271012405920002', 'Siti Rahayu', 'CBG-TGR', 'Tangerang', '1992-05-24', 'P', 'Jl. Gatot Subroto No. 5, Tangerang', '081234567891', 'siti@email.com', 'HRD', 'Staff', '2021-03-15', 'PEG-002'],
-            ['3171012506930003', 'Ahmad Fauzi', 'CBG-BKS', 'Bekasi', '1993-06-25', 'L', 'Perumahan Grand Wisata Blok A1, Bekasi', '081234567892', 'ahmad@email.com', 'IT', 'Supervisor', '2019-01-10', 'PEG-003'],
+            ['3171012304900001', 'Budi Santoso', 'CBG-JKT', 'Jakarta', '1990-04-23', 'L', 'Jl. Merdeka No. 10, Jakarta Pusat', '081234567890', 'budi@email.com', '2020-06-01', 'PEG-001'],
+            ['3271012405920002', 'Siti Rahayu', 'CBG-TGR', 'Tangerang', '1992-05-24', 'P', 'Jl. Gatot Subroto No. 5, Tangerang', '081234567891', 'siti@email.com', '2021-03-15', 'PEG-002'],
+            ['3171012506930003', 'Ahmad Fauzi', 'CBG-BKS', 'Bekasi', '1993-06-25', 'L', 'Perumahan Grand Wisata Blok A1, Bekasi', '081234567892', 'ahmad@email.com', '2019-01-10', 'PEG-003'],
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        $lastCol = 'M';
+        $lastCol = 'K';
         $lastRow = 4;
 
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([

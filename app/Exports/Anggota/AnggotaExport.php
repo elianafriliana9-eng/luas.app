@@ -49,8 +49,8 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
         if (!empty($this->filters['cabang_id'])) {
             $query->where('cabang_id', $this->filters['cabang_id']);
         }
-        if (!empty($this->filters['departemen'])) {
-            $query->where('departemen', $this->filters['departemen']);
+        if (!empty($this->filters['perusahaan_id'])) {
+            $query->where('perusahaan_id', $this->filters['perusahaan_id']);
         }
 
         return $query->orderBy('tanggal_masuk', 'desc');
@@ -64,8 +64,7 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
             'Nama Lengkap',
             'No. Pegawai',
             'Cabang',
-            'Departemen',
-            'Jabatan',
+            'Perusahaan',
             'Gaji Pokok',
             'Tanggal Masuk',
             'Status',
@@ -80,8 +79,7 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
             $anggota->nama_lengkap,
             $anggota->no_pegawai ?? '-',
             $anggota->cabang?->nama ?? '-',
-            $anggota->departemen ?? '-',
-            $anggota->jabatan ?? '-',
+            $anggota->perusahaan?->nama ?? '-',
             $anggota->gaji_pokok,
             $anggota->tanggal_masuk?->format('d/m/Y') ?? '-',
             ucfirst(str_replace('_', ' ', $anggota->status)),
@@ -91,7 +89,7 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
     public function styles(Worksheet $sheet)
     {
         $lastRow = $sheet->getHighestRow();
-        $lastCol = 'J';
+        $lastCol = 'I';
 
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
             'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 11],

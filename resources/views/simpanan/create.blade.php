@@ -79,7 +79,7 @@
                                 </div>
                                 <div class="flex-1">
                                     <p class="font-semibold text-blue-900 text-sm">{{ $result->nama_lengkap }}</p>
-                                    <p class="text-xs text-slate-400 font-data">{{ $result->no_anggota }} &middot; {{ $result->nik }} &middot; {{ $result->departemen ?? '-' }}</p>
+                                    <p class="text-xs text-slate-400 font-data">{{ $result->no_anggota }} &middot; {{ $result->nik }} &middot; {{ $result->perusahaan?->nama ?? '-' }}</p>
                                 </div>
                                 <span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">arrow_forward</span>
                             </a>
@@ -97,7 +97,7 @@
                         </div>
                         <div>
                             <p class="font-bold text-blue-900 font-headline">{{ $anggota->nama_lengkap }}</p>
-                            <p class="text-sm text-slate-500 font-data">{{ $anggota->no_anggota }} &middot; {{ $anggota->departemen ?? '-' }}</p>
+                            <p class="text-sm text-slate-500 font-data">{{ $anggota->no_anggota }} &middot; {{ $anggota->perusahaan?->nama ?? '-' }}</p>
                         </div>
                     </div>
                 </section>

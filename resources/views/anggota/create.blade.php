@@ -79,12 +79,13 @@
                                 <input type="text" name="no_pegawai" value="{{ old('no_pegawai') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Departemen</label>
-                                <input type="text" name="departemen" value="{{ old('departemen') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Jabatan</label>
-                                <input type="text" name="jabatan" value="{{ old('jabatan') }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Perusahaan</label>
+                                <select name="perusahaan_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">Pilih Perusahaan</option>
+                                    @foreach($perusahaans as $p)
+                                        <option value="{{ $p->id }}" {{ old('perusahaan_id') == $p->id ? 'selected' : '' }}>{{ $p->nama }} ({{ $p->kode }})</option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok</label>

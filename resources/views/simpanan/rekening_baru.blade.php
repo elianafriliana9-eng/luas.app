@@ -29,7 +29,7 @@
                         <option value="">-- Pilih Anggota --</option>
                         @foreach($anggota as $a)
                             <option value="{{ $a->id }}" {{ old('anggota_id') == $a->id ? 'selected' : '' }}>
-                                {{ $a->no_anggota }} — {{ $a->nama_lengkap }} {{ $a->departemen ? '(' . $a->departemen . ')' : '' }}
+                                {{ $a->no_anggota }} — {{ $a->nama_lengkap }} {{ $a->perusahaan?->nama ? '(' . $a->perusahaan->nama . ')' : '' }}
                             </option>
                         @endforeach
                     </select>

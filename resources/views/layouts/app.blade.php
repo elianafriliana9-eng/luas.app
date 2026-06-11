@@ -158,63 +158,78 @@
             @php
                 $pendingKeluar = \App\Models\Anggota::where('status', 'pengajuan_keluar')->count();
             @endphp
-            <!-- ═══ ANGGOTA ACCORDION ═══ -->
-            <div x-data="{ open: {{ request()->routeIs('anggota.*') ? 'true' : 'false' }}, lapAnggota: {{ request()->routeIs('anggota.laporan.*') ? 'true' : 'false' }} }">
-                <button @click="open = !open" class="nav-link w-full flex justify-between {{ request()->routeIs('anggota.*') ? 'active' : '' }}">
+            <!-- ═══ MASTER DATA ACCORDION ═══ -->
+            <div x-data="{ open: {{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'true' : 'false' }}, subAnggota: {{ request()->routeIs('anggota.*') ? 'true' : 'false' }}, lapAnggota: {{ request()->routeIs('anggota.laporan.*') ? 'true' : 'false' }} }">
+                <button @click="open = !open" class="nav-link w-full flex justify-between {{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'active' : '' }}">
                     <div class="flex items-center gap-3">
-                        <span class="material-symbols-outlined text-[20px]" style="{{ request()->routeIs('anggota.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">group</span>
-                        <span>Anggota</span>
+                        <span class="material-symbols-outlined text-[20px]" style="{{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">database</span>
+                        <span>Master Data</span>
                     </div>
                     <span class="material-symbols-outlined text-[16px] accord-chevron" :class="open && 'open'">expand_more</span>
                 </button>
                 <div class="accord-body" :class="open && 'open'">
                     <div class="flex flex-col py-1 space-y-0.5">
-                        <a href="{{ route('anggota.index') }}" class="sub-link {{ request()->routeIs('anggota.index') ? 'active' : '' }}">
-                            <span class="material-symbols-outlined text-[16px] flex-shrink-0">list_alt</span>
-                            <span>Daftar Anggota</span>
+                        <a href="{{ route('perusahaan.index') }}" class="sub-link {{ request()->routeIs('perusahaan.*') ? 'active' : '' }}">
+                            <span class="material-symbols-outlined text-[16px] flex-shrink-0">business</span>
+                            <span>Perusahaan (PT)</span>
                         </a>
-                        @if(auth()->user()->role === 'super_admin')
-                        <a href="{{ route('anggota.approval_keluar') }}" class="sub-link {{ request()->routeIs('anggota.approval_keluar') ? 'active' : '' }}">
-                            <span class="material-symbols-outlined text-[16px] flex-shrink-0">exit_to_app</span>
-                            <span>Approval Keluar</span>
-                            @if($pendingKeluar > 0)
-                                <span class="ml-auto px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">{{ $pendingKeluar }}</span>
-                            @endif
-                        </a>
-                        @endif
-                        <a href="{{ route('anggota.saldo') }}" class="sub-link {{ request()->routeIs('anggota.saldo') ? 'active' : '' }}">
-                            <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_balance_wallet</span>
-                            <span>Saldo Anggota</span>
-                        </a>
-                        <button @click="lapAnggota = !lapAnggota" type="button" class="sub-header {{ request()->routeIs('anggota.laporan.*') ? 'active' : '' }}">
+
+                        {{-- ▸ Anggota --}}
+                        <button @click="subAnggota = !subAnggota" type="button" class="sub-header {{ request()->routeIs('anggota.*') ? 'active' : '' }}">
                             <span class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[16px]">receipt_long</span>
-                                Laporan
+                                <span class="material-symbols-outlined text-[16px]">group</span>
+                                Anggota
                             </span>
-                            <span class="material-symbols-outlined text-[12px] accord-chevron" :class="lapAnggota && 'open'">expand_more</span>
+                            <span class="material-symbols-outlined text-[12px] accord-chevron" :class="subAnggota && 'open'">expand_more</span>
                         </button>
-                        <div class="accord-body" :class="lapAnggota && 'open'">
-                            <a href="{{ route('anggota.laporan.saldo') }}" class="sub-link {{ request()->routeIs('anggota.laporan.saldo') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_balance</span>
-                                <span>Laporan Saldo</span>
+                        <div class="accord-body" :class="subAnggota && 'open'">
+                            <a href="{{ route('anggota.index') }}" class="sub-link {{ request()->routeIs('anggota.index') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">list_alt</span>
+                                <span>Daftar Anggota</span>
                             </a>
-                            <a href="{{ route('anggota.laporan.profil') }}" class="sub-link {{ request()->routeIs('anggota.laporan.profil') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">badge</span>
-                                <span>Laporan Profil</span>
+                            @if(auth()->user()->role === 'super_admin')
+                            <a href="{{ route('anggota.approval_keluar') }}" class="sub-link {{ request()->routeIs('anggota.approval_keluar') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">exit_to_app</span>
+                                <span>Approval Keluar</span>
+                                @if($pendingKeluar > 0)
+                                    <span class="ml-auto px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">{{ $pendingKeluar }}</span>
+                                @endif
                             </a>
-                            <a href="{{ route('anggota.laporan.rekap') }}" class="sub-link {{ request()->routeIs('anggota.laporan.rekap') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">summarize</span>
-                                <span>Laporan Rekap</span>
+                            @endif
+                            <a href="{{ route('anggota.saldo') }}" class="sub-link {{ request()->routeIs('anggota.saldo') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_balance_wallet</span>
+                                <span>Saldo Anggota</span>
                             </a>
-                            <a href="{{ route('anggota.laporan.keluar') }}" class="sub-link {{ request()->routeIs('anggota.laporan.keluar') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">person_remove</span>
-                                <span>Anggota Keluar</span>
+                            <button @click="lapAnggota = !lapAnggota" type="button" class="sub-header {{ request()->routeIs('anggota.laporan.*') ? 'active' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                                    Laporan
+                                </span>
+                                <span class="material-symbols-outlined text-[12px] accord-chevron" :class="lapAnggota && 'open'">expand_more</span>
+                            </button>
+                            <div class="accord-body" :class="lapAnggota && 'open'">
+                                <a href="{{ route('anggota.laporan.saldo') }}" class="sub-link {{ request()->routeIs('anggota.laporan.saldo') ? 'active' : '' }}">
+                                    <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_balance</span>
+                                    <span>Laporan Saldo</span>
+                                </a>
+                                <a href="{{ route('anggota.laporan.profil') }}" class="sub-link {{ request()->routeIs('anggota.laporan.profil') ? 'active' : '' }}">
+                                    <span class="material-symbols-outlined text-[16px] flex-shrink-0">badge</span>
+                                    <span>Laporan Profil</span>
+                                </a>
+                                <a href="{{ route('anggota.laporan.rekap') }}" class="sub-link {{ request()->routeIs('anggota.laporan.rekap') ? 'active' : '' }}">
+                                    <span class="material-symbols-outlined text-[16px] flex-shrink-0">summarize</span>
+                                    <span>Laporan Rekap</span>
+                                </a>
+                                <a href="{{ route('anggota.laporan.keluar') }}" class="sub-link {{ request()->routeIs('anggota.laporan.keluar') ? 'active' : '' }}">
+                                    <span class="material-symbols-outlined text-[16px] flex-shrink-0">person_remove</span>
+                                    <span>Anggota Keluar</span>
+                                </a>
+                            </div>
+                            <a href="{{ route('anggota.import') }}" class="sub-link {{ request()->routeIs('anggota.import') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">upload_file</span>
+                                <span>Import Anggota</span>
                             </a>
                         </div>
-                        <a href="{{ route('anggota.import') }}" class="sub-link {{ request()->routeIs('anggota.import') ? 'active' : '' }}">
-                            <span class="material-symbols-outlined text-[16px] flex-shrink-0">upload_file</span>
-                            <span>Import Anggota</span>
-                        </a>
                     </div>
                 </div>
             </div>

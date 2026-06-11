@@ -26,7 +26,7 @@
                     @forelse($pengajuan as $pj)
                         <tr class="hover:bg-gray-50">
                             <td class="px-4 py-3 text-sm font-mono text-indigo-600">{{ $pj->no_pengajuan }}</td>
-                            <td class="px-4 py-3"><div class="text-sm font-medium">{{ $pj->anggota?->nama_lengkap }}</div><div class="text-xs text-gray-500">{{ $pj->anggota?->departemen ?? '-' }}</div></td>
+                            <td class="px-4 py-3"><div class="text-sm font-medium">{{ $pj->anggota?->nama_lengkap }}</div><div class="text-xs text-gray-500">{{ $pj->anggota?->perusahaan?->nama ?? '-' }}</div></td>
                             <td class="px-4 py-3 text-sm">{{ $pj->produk?->nama }}</td>
                             <td class="px-4 py-3 text-right font-mono font-bold text-sm">Rp {{ number_format($pj->nominal_diajukan, 0, ',', '.') }}</td>
                             <td class="px-4 py-3 text-center text-sm">{{ $pj->jangka_bulan }} bln</td>

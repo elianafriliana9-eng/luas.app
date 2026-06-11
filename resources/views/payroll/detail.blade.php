@@ -28,12 +28,8 @@
                                     <dd class="text-sm font-medium text-gray-900">{{ $anggota->no_pegawai ?? '-' }}</dd>
                                 </div>
                                 <div class="flex justify-between">
-                                    <dt class="text-sm text-gray-500">Departemen</dt>
-                                    <dd class="text-sm font-medium text-gray-900">{{ $anggota->departemen ?? '-' }}</dd>
-                                </div>
-                                <div class="flex justify-between">
-                                    <dt class="text-sm text-gray-500">Jabatan</dt>
-                                    <dd class="text-sm font-medium text-gray-900">{{ $anggota->jabatan ?? '-' }}</dd>
+                                    <dt class="text-sm text-gray-500">Perusahaan</dt>
+                                    <dd class="text-sm font-medium text-gray-900">{{ $anggota->perusahaan?->nama ?? '-' }}</dd>
                                 </div>
                                 <div class="flex justify-between">
                                     <dt class="text-sm text-gray-500">Masa Kerja</dt>

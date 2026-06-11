@@ -13,39 +13,113 @@ class TransaksiSimpananSeeder extends Seeder
 {
     public function run(): void
     {
-        $rekenings = RekeningSimpanan::all();
-        $user = User::where('role', 'teller')->first();
+        $rekenings = RekeningSimpanan::with('produk', 'anggota')->get();
+        $user = User::where('role', 'teller')->first() ?? User::first();
+        if ($rekenings->isEmpty() || !$user) return;
 
-        if ($rekenings->isEmpty()) {
-            return;
-        }
+        $sekarang = Carbon::now()->startOfDay();
 
         foreach ($rekenings as $rekening) {
-            $numTransactions = fake()->numberBetween(1, 5);
+            $jenis = $rekening->produk->jenis;
+            $tglBuka = Carbon::parse($rekening->tanggal_buka)->startOfDay();
 
-            for ($i = 0; $i < $numTransactions; $i++) {
-                $isSetoran = fake()->boolean(80);
-                $nominal = fake()->numberBetween(1, 50) * 10000;
+            if ($jenis === 'pokok') {
+                TransaksiSimpanan::updateOrCreate(
+                    ['no_transaksi' => 'TRX-S-POKOK-' . $rekening->anggota->no_anggota],
+                    [
+                        'rekening_id' => $rekening->id,
+                        'user_id' => $user->id,
+                        'jenis' => 'setoran',
+                        'nominal' => 100000,
+                        'saldo_sebelum' => 0,
+                        'saldo_sesudah' => 100000,
+                        'keterangan' => 'Setoran Simpanan Pokok',
+                        'channel' => 'teller',
+                        'status_approval' => 'approved',
+                        'created_at' => $tglBuka,
+                    ]
+                );
+            }
 
-                $saldoSesudah = $isSetoran ? ($rekening->saldo + $nominal) : ($rekening->saldo - $nominal);
-                if ($saldoSesudah < 0) continue;
+            if ($jenis === 'wajib') {
+                $lamaBulan = (int) $tglBuka->diffInMonths($sekarang);
+                $maxTrx = min($lamaBulan, 10); // max 10 bulan transaksi
+                $saldoJalan = 0;
 
-                $tanggalTransaksi = Carbon::now()->subDays(fake()->numberBetween(1, 60));
+                for ($i = 0; $i < $maxTrx; $i++) {
+                    $tglSetor = $tglBuka->copy()->addMonths($i);
+                    if ($tglSetor->gt($sekarang)) break;
 
-                TransaksiSimpanan::create([
-                    'rekening_id' => $rekening->id,
-                    'user_id' => $user->id ?? null,
-                    'no_transaksi' => 'TRX-S-' . $tanggalTransaksi->format('ymdHi') . '-' . strtoupper(Str::random(6)),
-                    'jenis' => $isSetoran ? 'setoran' : 'penarikan',
-                    'nominal' => $nominal,
-                    'saldo_sebelum' => $rekening->saldo,
-                    'saldo_sesudah' => $saldoSesudah,
-                    'keterangan' => $isSetoran ? 'Setoran tunai via teller' : 'Penarikan tunai',
-                    'channel' => 'teller',
-                    'created_at' => $tanggalTransaksi,
-                ]);
+                    $saldoSebelum = $saldoJalan;
+                    $saldoJalan += 50000;
 
-                $rekening->update(['saldo' => $saldoSesudah]);
+                    TransaksiSimpanan::updateOrCreate(
+                        [
+                            'no_transaksi' => 'TRX-S-WAJIB-' . $rekening->anggota->no_anggota . '-' . ($i + 1),
+                        ],
+                        [
+                            'rekening_id' => $rekening->id,
+                            'user_id' => $user->id,
+                            'jenis' => 'setoran',
+                            'nominal' => 50000,
+                            'saldo_sebelum' => $saldoSebelum,
+                            'saldo_sesudah' => $saldoJalan,
+                            'keterangan' => 'Setoran Simpanan Wajib bulan ke-' . ($i + 1),
+                            'channel' => 'teller',
+                            'status_approval' => 'approved',
+                            'created_at' => $tglSetor,
+                        ]
+                    );
+                }
+            }
+
+            if ($jenis === 'sukarela') {
+                $saldoSukarela = (float) $rekening->saldo;
+                if ($saldoSukarela <= 0) continue;
+
+                // Create 3-5 setoran transactions with varying amounts
+                $jumlahTrx = rand(3, 5);
+                $sisaSaldo = $saldoSukarela;
+                $saldoJalan = 0;
+
+                for ($i = 0; $i < $jumlahTrx; $i++) {
+                    // Distribute saldo across transactions
+                    if ($i === $jumlahTrx - 1) {
+                        $nominal = $sisaSaldo;
+                    } else {
+                        $maxBagian = (int) ($saldoSukarela / $jumlahTrx) * 2;
+                        $minBagian = (int) ($saldoSukarela / $jumlahTrx) / 2;
+                        $nominal = rand((int) $minBagian, (int) $maxBagian);
+                        if ($nominal > $sisaSaldo) $nominal = $sisaSaldo;
+                        if ($nominal < 100000) $nominal = $sisaSaldo / ($jumlahTrx - $i);
+                    }
+                    $nominal = (int) round($nominal / 1000) * 1000;
+
+                    $tglSetor = $sekarang->copy()->subMonths($jumlahTrx - $i)->addDays(rand(1, 20));
+                    if ($tglSetor->lt($tglBuka)) $tglSetor = $tglBuka->copy()->addDays(rand(1, 5));
+
+                    $saldoSebelum = $saldoJalan;
+                    $saldoJalan += $nominal;
+                    $sisaSaldo -= $nominal;
+
+                    TransaksiSimpanan::updateOrCreate(
+                        [
+                            'no_transaksi' => 'TRX-S-SUKARELA-' . $rekening->anggota->no_anggota . '-' . ($i + 1),
+                        ],
+                        [
+                            'rekening_id' => $rekening->id,
+                            'user_id' => $user->id,
+                            'jenis' => 'setoran',
+                            'nominal' => $nominal,
+                            'saldo_sebelum' => $saldoSebelum,
+                            'saldo_sesudah' => $saldoJalan,
+                            'keterangan' => 'Setoran Simpanan Sukarela',
+                            'channel' => 'teller',
+                            'status_approval' => 'approved',
+                            'created_at' => $tglSetor,
+                        ]
+                    );
+                }
             }
         }
     }

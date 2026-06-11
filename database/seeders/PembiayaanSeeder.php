@@ -5,6 +5,10 @@ namespace Database\Seeders;
 use App\Models\Anggota;
 use App\Models\Pembiayaan;
 use App\Models\JadwalAngsuran;
+use App\Models\PengajuanPembiayaan;
+use App\Models\ProdukPembiayaan;
+use App\Models\TransaksiPembiayaan;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -12,11 +16,10 @@ class PembiayaanSeeder extends Seeder
 {
     public function run(): void
     {
-        $budi = Anggota::where('nik', '3171012304900001')->first();
-        if (!$budi) return;
+        $user = User::where('role', 'super_admin')->first() ?? User::first();
+        if (!$user) return;
 
-        // 1. Create a Product — Karyawan Loan
-        $produk = \App\Models\ProdukPembiayaan::firstOrCreate(
+        $produk = ProdukPembiayaan::firstOrCreate(
             ['kode' => 'KAR'],
             [
                 'nama' => 'Pembiayaan Karyawan',
@@ -28,128 +31,150 @@ class PembiayaanSeeder extends Seeder
             ]
         );
 
-        // 2. Create Pengajuan
-        $pengajuan = \App\Models\PengajuanPembiayaan::updateOrCreate(
-            ['no_pengajuan' => 'PJN-26040001'],
-            [
-                'anggota_id' => $budi->id,
-                'produk_id' => $produk->id,
-                'nominal_diajukan' => 10000000,
-                'jangka_bulan' => 12,
-                'tujuan' => 'konsumtif',
-                'status_approval' => 'disetujui',
-                'approved_at' => now()->subMonths(4),
-            ]
-        );
-
-        // 3. Create a loan for Budi — dengan potong gaji
-        $angsuranPokok = 833333; // 10M / 12
-        $angsuranBunga = 83333;  // 10M * 10% / 12
-        $totalAngsuran = $angsuranPokok + $angsuranBunga;
-
-        $pembiayaan = Pembiayaan::updateOrCreate(
-            ['no_pembiayaan' => 'PMB-26040001'],
-            [
-                'pengajuan_id' => $pengajuan->id,
-                'anggota_id' => $budi->id,
-                'nominal_disetujui' => 10000000,
-                'nominal_cair' => 10000000,
-                'jangka_bulan' => 12,
-                'bunga_pa' => 10,
-                'metode_hitung' => 'flat',
-                'angsuran_pokok' => $angsuranPokok,
-                'angsuran_bunga' => $angsuranBunga,
-                'tanggal_akad' => now()->subMonths(4),
-                'tanggal_cair' => now()->subMonths(4),
-                'status' => 'aktif',
-                'saldo_pokok' => 6666668, // Paid 4 months
-                'saldo_bunga' => 666666,
-                'kolektibilitas' => 1,
-                // Payroll deduction fields
-                'auto_potong_gaji' => true,
-                'nominal_potongan' => $totalAngsuran,
-                'bulan_tersisa_potongan' => 8, // 12 - 4 months paid
-                'sumber_pembayaran' => 'potong_gaji',
-            ]
-        );
-
-        // 4. Create Jadwal Angsuran (12 months)
-        $pembiayaan->jadwalAngsuran()->delete();
-        for ($i = 1; $i <= 12; $i++) {
-            $isPaid = $i <= 4;
-            JadwalAngsuran::create([
-                'pembiayaan_id' => $pembiayaan->id,
-                'ke' => $i,
-                'tanggal_jatuh_tempo' => now()->subMonths(4)->addMonths($i)->setDay($budi->tanggal_gajian ?? 25),
-                'pokok' => $angsuranPokok,
-                'bunga' => $angsuranBunga,
-                'total' => $totalAngsuran,
-                'saldo_akhir' => 10000000 - ($i * $angsuranPokok),
-                'status' => $isPaid ? 'lunas' : 'belum',
-                'tanggal_bayar' => $isPaid ? now()->subMonths(4)->addMonths($i)->subDays(2)->setDay(25) : null,
-            ]);
-        }
-
-        // 5. Create Siti's loan (second demo account)
+        $budi = Anggota::where('nik', '3171012304900001')->first();
         $siti = Anggota::where('nik', '3271012405920002')->first();
-        if ($siti) {
-            $pengajuanSiti = \App\Models\PengajuanPembiayaan::updateOrCreate(
-                ['no_pengajuan' => 'PJN-26040002'],
+        $kurniawan = Anggota::where('nik', '3671011807910011')->first();
+        $zainal = Anggota::where('nik', '3281011806880023')->first();
+        $indral = Anggota::where('nik', '3178011004890009')->first();
+
+        // Helper untuk create loan
+        $createLoan = function (Anggota $anggota, string $noPengajuan, string $noPembiayaan,
+                                float $nominal, int $jangka, int $bulanLalu,
+                                string $sumberPembayaran = 'potong_gaji') use ($produk, $user) {
+
+            $pokokPerBulan = (int)round($nominal / $jangka);
+            $bungaPerBulan = (int)round(($nominal * 10 / 100) / $jangka);
+            $totalAngsuran = $pokokPerBulan + $bungaPerBulan;
+
+            $pengajuan = PengajuanPembiayaan::updateOrCreate(
+                ['no_pengajuan' => $noPengajuan],
                 [
-                    'anggota_id' => $siti->id,
+                    'anggota_id' => $anggota->id,
                     'produk_id' => $produk->id,
-                    'nominal_diajukan' => 5000000,
-                    'jangka_bulan' => 6,
+                    'nominal_diajukan' => $nominal,
+                    'jangka_bulan' => $jangka,
                     'tujuan' => 'konsumtif',
                     'status_approval' => 'disetujui',
-                    'approved_at' => now()->subMonths(2),
+                    'approved_by' => $user->id,
+                    'approved_at' => now()->subMonths($bulanLalu),
                 ]
             );
 
-            $angsuranPokokSiti = 833333;
-            $angsuranBungaSiti = 41667;
-            $totalAngsuranSiti = $angsuranPokokSiti + $angsuranBungaSiti;
+            $saldoPokok = $nominal - ($pokokPerBulan * $bulanLalu);
+            $saldoBunga = ($bungaPerBulan * ($jangka - $bulanLalu));
 
-            $pembiayaanSiti = Pembiayaan::updateOrCreate(
-                ['no_pembiayaan' => 'PMB-26040002'],
+            $pembiayaan = Pembiayaan::updateOrCreate(
+                ['no_pembiayaan' => $noPembiayaan],
                 [
-                    'pengajuan_id' => $pengajuanSiti->id,
-                    'anggota_id' => $siti->id,
-                    'nominal_disetujui' => 5000000,
-                    'nominal_cair' => 5000000,
-                    'jangka_bulan' => 6,
+                    'pengajuan_id' => $pengajuan->id,
+                    'anggota_id' => $anggota->id,
+                    'nominal_disetujui' => $nominal,
+                    'nominal_cair' => $nominal,
+                    'jangka_bulan' => $jangka,
                     'bunga_pa' => 10,
                     'metode_hitung' => 'flat',
-                    'angsuran_pokok' => $angsuranPokokSiti,
-                    'angsuran_bunga' => $angsuranBungaSiti,
-                    'tanggal_akad' => now()->subMonths(2),
-                    'tanggal_cair' => now()->subMonths(2),
+                    'angsuran_pokok' => $pokokPerBulan,
+                    'angsuran_bunga' => $bungaPerBulan,
+                    'tanggal_akad' => now()->subMonths($bulanLalu),
+                    'tanggal_cair' => now()->subMonths($bulanLalu),
                     'status' => 'aktif',
-                    'saldo_pokok' => 3333334,
-                    'saldo_bunga' => 250002,
+                    'saldo_pokok' => $saldoPokok,
+                    'saldo_bunga' => $saldoBunga,
                     'kolektibilitas' => 1,
-                    'auto_potong_gaji' => true,
-                    'nominal_potongan' => $totalAngsuranSiti,
-                    'bulan_tersisa_potongan' => 4,
-                    'sumber_pembayaran' => 'keduanya', // Bisa bayar manual juga
+                    'auto_potong_gaji' => $sumberPembayaran !== 'bayar_manual',
+                    'nominal_potongan' => $totalAngsuran,
+                    'bulan_tersisa_potongan' => $jangka - $bulanLalu,
+                    'sumber_pembayaran' => $sumberPembayaran,
                 ]
             );
 
-            $pembiayaanSiti->jadwalAngsuran()->delete();
-            for ($i = 1; $i <= 6; $i++) {
-                $isPaid = $i <= 2;
+            $pembiayaan->jadwalAngsuran()->delete();
+            for ($i = 1; $i <= $jangka; $i++) {
+                $isPaid = $i <= $bulanLalu;
+                $tglJatuhTempo = now()->subMonths($bulanLalu)->addMonths($i)->setDay($anggota->tanggal_gajian ?? 25);
+
                 JadwalAngsuran::create([
-                    'pembiayaan_id' => $pembiayaanSiti->id,
+                    'pembiayaan_id' => $pembiayaan->id,
                     'ke' => $i,
-                    'tanggal_jatuh_tempo' => now()->subMonths(2)->addMonths($i)->setDay($siti->tanggal_gajian ?? 25),
-                    'pokok' => $angsuranPokokSiti,
-                    'bunga' => $angsuranBungaSiti,
-                    'total' => $totalAngsuranSiti,
-                    'saldo_akhir' => 5000000 - ($i * $angsuranPokokSiti),
+                    'tanggal_jatuh_tempo' => $tglJatuhTempo,
+                    'pokok' => $pokokPerBulan,
+                    'bunga' => $bungaPerBulan,
+                    'total' => $totalAngsuran,
+                    'saldo_akhir' => $nominal - ($i * $pokokPerBulan),
                     'status' => $isPaid ? 'lunas' : 'belum',
-                    'tanggal_bayar' => $isPaid ? now()->subMonths(2)->addMonths($i)->subDays(3)->setDay(25) : null,
+                    'tanggal_bayar' => $isPaid ? $tglJatuhTempo->copy() : null,
                 ]);
             }
+
+            // Create transaksi for paid installments
+            if ($sumberPembayaran !== 'bayar_manual') {
+                for ($i = 1; $i <= $bulanLalu; $i++) {
+                    $jadwal = $pembiayaan->jadwalAngsuran()->where('ke', $i)->first();
+                    if (!$jadwal) continue;
+
+                    TransaksiPembiayaan::updateOrCreate(
+                        ['no_transaksi' => 'TRX-PMB-' . $noPembiayaan . '-' . str_pad($i, 2, '0', STR_PAD_LEFT)],
+                        [
+                            'pembiayaan_id' => $pembiayaan->id,
+                            'jadwal_id' => $jadwal->id,
+                            'jenis' => 'angsuran',
+                            'nominal_pokok' => $pokokPerBulan,
+                            'nominal_bunga' => $bungaPerBulan,
+                            'nominal_denda' => 0,
+                            'total' => $totalAngsuran,
+                            'channel' => 'teller',
+                            'created_at' => $jadwal->tanggal_jatuh_tempo->copy()->subDays(1),
+                        ]
+                    );
+                }
+            }
+
+            return $pembiayaan;
+        };
+
+        // 1. Budi Santoso — Rp 10.000.000, 12 bulan, 4 bulan berjalan (sudah 4x bayar)
+        if ($budi) {
+            $createLoan($budi, 'PJN-26040001', 'PMB-26040001', 10000000, 12, 4, 'potong_gaji');
+        }
+
+        // 2. Siti Rahayu — Rp 5.000.000, 6 bulan, 2 bulan berjalan
+        if ($siti) {
+            $createLoan($siti, 'PJN-26040002', 'PMB-26040002', 5000000, 6, 2, 'keduanya');
+        }
+
+        // 3. Kurniawan Saputra — Rp 25.000.000, 24 bulan, 6 bulan berjalan
+        if ($kurniawan) {
+            $pembiayaan = $createLoan($kurniawan, 'PJN-26050001', 'PMB-26050001', 25000000, 24, 6, 'potong_gaji');
+
+            // Add collateral for larger loan
+            $pembiayaan->jaminan()->updateOrCreate(
+                ['no_dokumen' => 'SHM-0012345'],
+                [
+                    'jenis_jaminan' => 'tanah',
+                    'deskripsi' => 'Sertifikat Hak Milik tanah seluas 150 m2 atas nama Kurniawan Saputra, berlokasi di BSD City, Tangerang Selatan',
+                    'nilai_taksasi' => 35000000,
+                ]
+            );
+        }
+
+        // 4. Zainal Arifin — Rp 15.000.000, 12 bulan, 3 bulan berjalan
+        if ($zainal) {
+            $createLoan($zainal, 'PJN-26050002', 'PMB-26050002', 15000000, 12, 3, 'potong_gaji');
+        }
+
+        // 5. Indra Lesmana — pengajuan baru (pending)
+        if ($indral) {
+            PengajuanPembiayaan::updateOrCreate(
+                ['no_pengajuan' => 'PJN-26060001'],
+                [
+                    'anggota_id' => $indral->id,
+                    'produk_id' => $produk->id,
+                    'nominal_diajukan' => 8000000,
+                    'jangka_bulan' => 10,
+                    'tujuan' => 'konsumtif',
+                    'status_approval' => 'pending',
+                ]
+            );
         }
     }
 }
