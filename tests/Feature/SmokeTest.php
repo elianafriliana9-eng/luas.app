@@ -216,10 +216,10 @@ class SmokeTest extends TestCase
 
     // ================ LAPORAN ANGGOTA ================
 
-    public function test_anggota_laporan_saldo(): void
+    public function test_anggota_laporan_masuk(): void
     {
         $this->actingAs($this->admin);
-        $response = $this->get(route('anggota.laporan.saldo'));
+        $response = $this->get(route('anggota.laporan.masuk'));
         $response->assertOk();
     }
 

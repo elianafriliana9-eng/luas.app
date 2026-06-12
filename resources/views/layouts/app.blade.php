@@ -182,7 +182,7 @@
             );
             @endphp
             <!-- ═══ MASTER DATA ACCORDION ═══ -->
-            <div x-data="{ open: {{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'true' : 'false' }}, subAnggota: {{ request()->routeIs('anggota.*') ? 'true' : 'false' }}, lapAnggota: {{ request()->routeIs('anggota.laporan.*') ? 'true' : 'false' }} }">
+                            <div x-data="{ open: {{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'true' : 'false' }}, subAnggota: {{ request()->routeIs('anggota.*') ? 'true' : 'false' }}, lapAnggota: {{ request()->routeIs('anggota.laporan.*') || request()->routeIs('anggota.saldo') ? 'true' : 'false' }} }">
                 <button @click="open = !open" class="nav-link w-full flex justify-between {{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'active' : '' }}">
                     <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-[20px]" style="{{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">database</span>
@@ -228,11 +228,7 @@
                                 @endif
                             </a>
                             @endif
-                            <a href="{{ route('anggota.saldo') }}" class="sub-link {{ request()->routeIs('anggota.saldo') ? 'active' : '' }}">
-                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_balance_wallet</span>
-                                <span>Saldo Anggota</span>
-                            </a>
-                            <button @click="lapAnggota = !lapAnggota" type="button" class="sub-header {{ request()->routeIs('anggota.laporan.*') ? 'active' : '' }}">
+                            <button @click="lapAnggota = !lapAnggota" type="button" class="sub-header {{ request()->routeIs('anggota.laporan.*') || request()->routeIs('anggota.saldo') ? 'active' : '' }}">
                                 <span class="flex items-center gap-2">
                                     <span class="material-symbols-outlined text-[16px]">receipt_long</span>
                                     Laporan
@@ -240,9 +236,13 @@
                                 <span class="material-symbols-outlined text-[12px] accord-chevron" :class="lapAnggota && 'open'">expand_more</span>
                             </button>
                             <div class="accord-body" :class="lapAnggota && 'open'">
-                                <a href="{{ route('anggota.laporan.saldo') }}" class="sub-link {{ request()->routeIs('anggota.laporan.saldo') ? 'active' : '' }}">
-                                    <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_balance</span>
-                                    <span>Laporan Saldo</span>
+                                <a href="{{ route('anggota.saldo') }}" class="sub-link {{ request()->routeIs('anggota.saldo') ? 'active' : '' }}">
+                                    <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_balance_wallet</span>
+                                    <span>Saldo Anggota</span>
+                                </a>
+                                <a href="{{ route('anggota.laporan.masuk') }}" class="sub-link {{ request()->routeIs('anggota.laporan.masuk') ? 'active' : '' }}">
+                                    <span class="material-symbols-outlined text-[16px] flex-shrink-0">person_add</span>
+                                    <span>Anggota Masuk</span>
                                 </a>
                                 <a href="{{ route('anggota.laporan.profil') }}" class="sub-link {{ request()->routeIs('anggota.laporan.profil') ? 'active' : '' }}">
                                     <span class="material-symbols-outlined text-[16px] flex-shrink-0">badge</span>

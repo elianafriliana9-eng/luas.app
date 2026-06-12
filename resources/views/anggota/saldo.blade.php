@@ -8,13 +8,24 @@
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                     Export Excel
                 </a>
-                <a href="{{ route('anggota.index') }}" class="text-indigo-600 hover:text-indigo-900">← Kembali</a>
+                <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition no-print flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    Print
+                </button>
             </div>
         </div>
     </x-slot>
     <div class="py-6"><div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white p-4 rounded-t-xl shadow-sm flex flex-wrap gap-3 items-end">
+        <div class="bg-white p-4 rounded-t-xl shadow-sm flex flex-wrap gap-3 items-end no-print">
             <form method="GET" action="{{ route('anggota.saldo') }}" class="flex-1 flex flex-wrap gap-3 items-end">
+                <div class="min-w-[150px]">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                    <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option value="">Semua</option>
+                        <option value="aktif" {{ request('status')=='aktif'?'selected':'' }}>Aktif</option>
+                        <option value="keluar" {{ request('status')=='keluar'?'selected':'' }}>Keluar</option>
+                    </select>
+                </div>
                 <div class="flex-1 min-w-[200px]">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Pencarian</label>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau no. anggota..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
@@ -29,7 +40,7 @@
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">Filter</button>
             </form>
         </div>
-        <div class="bg-white overflow-x-auto rounded-b-xl shadow-sm">
+        <div class="bg-white overflow-x-auto shadow-sm">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50"><tr>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Anggota</th>

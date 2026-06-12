@@ -369,17 +369,23 @@ class AnggotaController extends Controller
     }
 
     /**
-     * d. List saldo anggota
+     * d. List saldo anggota (merged with laporan saldo)
      */
     public function saldo(Request $request)
     {
-        $query = Anggota::where('status', 'aktif')
-            ->with(['cabang', 'rekeningSimpanan.produk']);
+        $query = Anggota::with(['cabang', 'rekeningSimpanan.produk']);
 
-        // Filter
+        // Filter status
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        // Filter cabang
         if ($cabangId = $request->input('cabang_id')) {
             $query->where('cabang_id', $cabangId);
         }
+
+        // Pencarian
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama_lengkap', 'like', "%{$search}%")
@@ -394,23 +400,27 @@ class AnggotaController extends Controller
     }
 
     /**
-     * h. Laporan saldo anggota
+     * h. Laporan anggota masuk (pending + baru approve < 30 hari)
      */
-    public function laporanSaldo(Request $request)
+    public function laporanMasuk(Request $request)
     {
-        $query = Anggota::with(['cabang', 'rekeningSimpanan.produk']);
+        $query = Anggota::with('cabang')
+            ->where(function ($q) {
+                $q->where('status', 'pending_aktif')
+                  ->orWhere(function ($sub) {
+                      $sub->where('status', 'aktif')
+                          ->whereDate('tanggal_masuk', '>=', now()->subDays(30));
+                  });
+            });
 
-        if ($status = $request->input('status')) {
-            $query->where('status', $status);
-        }
         if ($cabangId = $request->input('cabang_id')) {
             $query->where('cabang_id', $cabangId);
         }
 
-        $anggota = $query->orderBy('nama_lengkap')->get();
+        $anggota = $query->orderBy('created_at', 'desc')->get();
         $cabangs = Cabang::where('aktif', true)->get();
 
-        return view('anggota.laporan.saldo', compact('anggota', 'cabangs'));
+        return view('anggota.laporan.masuk', compact('anggota', 'cabangs'));
     }
 
     /**
@@ -537,7 +547,7 @@ class AnggotaController extends Controller
      */
     public function exportSaldo(Request $request)
     {
-        $filters = $request->only(['search', 'cabang_id']);
+        $filters = $request->only(['search', 'cabang_id', 'status']);
         return $this->excelDownload(new SaldoExport($filters), 'saldo-anggota-' . date('Y-m-d') . '.xlsx');
     }
 

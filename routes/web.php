@@ -37,7 +37,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/anggota/{id}/reject-anggota', [AnggotaController::class, 'rejectAnggota'])->name('anggota.reject_anggota')->middleware('role:super_admin');
     Route::get('/anggota/approval-keluar', [AnggotaController::class, 'approvalKeluar'])->name('anggota.approval_keluar')->middleware('role:super_admin');
     Route::get('/anggota/saldo', [AnggotaController::class, 'saldo'])->name('anggota.saldo');
-    Route::get('/anggota/laporan/saldo', [AnggotaController::class, 'laporanSaldo'])->name('anggota.laporan.saldo');
+    Route::get('/anggota/laporan/masuk', [AnggotaController::class, 'laporanMasuk'])->name('anggota.laporan.masuk');
+    Route::get('/anggota/laporan/saldo', fn() => redirect()->route('anggota.saldo'))->name('anggota.laporan.saldo');
     Route::get('/anggota/laporan/profil', [AnggotaController::class, 'laporanProfil'])->name('anggota.laporan.profil');
     Route::get('/anggota/laporan/rekap', [AnggotaController::class, 'laporanRekap'])->name('anggota.laporan.rekap');
     Route::get('/anggota/laporan/keluar', [AnggotaController::class, 'laporanKeluar'])->name('anggota.laporan.keluar');

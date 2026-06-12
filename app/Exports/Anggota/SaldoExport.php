@@ -33,7 +33,11 @@ class SaldoExport implements FromQuery, WithHeadings, WithMapping, WithStyles, S
 
     public function query()
     {
-        $query = Anggota::with('rekeningSimpanan.produk', 'cabang')->where('status', 'aktif');
+        $query = Anggota::with('rekeningSimpanan.produk', 'cabang');
+
+        if (!empty($this->filters['status'])) {
+            $query->where('status', $this->filters['status']);
+        }
 
         if (!empty($this->filters['search'])) {
             $s = $this->filters['search'];
