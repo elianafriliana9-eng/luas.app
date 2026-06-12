@@ -13,7 +13,7 @@ class TransaksiSimpananSeeder extends Seeder
     public function run(): void
     {
         $rekenings = RekeningSimpanan::with('produk', 'anggota')->get();
-        $user = User::where('role', 'teller')->first() ?? User::first();
+        $user = User::where('role', 'super_admin')->first() ?? User::first();
         if ($rekenings->isEmpty() || !$user) return;
 
         $sekarang = Carbon::now()->startOfDay();
@@ -36,7 +36,7 @@ class TransaksiSimpananSeeder extends Seeder
                         'saldo_sebelum' => 0,
                         'saldo_sesudah' => $saldoAkhir,
                         'keterangan' => 'Setoran Simpanan Pokok',
-                        'channel' => 'teller',
+                        'channel' => 'admin',
                         'status_approval' => 'approved',
                         'created_at' => $tglBuka,
                     ]
@@ -67,7 +67,7 @@ class TransaksiSimpananSeeder extends Seeder
                             'saldo_sebelum' => $saldoSebelum,
                             'saldo_sesudah' => $saldoJalan,
                             'keterangan' => 'Setoran Simpanan Wajib bulan ke-' . ($i + 1),
-                            'channel' => 'teller',
+                            'channel' => 'admin',
                             'status_approval' => 'approved',
                             'created_at' => $tglSetor,
                         ]
@@ -101,7 +101,7 @@ class TransaksiSimpananSeeder extends Seeder
                             'saldo_sebelum' => $saldoSebelum,
                             'saldo_sesudah' => $saldoJalan,
                             'keterangan' => 'Setoran Simpanan Sukarela',
-                            'channel' => 'teller',
+                            'channel' => 'admin',
                             'status_approval' => 'approved',
                             'created_at' => $tglSetor,
                         ]

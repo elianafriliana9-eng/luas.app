@@ -11,6 +11,10 @@
                     <span class="material-symbols-outlined text-[18px]">file_download</span>
                     Export Excel
                 </a>
+                <a href="{{ route('simpanan.pdf.rekap', request()->query()) }}" target="_blank" class="flex items-center gap-2 px-4 py-2.5 bg-danger text-white text-sm font-semibold rounded-xl hover:bg-red-700 transition-all shadow-sm">
+                    <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                    PDF
+                </a>
                 <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all no-print">
                     <span class="material-symbols-outlined text-[18px]">print</span>
                     Cetak

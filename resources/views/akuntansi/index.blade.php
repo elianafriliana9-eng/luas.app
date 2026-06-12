@@ -53,7 +53,7 @@
                             <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center gap-1">
                                     <a href="{{ route('akuntansi.jurnal.detail', $j->id) }}" class="p-1 text-indigo-600 hover:text-indigo-900" title="Detail"></a>
-                                    @if(!$j->is_cancelled && $j->jenis === 'manual')
+                                    @if(auth()->user()->role === 'super_admin' && !$j->is_cancelled && $j->jenis === 'manual')
                                         <a href="{{ route('akuntansi.jurnal.revisi', $j->id) }}" class="p-1 text-blue-600 hover:text-blue-900" title="Revisi">✏️</a>
                                         <a href="{{ route('akuntansi.jurnal.batal', $j->id) }}" class="p-1 text-red-600 hover:text-red-900" title="Batalkan">🚫</a>
                                     @endif

@@ -19,6 +19,7 @@
                     <span class="material-symbols-outlined text-[18px]">file_download</span>
                     Export Excel
                 </a>
+                @if(auth()->user()->role === 'super_admin')
                 @php $pendingCount = Cache::remember('badge.pending_approval', 300, fn() => \App\Models\TransaksiSimpanan::where('status_approval', 'pending')->where('dibatalkan', false)->count()); @endphp
                 <a href="{{ route('simpanan.approval') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all relative">
                     <span class="material-symbols-outlined text-[18px]">pending_actions</span>
@@ -27,6 +28,7 @@
                         <span class="px-1.5 py-0.5 bg-danger text-white text-[10px] font-bold rounded-full leading-none">{{ $pendingCount }}</span>
                     @endif
                 </a>
+                @endif
                 <a href="{{ route('simpanan.create', ['jenis' => 'setoran']) }}" class="flex items-center gap-2 bg-secondary text-white px-4 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-secondary/20 hover:bg-secondary-dark transition-all active:scale-95">
                     <span class="material-symbols-outlined text-[18px]">add_circle</span>
                     Setoran
@@ -150,7 +152,7 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    @if(!$trx->dibatalkan && in_array($trx->jenis, ['setoran', 'penarikan', 'pinbuk_masuk', 'pinbuk_keluar']))
+                                    @if(auth()->user()->role === 'super_admin' && !$trx->dibatalkan && in_array($trx->jenis, ['setoran', 'penarikan', 'pinbuk_masuk', 'pinbuk_keluar']))
                                         <a href="{{ route('simpanan.cancel', $trx->id) }}" class="p-2 text-tertiary-dark hover:bg-tertiary/10 rounded-lg transition-colors inline-flex" title="Batalkan">
                                             <span class="material-symbols-outlined text-[18px]">block</span>
                                         </a>

@@ -45,10 +45,6 @@
                             @endphp
                             <dl class="space-y-3">
                                 <div class="flex justify-between">
-                                    <dt class="text-sm text-gray-500">Gaji Pokok</dt>
-                                    <dd class="text-sm font-medium text-gray-900 font-mono">Rp {{ number_format($anggota->gaji_pokok ?? 0, 0, ',', '.') }}</dd>
-                                </div>
-                                <div class="flex justify-between">
                                     <dt class="text-sm text-gray-500">Tanggal Gajian</dt>
                                     <dd class="text-sm font-medium text-gray-900">Setiap tanggal {{ $anggota->tanggal_gajian ?? 25 }}</dd>
                                 </div>

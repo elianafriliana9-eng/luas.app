@@ -133,7 +133,7 @@ class SimpananController extends Controller
                 'saldo_sebelum' => $saldoSebelum,
                 'saldo_sesudah' => $needApproval ? $saldoSebelum : $saldoSesudah,
                 'keterangan' => $validated['keterangan'] ?? ($validated['jenis'] === 'setoran' ? 'Setoran tunai' : 'Penarikan tunai'),
-                'channel' => 'teller',
+                'channel' => 'admin',
                 'status_approval' => $needApproval ? 'pending' : 'approved',
                 'approved_by' => $needApproval ? null : auth()->id(),
                 'approved_at' => $needApproval ? null : now(),
@@ -340,7 +340,7 @@ class SimpananController extends Controller
                 'saldo_sebelum' => $sumberSaldoSebelum,
                 'saldo_sesudah' => $saldoSumberSesudah,
                 'keterangan' => 'Pinbuk ke ' . $tujuan->no_rekening . ' — ' . ($validated['keterangan'] ?? ''),
-                'channel' => 'teller',
+                'channel' => 'admin',
                 'status_approval' => $needApproval ? 'pending' : 'approved',
                 'approved_by' => $needApproval ? null : auth()->id(),
                 'approved_at' => $needApproval ? null : now(),
@@ -355,7 +355,7 @@ class SimpananController extends Controller
                 'saldo_sebelum' => $tujuanSaldoSebelum,
                 'saldo_sesudah' => $saldoTujuanSesudah,
                 'keterangan' => 'Pinbuk dari ' . $sumber->no_rekening . ' — ' . ($validated['keterangan'] ?? ''),
-                'channel' => 'teller',
+                'channel' => 'admin',
                 'status_approval' => $needApproval ? 'pending' : 'approved',
                 'approved_by' => $needApproval ? null : auth()->id(),
                 'approved_at' => $needApproval ? null : now(),
@@ -928,28 +928,36 @@ class SimpananController extends Controller
 
     public function pdfStatement($id, Request $request)
     {
-        $rekening = RekeningSimpanan::with(['anggota', 'produk'])->findOrFail($id);
-        $query = TransaksiSimpanan::where('rekening_id', $id)->where('dibatalkan', false)->orderBy('created_at', 'asc');
+        try {
+            $rekening = RekeningSimpanan::with(['anggota', 'produk'])->findOrFail($id);
+            $query = TransaksiSimpanan::where('rekening_id', $id)->where('dibatalkan', false)->orderBy('created_at', 'asc');
 
-        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
-        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+            if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+            if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
 
-        $transaksis = $query->get();
-        $pdf = Pdf::loadView('simpanan.pdf_statement', compact('rekening', 'transaksis'));
-        return $pdf->download('Statement_' . $rekening->no_rekening . '.pdf');
+            $transaksis = $query->get();
+            $pdf = Pdf::loadView('simpanan.pdf_statement', compact('rekening', 'transaksis'));
+            return $pdf->download('Statement_' . $rekening->no_rekening . '.pdf');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
     public function pdfRekap(Request $request)
     {
-        $query = RekeningSimpanan::with(['anggota', 'produk'])->where('status', 'aktif');
+        try {
+            $query = RekeningSimpanan::with(['anggota', 'produk'])->where('status', 'aktif');
 
-        if ($produkId = $request->input('produk_id')) $query->where('produk_id', $produkId);
-        if ($cabangId = $request->input('cabang_id')) $query->whereHas('anggota', fn($q) => $q->where('cabang_id', $cabangId));
+            if ($produkId = $request->input('produk_id')) $query->where('produk_id', $produkId);
+            if ($cabangId = $request->input('cabang_id')) $query->whereHas('anggota', fn($q) => $q->where('cabang_id', $cabangId));
 
-        $rekenings = $query->orderBy('no_rekening')->get();
-        $total = $rekenings->sum('saldo');
-        $pdf = Pdf::loadView('simpanan.pdf_rekap', compact('rekenings', 'total'));
-        return $pdf->download('Rekap_Simpanan_' . date('Y-m-d') . '.pdf');
+            $rekenings = $query->orderBy('no_rekening')->get();
+            $total = $rekenings->sum('saldo');
+            $pdf = Pdf::loadView('simpanan.pdf_rekap', compact('rekenings', 'total'));
+            return $pdf->download('Rekap_Simpanan_' . date('Y-m-d') . '.pdf');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
     /**

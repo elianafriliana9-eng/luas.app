@@ -480,7 +480,7 @@ class PembiayaanController extends Controller
                 'nominal_bunga' => $jadwal->bunga,
                 'nominal_denda' => 0,
                 'total' => $jadwal->total,
-                'channel' => 'teller',
+                'channel' => 'admin',
             ]);
 
             DB::commit();

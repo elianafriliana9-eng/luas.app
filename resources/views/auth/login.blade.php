@@ -222,8 +222,8 @@
                 </p>
                 <div class="mt-4 p-3 bg-surface-container rounded text-xs text-left">
                     <strong>Akun Demo:</strong><br>
+                    Super Admin: <code>superadmin@kopsaku.com</code><br>
                     Admin: <code>admin@kopsaku.com</code><br>
-                    Teller: <code>teller@kopsaku.com</code><br>
                     Password: <code>password</code>
                 </div>
             </div>

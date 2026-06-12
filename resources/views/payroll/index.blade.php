@@ -5,6 +5,7 @@
                 {{ __('Payroll — Potongan Gaji') }}
             </h2>
             <div class="flex gap-2">
+                @if(auth()->user()->role === 'super_admin')
                 <a href="{{ route('payroll.pay_later_pending') }}"
                    class="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -24,6 +25,7 @@
                         Proses Potongan Bulan Ini
                     </button>
                 </form>
+                @endif
             </div>
         </div>
     </x-slot>
@@ -49,7 +51,6 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Karyawan</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Perusahaan</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Pokok</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Potongan/Bulan</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Diterima</th>
                                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Gajian</th>
@@ -77,9 +78,6 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $k->perusahaan?->nama ?? '-' }}</td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
-                                            Rp {{ number_format($k->gaji_pokok ?? 0, 0, ',', '.') }}
-                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 text-right font-mono">
                                             - Rp {{ number_format($totalPotongan, 0, ',', '.') }}
                                         </td>
@@ -100,7 +98,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                                             Tidak ada karyawan dengan potongan gaji aktif.
                                         </td>
                                     </tr>

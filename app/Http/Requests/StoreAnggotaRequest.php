@@ -8,7 +8,7 @@ class StoreAnggotaRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return in_array(auth()->user()->role, ['super_admin', 'admin', 'teller']);
+        return in_array(auth()->user()->role, ['super_admin', 'admin']);
     }
 
     public function rules(): array

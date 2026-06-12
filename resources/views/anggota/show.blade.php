@@ -77,7 +77,7 @@
                         Cetak
                     </button>
                     @if($anggota->status === 'keluar')
-                        <a href="{{ route('anggota.export_keluar', $anggota->id) }}" class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white text-sm font-semibold rounded-xl shadow-md shadow-slate-800/20 hover:bg-slate-900 transition-all no-print">
+                        <a href="{{ route('anggota.pdf_keluar', $anggota->id) }}" class="flex items-center gap-2 px-4 py-2.5 bg-slate-800 text-white text-sm font-semibold rounded-xl shadow-md shadow-slate-800/20 hover:bg-slate-900 transition-all no-print">
                             <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
                             Download Bukti (PDF)
                         </a>
@@ -148,10 +148,6 @@
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Perusahaan</p>
                     <p class="text-sm font-semibold text-blue-900 mt-0.5">{{ $anggota->perusahaan?->nama ?? '-' }}</p>
-                </div>
-                <div>
-                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gaji Pokok</p>
-                    <p class="text-sm font-semibold text-blue-900 font-data mt-0.5">Rp {{ number_format($anggota->gaji_pokok ?? 0, 0, ',', '.') }}</p>
                 </div>
                 <div>
                     <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Alamat</p>

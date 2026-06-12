@@ -140,14 +140,14 @@
                                         <a href="{{ route('simpanan.statement', $rek->id) }}" class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Statement">
                                             <span class="material-symbols-outlined text-[18px]">receipt_long</span>
                                         </a>
-                                        @if($rek->status === 'aktif')
+                                        @if(auth()->user()->role === 'super_admin' && $rek->status === 'aktif')
                                             <a href="{{ route('simpanan.blokir', $rek->id) }}" class="p-2 text-tertiary-dark hover:bg-tertiary/10 rounded-lg transition-colors" title="Blokir">
                                                 <span class="material-symbols-outlined text-[18px]">lock</span>
                                             </a>
                                             <a href="{{ route('simpanan.tutup', $rek->id) }}" class="p-2 text-danger hover:bg-danger/10 rounded-lg transition-colors" title="Tutup Rekening">
                                                 <span class="material-symbols-outlined text-[18px]">cancel</span>
                                             </a>
-                                        @elseif($rek->status === 'blokir')
+                                        @elseif(auth()->user()->role === 'super_admin' && $rek->status === 'blokir')
                                             <form action="{{ route('simpanan.buka_blokir', $rek->id) }}" method="POST" class="inline">
                                                 @csrf
                                                 <button type="submit" class="p-2 text-secondary hover:bg-secondary/10 rounded-lg transition-colors" title="Buka Blokir">

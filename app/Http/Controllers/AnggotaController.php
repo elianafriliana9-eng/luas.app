@@ -251,7 +251,7 @@ class AnggotaController extends Controller
                         'saldo_sebelum' => $saldoTarik,
                         'saldo_sesudah' => 0,
                         'keterangan' => 'Penarikan otomatis karena anggota keluar',
-                        'channel' => 'teller',
+                        'channel' => 'admin',
                         'status_approval' => 'approved',
                         'approved_by' => auth()->id(),
                         'approved_at' => now(),
@@ -571,31 +571,39 @@ class AnggotaController extends Controller
 
     public function pdfProfil(Request $request)
     {
-        $query = Anggota::with('cabang');
-        if ($status = $request->input('status')) $query->where('status', $status);
-        if ($perusahaanId = $request->input('perusahaan_id')) $query->where('perusahaan_id', $perusahaanId);
+        try {
+            $query = Anggota::with('cabang');
+            if ($status = $request->input('status')) $query->where('status', $status);
+            if ($perusahaanId = $request->input('perusahaan_id')) $query->where('perusahaan_id', $perusahaanId);
 
-        $anggota = $query->orderBy('nama_lengkap')->get();
-        $pdf = Pdf::loadView('anggota.pdf_profil', compact('anggota'));
-        return $pdf->download('Profil_Anggota_' . date('Y-m-d') . '.pdf');
+            $anggota = $query->orderBy('nama_lengkap')->get();
+            $pdf = Pdf::loadView('anggota.pdf_profil', compact('anggota'));
+            return $pdf->download('Profil_Anggota_' . date('Y-m-d') . '.pdf');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
     public function pdfKeluar($id)
     {
-        $anggota = Anggota::with(['cabang', 'rekeningSimpanan.produk'])->findOrFail($id);
+        try {
+            $anggota = Anggota::with(['cabang', 'rekeningSimpanan.produk'])->findOrFail($id);
 
-        if ($anggota->status !== 'keluar') {
-            return back()->with('error', 'Hanya dapat mengekspor data untuk anggota yang sudah keluar.');
+            if ($anggota->status !== 'keluar') {
+                return back()->with('error', 'Hanya dapat mengekspor data untuk anggota yang sudah keluar.');
+            }
+
+            $rekeningIds = $anggota->rekeningSimpanan->pluck('id');
+            $historyTransaksi = TransaksiSimpanan::whereIn('rekening_id', $rekeningIds)
+                ->with(['rekening.produk'])
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            $pdf = Pdf::loadView('anggota.pdf_keluar', compact('anggota', 'historyTransaksi'));
+            return $pdf->download('Bukti_Penutupan_Keanggotaan_' . $anggota->no_anggota . '.pdf');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
         }
-
-        $rekeningIds = $anggota->rekeningSimpanan->pluck('id');
-        $historyTransaksi = TransaksiSimpanan::whereIn('rekening_id', $rekeningIds)
-            ->with(['rekening.produk'])
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        $pdf = Pdf::loadView('anggota.pdf_keluar', compact('anggota', 'historyTransaksi'));
-        return $pdf->download('Bukti_Penutupan_Keanggotaan_' . $anggota->no_anggota . '.pdf');
     }
 
     /**

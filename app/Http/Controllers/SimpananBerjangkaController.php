@@ -140,7 +140,7 @@ class SimpananBerjangkaController extends Controller
                         'saldo_sebelum' => $saldoSebelum,
                         'saldo_sesudah' => $rekening->saldo,
                         'keterangan' => 'Pencairan deposito ' . $deposito->no_deposito . ' (' . ($validated['keterangan'] ?? '') . ')',
-                        'channel' => 'teller',
+                        'channel' => 'admin',
                         'status_approval' => 'approved',
                         'approved_by' => auth()->id(),
                         'approved_at' => now(),

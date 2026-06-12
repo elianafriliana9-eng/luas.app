@@ -28,7 +28,7 @@ class SmokeTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
-    private User $teller;
+    private User $user;
     private Cabang $cabang;
     private Anggota $anggota;
     private Anggota $anggotaKeluar;
@@ -43,7 +43,7 @@ class SmokeTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create(['role' => 'super_admin']);
-        $this->teller = User::factory()->create(['role' => 'teller']);
+        $this->user = User::factory()->create(['role' => 'user']);
 
         $this->cabang = Cabang::create([
             'kode' => 'CBG-SMK', 'nama' => 'Cabang Smoke Test',

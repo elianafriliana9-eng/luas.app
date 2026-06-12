@@ -100,11 +100,6 @@
                                 @error('perusahaan_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok</label>
-                                <input type="text" name="gaji_pokok" value="{{ old('gaji_pokok') }}" inputmode="decimal" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 @error('gaji_pokok') border-red-500 @enderror" oninput="formatRupiah(this)">
-                                @error('gaji_pokok') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-                            </div>
-                            <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Gajian</label>
                                 <input type="number" name="tanggal_gajian" value="{{ old('tanggal_gajian', 25) }}" min="1" max="31" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 @error('tanggal_gajian') border-red-500 @enderror">
                                 @error('tanggal_gajian') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror

@@ -16,7 +16,9 @@
             <div class="bg-white p-4 rounded-lg shadow-sm"><div class="text-xs text-gray-500 uppercase">Total Pembiayaan Aktif</div><div class="text-2xl font-bold text-indigo-600 mt-1">{{ $totalPinjaman }}</div></div>
             <div class="bg-white p-4 rounded-lg shadow-sm"><div class="text-xs text-gray-500 uppercase">Total Outstanding</div><div class="text-lg font-bold text-indigo-600 font-mono mt-1">Rp {{ number_format($totalOutstanding, 0, ',', '.') }}</div></div>
             <div class="bg-white p-4 rounded-lg shadow-sm flex items-center justify-end gap-2">
+                @if(auth()->user()->role === 'super_admin')
                 <a href="{{ route('pembiayaan.registrasi') }}" class="px-3 py-2 bg-yellow-100 text-yellow-700 text-sm rounded-lg hover:bg-yellow-200 transition">⏳ Registrasi</a>
+                @endif
                 <a href="{{ route('pembiayaan.laporan.pembiayaan') }}" class="px-3 py-2 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition">📄 Laporan</a>
             </div>
         </div>
@@ -60,10 +62,10 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center gap-1">
-                                    @if($pem->status === 'disetujui')
+                                    @if(auth()->user()->role === 'super_admin' && $pem->status === 'disetujui')
                                         <a href="{{ route('pembiayaan.pencairan', $pem->id) }}" class="p-1 text-green-600 hover:text-green-900" title="Cairkan">💰</a>
                                     @endif
-                                    @if($pem->status === 'aktif')
+                                    @if(auth()->user()->role === 'super_admin' && $pem->status === 'aktif')
                                         <a href="{{ route('pembiayaan.pelunasan', $pem->id) }}" class="p-1 text-blue-600 hover:text-blue-900" title="Lunasi">✅</a>
                                     @endif
                                     <a href="{{ route('pembiayaan.cetak.sp3', $pem->id) }}" class="p-1 text-gray-600 hover:text-gray-900" title="Cetak SP3">📄</a>

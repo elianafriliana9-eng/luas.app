@@ -219,7 +219,7 @@
                                 @endif
                             </a>
                             @endif
-                            @if(in_array(auth()->user()->role, ['super_admin', 'admin']))
+                            @if(auth()->user()->role === 'super_admin')
                             <a href="{{ route('anggota.pending_approval') }}" class="sub-link {{ request()->routeIs('anggota.pending_approval') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px] flex-shrink-0">how_to_reg</span>
                                 <span>Approval Anggota Baru</span>
@@ -261,11 +261,13 @@
                                 <span class="material-symbols-outlined text-[16px] flex-shrink-0">upload_file</span>
                                 <span>Import Anggota</span>
                             </a>
+                            @if(auth()->user()->role === 'super_admin')
                             <a href="{{ route('anggota.import.master') }}" class="sub-link {{ request()->routeIs('anggota.import.master') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px] flex-shrink-0">dataset</span>
                                 <span>Import Master Data</span>
                             </a>
-                            @if(in_array(auth()->user()->role, ['super_admin', 'admin']))
+                            @endif
+                            @if(auth()->user()->role === 'super_admin')
                             <a href="{{ route('konfigurasi-coa.index') }}" class="sub-link {{ request()->routeIs('konfigurasi-coa.*') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_tree</span>
                                 <span>Konfigurasi COA</span>
@@ -377,6 +379,7 @@
                                 <span class="material-symbols-outlined text-[16px]">compare_arrows</span>
                                 Pemindahbukuan
                             </a>
+                            @if(auth()->user()->role === 'super_admin')
                             <a href="{{ route('simpanan.pinbuk.approval') }}" class="sub-link {{ request()->routeIs('simpanan.pinbuk.approval') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px]">pending_actions</span>
                                 Approval Pinbuk
@@ -384,6 +387,7 @@
                                     <span class="ml-auto px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">{{ $pendingPinbuk }}</span>
                                 @endif
                             </a>
+                            @endif
                             <a href="{{ route('simpanan.rekening_baru') }}" class="sub-link {{ request()->routeIs('simpanan.rekening_baru') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
                                 Buka Rekening Baru
@@ -455,10 +459,12 @@
                             <span class="material-symbols-outlined text-[16px] flex-shrink-0">note_add</span>
                             <span>Pengajuan</span>
                         </a>
+                        @if(auth()->user()->role === 'super_admin')
                         <a href="{{ route('pembiayaan.registrasi') }}" class="sub-link {{ request()->routeIs('pembiayaan.registrasi') ? 'active' : '' }}">
                             <span class="material-symbols-outlined text-[16px] flex-shrink-0">fact_check</span>
                             <span>Registrasi</span>
                         </a>
+                        @endif
                         <a href="{{ route('pembiayaan.index') }}" class="sub-link {{ request()->routeIs('pembiayaan.index') ? 'active' : '' }}">
                             <span class="material-symbols-outlined text-[16px] flex-shrink-0">list_alt</span>
                             <span>Daftar Pembiayaan</span>
@@ -490,6 +496,7 @@
                             <span class="material-symbols-outlined text-[16px] flex-shrink-0">swap_horiz</span>
                             <span>Transaksi Jurnal</span>
                         </a>
+                        @if(auth()->user()->role === 'super_admin')
                         <a href="{{ route('akuntansi.coa') }}" class="sub-link {{ request()->routeIs('akuntansi.coa') ? 'active' : '' }}">
                             <span class="material-symbols-outlined text-[16px] flex-shrink-0">list_alt</span>
                             <span>Setup Akun (COA)</span>
@@ -498,6 +505,7 @@
                             <span class="material-symbols-outlined text-[16px] flex-shrink-0">savings</span>
                             <span>Setup Kas</span>
                         </a>
+                        @endif
                         <a href="{{ route('akuntansi.buku_besar') }}" class="sub-link {{ request()->routeIs('akuntansi.buku_besar') ? 'active' : '' }}">
                             <span class="material-symbols-outlined text-[16px] flex-shrink-0">menu_book</span>
                             <span>Buku Besar</span>

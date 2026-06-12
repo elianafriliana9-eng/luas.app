@@ -119,7 +119,7 @@ class PembiayaanSeeder extends Seeder
                         'nominal_bunga' => $bungaPerBulan,
                         'nominal_denda' => 0,
                         'total' => $totalAngsuran,
-                        'channel' => 'teller',
+                        'channel' => 'admin',
                         'created_at' => $jadwal->tanggal_jatuh_tempo->copy()->subDays(1),
                     ]
                 );

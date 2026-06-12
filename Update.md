@@ -1,6 +1,6 @@
 # KopSaku — Update Progres
 
-> Terakhir diperbarui: 12 Juni 2026
+> Terakhir diperbarui: 12 Juni 2026 — 19:16 WIB
 
 ---
 
@@ -70,13 +70,20 @@
 - COA fallback hardcoded jika konfigurasi DB kosong
 
 ### Fitur Lintas Modul
-- **Role-based access**: admin, super_admin, teller, bendahara, manajer
+- **Role-based access**: super_admin, admin, executive, user
+- **Role restructure**: teller, kepala_cabang, account_officer, akuntan → dihapus
+  - `super_admin` → full web access + approval/control
+  - `admin` → web data entry + import/export saja
+  - `executive` + `user` → mobile only
+- **Sidebar gates**: 7 super_admin-only items di-hidden dari admin
+- **Approval/control buttons gated** (`@if super_admin`) di 6 halaman (simpanan, pembiayaan, payroll, akuntansi, anggota)
 - **Soft Deletes**: 12 tabel (Anggota, RekeningSimpanan, TransaksiSimpanan, Pembiayaan, dll)
 - **Audit trail**: `created_by`, `updated_by`, `ip_address`, `user_agent` di tabel transaksional
 - **Immutable flag**: TransaksiSimpanan tidak bisa di-ubah setelah approve
 - **UUID primary keys** — no auto-increment
 - **HasUuid + Auditable + SimpananJurnal trait**
 - **Form Request**: StoreAnggotaRequest, UpdateAnggotaRequest, StoreTransaksiRequest, StorePinbukRequest, RekeningBaruRequest
+- **Channel values**: `teller` → `admin` di transaksi_simpanan & transaksi_pembiayaan
 
 ### UI/UX
 - **Phase 1**: Loading state + disabled button + spinner di 14 form finansial
@@ -101,6 +108,10 @@
 - RekapAnggotaExport: fix Closure bug `Anggota::sum(function(...))` → `leftJoin()->sum()`
 - SmokeTest: tambah `tanggal_buka` di rekening seed, tambah `anggotaKeluar` seed
 - SimpananTest: `test_simpanan_transaksi` → assertRedirect (bukan assertOk)
+- **PDF/Cetak kosong**: Direktori `storage/fonts` (dibutuhkan DomPDF untuk font cache) tidak ada — dibuat
+- **Error handling PDF**: Semua method PDF (pdfStatement, pdfRekap, pdfProfil, pdfKeluar) ditambah try/catch — error tampil sebagai flash message
+- **Route name fix**: `anggota/show.blade.php` — route `anggota.export_keluar` → `anggota.pdf_keluar` (salah nama, tadinya error)
+- **Channel value cleanup**: 9 file (4 controller, 1 import, 2 seeder, 2 test) — `teller` → `admin`
 
 ---
 

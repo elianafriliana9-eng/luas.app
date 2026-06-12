@@ -95,7 +95,6 @@
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No. Pegawai</th>
                             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Perusahaan</th>
-                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gaji Pokok</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                             <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                         </tr>
@@ -117,9 +116,6 @@
                                 </td>
                                 <td class="px-4 py-3 text-sm text-gray-600">{{ $a->no_pegawai ?? '-' }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-600">{{ $a->perusahaan?->nama ?? '-' }}</td>
-                                <td class="px-4 py-3 text-sm text-right font-mono text-gray-900">
-                                    {{ $a->gaji_pokok ? 'Rp ' . number_format($a->gaji_pokok, 0, ',', '.') : '-' }}
-                                </td>
                                 <td class="px-4 py-3 text-center">
                                     @if($a->status === 'aktif')
                                         <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800 font-medium">Aktif</span>
@@ -148,7 +144,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">Tidak ada data anggota.</td></tr>
+                            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">Tidak ada data anggota.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

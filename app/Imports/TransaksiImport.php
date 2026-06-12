@@ -62,7 +62,7 @@ class TransaksiImport implements ToModel, WithHeadingRow, WithValidation, SkipsO
             'saldo_sebelum' => $saldoSebelum,
             'saldo_sesudah' => $saldoSesudah,
             'keterangan' => ($row['keterangan'] ?? 'Import Excel') . ' (Import)',
-            'channel' => 'teller',
+            'channel' => 'admin',
             'status_approval' => 'approved',
             'approved_by' => auth()->id(),
             'approved_at' => now(),

@@ -17,7 +17,7 @@ class SimpananTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
-    private User $teller;
+    private User $user;
     private Cabang $cabang;
     private ProdukSimpanan $produkPokok;
     private ProdukSimpanan $produkWajib;
@@ -32,7 +32,7 @@ class SimpananTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create(['role' => 'super_admin']);
-        $this->teller = User::factory()->create(['role' => 'teller']);
+        $this->user = User::factory()->create(['role' => 'user']);
 
         $this->cabang = Cabang::create([
             'kode' => 'CBG-TST',
@@ -327,9 +327,9 @@ class SimpananTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_approval_page_blocked_for_teller(): void
+    public function test_approval_page_blocked_for_user(): void
     {
-        $this->actingAs($this->teller);
+        $this->actingAs($this->user);
         $response = $this->get(route('simpanan.approval'));
         $response->assertStatus(403);
     }
@@ -345,7 +345,7 @@ class SimpananTest extends TestCase
             'nominal' => 500000,
             'saldo_sebelum' => $this->reksukarela->saldo,
             'saldo_sesudah' => $this->reksukarela->saldo - 500000,
-            'channel' => 'teller',
+            'channel' => 'admin',
             'status_approval' => 'pending',
         ]);
 
@@ -371,7 +371,7 @@ class SimpananTest extends TestCase
             'nominal' => $nominal,
             'saldo_sebelum' => $saldoAwal,
             'saldo_sesudah' => $saldoAwal - $nominal,
-            'channel' => 'teller',
+            'channel' => 'admin',
             'status_approval' => 'pending',
         ]);
 
@@ -386,9 +386,9 @@ class SimpananTest extends TestCase
         $this->assertEquals($saldoAwal, (float) $rekening->saldo);
     }
 
-    public function test_approve_transaction_blocked_for_teller(): void
+    public function test_approve_transaction_blocked_for_user(): void
     {
-        $this->actingAs($this->teller);
+        $this->actingAs($this->user);
         $transaksi = TransaksiSimpanan::create([
             'rekening_id' => $this->reksukarela->id,
             'user_id' => $this->admin->id,
@@ -397,7 +397,7 @@ class SimpananTest extends TestCase
             'nominal' => 5000,
             'saldo_sebelum' => 0,
             'saldo_sesudah' => 0,
-            'channel' => 'teller',
+            'channel' => 'admin',
             'status_approval' => 'pending',
         ]);
 
@@ -594,7 +594,7 @@ class SimpananTest extends TestCase
             'nominal' => 100000,
             'saldo_sebelum' => 0,
             'saldo_sesudah' => 100000,
-            'channel' => 'teller',
+            'channel' => 'admin',
             'status_approval' => 'approved',
         ]);
 
@@ -663,7 +663,7 @@ class SimpananTest extends TestCase
             'nominal' => 50000,
             'saldo_sebelum' => 0,
             'saldo_sesudah' => 50000,
-            'channel' => 'teller',
+            'channel' => 'admin',
             'status_approval' => 'approved',
             'dibatalkan' => true,
         ]);
@@ -686,7 +686,7 @@ class SimpananTest extends TestCase
             'nominal' => 50000,
             'saldo_sebelum' => 0,
             'saldo_sesudah' => 50000,
-            'channel' => 'teller',
+            'channel' => 'admin',
             'status_approval' => 'approved',
         ]);
 

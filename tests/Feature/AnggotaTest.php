@@ -178,7 +178,7 @@ class AnggotaTest extends TestCase
 
     public function test_role_middleware_blocks_non_admin(): void
     {
-        $user = User::factory()->create(['role' => 'teller']);
+        $user = User::factory()->create(['role' => 'user']);
         $this->actingAs($user);
 
         $response = $this->get(route('anggota.approval_keluar'));
