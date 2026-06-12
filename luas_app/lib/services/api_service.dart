@@ -153,6 +153,29 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getPembiayaanDetail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/pembiayaan-detail'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': jsonDecode(response.body)['data']};
+      } else {
+        return {'success': false, 'message': 'Gagal mengambil detail pembiayaan'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Koneksi gagal: $e'};
+    }
+  }
+
   static Future<Map<String, dynamic>> getProfile() async {
     try {
       final prefs = await SharedPreferences.getInstance();

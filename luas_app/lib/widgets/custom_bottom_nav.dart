@@ -68,9 +68,9 @@ class CustomBottomNav extends StatelessWidget {
           BottomNavigationBarItem(
             icon: Padding(
               padding: EdgeInsets.only(bottom: 4),
-              child: Icon(Icons.person_outline_rounded),
+              child: Icon(Icons.settings_rounded),
             ),
-            label: 'Profil',
+            label: 'Pengaturan',
           ),
         ],
       ),

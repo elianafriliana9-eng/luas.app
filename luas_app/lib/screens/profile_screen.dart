@@ -76,37 +76,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF1D4ED8)));
+      return const Scaffold(
+        backgroundColor: Color(0xFFF8FAFC),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF1D4ED8))),
+      );
     }
 
     if (_profileData == null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text('Gagal memuat profil'),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _fetchProfile, 
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1D4ED8)),
-              child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(backgroundColor: const Color(0xFF0037B0), elevation: 0),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text('Gagal memuat profil'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _fetchProfile, 
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1D4ED8)),
+                child: const Text('Coba Lagi', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
         ),
       );
     }
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          _buildProfileHeader(),
-          _buildInfoCard(),
-          const SizedBox(height: 8),
-          _buildSettingsSection(),
-          const SizedBox(height: 100),
-        ],
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0037B0),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildProfileHeader(),
+            _buildInfoCard(),
+            const SizedBox(height: 8),
+            _buildSettingsSection(),
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }

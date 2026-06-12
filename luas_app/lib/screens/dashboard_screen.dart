@@ -8,6 +8,11 @@ import 'simpanan_pokok_screen.dart';
 import 'simpanan_sukarela_screen.dart';
 import 'simpanan_wajib_screen.dart';
 import 'data_anggota_screen.dart';
+import 'history_transaksi_screen.dart';
+import 'pinjaman_anggota_screen.dart';
+import 'notification_screen.dart';
+import 'setting_screen.dart';
+import 'bayar_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -120,6 +125,20 @@ class _DashboardScreenState extends State<DashboardScreen>
   int _selectedIndex = 0;
 
   void _onItemTapped(int index) {
+    if (index == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const BayarScreen()),
+      );
+      return;
+    }
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const SettingScreen()),
+      );
+      return;
+    }
     setState(() {
       _selectedIndex = index;
     });
@@ -193,16 +212,43 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Align(
             alignment: Alignment.topRight,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(
-                Icons.settings_rounded,
-                color: Colors.white,
-                size: 24,
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Icon(
+                      Icons.notifications_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEF4444), // red-500
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -457,6 +503,12 @@ class _DashboardScreenState extends State<DashboardScreen>
         'icon_path': 'assets/icons/history.png',
         'iconColor': danger,
         'bgColor': const Color(0xFFFEF2F2), // red-50
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HistoryTransaksiScreen(dashboardData: _dashboardData),
+          ),
+        ),
       },
       {
         'title': 'Data\nAnggota',
@@ -468,6 +520,19 @@ class _DashboardScreenState extends State<DashboardScreen>
           context,
           MaterialPageRoute(
             builder: (_) => const DataAnggotaScreen(),
+          ),
+        ),
+      },
+      {
+        'title': 'Pinjaman\nAnggota',
+        'value': 'Rp ${_formatCurrency(_dashboardData?['total_tagihan'])}',
+        'icon_path': 'assets/icons/group.png',
+        'iconColor': const Color(0xFFF97316), // orange-500
+        'bgColor': const Color(0xFFFFF7ED), // orange-50
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PinjamanAnggotaScreen(dashboardData: _dashboardData),
           ),
         ),
       },
@@ -546,12 +611,18 @@ class _AnimatedMenuCardState extends State<AnimatedMenuCard> {
                   ),
                 ],
               ),
-              child: Image.asset(
-                widget.menu['icon_path'] as String,
-                width: 10,
-                height: 10,
-                fit: BoxFit.contain,
-              ),
+              child: widget.menu['icon_path'] != null
+                  ? Image.asset(
+                      widget.menu['icon_path'] as String,
+                      width: 26,
+                      height: 26,
+                      fit: BoxFit.contain,
+                    )
+                  : Icon(
+                      widget.menu['icon'] as IconData,
+                      color: iconColor,
+                      size: 26,
+                    ),
             ),
             const SizedBox(height: 12),
             Text(

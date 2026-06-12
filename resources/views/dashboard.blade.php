@@ -10,10 +10,7 @@
                     {{ $currentDate }}
                 </p>
             </div>
-            <button class="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-primary/20 hover:bg-primary-container transition-all active:scale-95">
-                <span class="material-symbols-outlined">add</span>
-                <span>Buat Transaksi Baru</span>
-            </button>
+
         </section>
 
         <!-- Charts Section -->
@@ -206,8 +203,5 @@
         </section>
     </div>
 
-    <!-- Floating Action Button (FAB) - For Quick Actions -->
-    <button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
-        <span class="material-symbols-outlined" style="font-size: 28px;">add</span>
-    </button>
+
 </x-app-layout>
