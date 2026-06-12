@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TransaksiPembiayaan extends Model
 {
-    use HasUuid;
+    use HasUuid, SoftDeletes;
 
     protected $table = 'transaksi_pembiayaan';
     public $timestamps = false;

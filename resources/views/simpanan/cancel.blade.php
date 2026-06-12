@@ -41,17 +41,19 @@
 
             <!-- Cancel Form -->
             <section class="bg-white rounded-xl shadow-sm p-6">
-                <form action="{{ route('simpanan.cancel.submit', $transaksi->id) }}" method="POST">
+                <form action="{{ route('simpanan.cancel.submit', $transaksi->id) }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
                     @csrf
                     <div>
                         <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Alasan Pembatalan <span class="text-danger">*</span></label>
-                        <textarea name="alasan" rows="3" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="Jelaskan alasan pembatalan..."></textarea>
+                        <textarea name="alasan" rows="3" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary @error('alasan') border-red-500 @enderror" placeholder="Jelaskan alasan pembatalan..."></textarea>
+                        @error('alasan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                     </div>
                     <div class="flex justify-end gap-3 mt-6 pt-5 border-t border-slate-100">
                         <a href="{{ route('simpanan.index') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
-                        <button type="submit" class="flex items-center gap-2 px-6 py-2.5 bg-tertiary-dark text-white text-sm font-semibold rounded-xl shadow-md shadow-tertiary/20 hover:opacity-90 transition-all active:scale-95">
-                            <span class="material-symbols-outlined text-[18px]">block</span>
-                            Batalkan Transaksi
+                        <button type="submit" :disabled="loading" onclick="return confirm('Yakin ingin membatalkan transaksi ini? Aksi ini tidak bisa dibatalkan.')" class="flex items-center gap-2 px-6 py-2.5 bg-tertiary-dark text-white text-sm font-semibold rounded-xl shadow-md shadow-tertiary/20 hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="loading" class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                            <span x-show="!loading" class="material-symbols-outlined text-[18px]">block</span>
+                            <span x-text="loading ? 'Memproses...' : 'Batalkan Transaksi'"></span>
                         </button>
                     </div>
                 </form>

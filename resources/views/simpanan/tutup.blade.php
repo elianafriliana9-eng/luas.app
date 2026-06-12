@@ -50,17 +50,19 @@
             @if($rekening->saldo <= 0)
                 <!-- Form -->
                 <section class="bg-white rounded-xl shadow-sm p-6">
-                    <form action="{{ route('simpanan.tutup.submit', $rekening->id) }}" method="POST">
+                    <form action="{{ route('simpanan.tutup.submit', $rekening->id) }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
                         @csrf
                         <div>
                             <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Alasan Penutupan <span class="text-danger">*</span></label>
-                            <textarea name="alasan" rows="3" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="Jelaskan alasan penutupan rekening..."></textarea>
+                            <textarea name="alasan" rows="3" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary @error('alasan') border-red-500 @enderror" placeholder="Jelaskan alasan penutupan rekening..."></textarea>
+                            @error('alasan') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                         </div>
                         <div class="flex justify-end gap-3 mt-6 pt-5 border-t border-slate-100">
                             <a href="{{ route('simpanan.rekening') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
-                            <button type="submit" class="flex items-center gap-2 px-6 py-2.5 bg-danger text-white text-sm font-semibold rounded-xl shadow-md shadow-danger/20 hover:bg-red-700 transition-all active:scale-95">
-                                <span class="material-symbols-outlined text-[18px]">cancel</span>
-                                Tutup Rekening
+                            <button type="submit" :disabled="loading" onclick="return confirm('Yakin ingin menutup rekening ini? Aksi ini tidak bisa dibatalkan.')" class="flex items-center gap-2 px-6 py-2.5 bg-danger text-white text-sm font-semibold rounded-xl shadow-md shadow-danger/20 hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="loading" class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                <span x-show="!loading" class="material-symbols-outlined text-[18px]">cancel</span>
+                                <span x-text="loading ? 'Memproses...' : 'Tutup Rekening'"></span>
                             </button>
                         </div>
                     </form>

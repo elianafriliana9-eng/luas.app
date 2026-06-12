@@ -1,6 +1,13 @@
 <x-app-layout>
     <div class="p-8 max-w-[1600px] mx-auto space-y-6">
 
+        <!-- Breadcrumbs -->
+        <nav class="flex items-center gap-1 text-xs text-slate-500">
+            <a href="{{ route('dashboard') }}" class="hover:text-primary transition">Dashboard</a>
+            <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+            <span class="text-primary font-medium">Simpanan</span>
+        </nav>
+
         <!-- Page Header -->
         <section class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-4">
             <div>
@@ -12,7 +19,7 @@
                     <span class="material-symbols-outlined text-[18px]">file_download</span>
                     Export Excel
                 </a>
-                @php $pendingCount = \App\Models\TransaksiSimpanan::where('status_approval', 'pending')->where('dibatalkan', false)->count(); @endphp
+                @php $pendingCount = Cache::remember('badge.pending_approval', 300, fn() => \App\Models\TransaksiSimpanan::where('status_approval', 'pending')->where('dibatalkan', false)->count()); @endphp
                 <a href="{{ route('simpanan.approval') }}" class="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl hover:bg-slate-50 transition-all relative">
                     <span class="material-symbols-outlined text-[18px]">pending_actions</span>
                     Approval

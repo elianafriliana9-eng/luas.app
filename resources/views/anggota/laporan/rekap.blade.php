@@ -41,13 +41,15 @@
                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aktif</th>
                 </tr></thead>
                 <tbody class="divide-y">
-                    @foreach($perCabang as $c)
+                    @forelse($perCabang as $c)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-3 text-sm font-medium">{{ $c->cabang?->nama ?? '-' }}</td>
                             <td class="px-6 py-3 text-sm text-center font-bold">{{ $c->total }}</td>
                             <td class="px-6 py-3 text-sm text-center">{{ $c->aktif }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data cabang</td></tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -61,12 +63,14 @@
                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Jumlah Aktif</th>
                 </tr></thead>
                 <tbody class="divide-y">
-                    @foreach($perPerusahaan as $p)
+                    @forelse($perPerusahaan as $p)
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-3 text-sm font-medium">{{ $p->nama }}</td>
                             <td class="px-6 py-3 text-sm text-center font-bold">{{ $p->anggota_count }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr><td colspan="2" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data perusahaan</td></tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

@@ -32,7 +32,7 @@
                 </tr></thead>
                 <tbody class="divide-y">
                     @php $grandTotal = 0; @endphp
-                    @foreach($anggota as $i => $a)
+                    @forelse($anggota as $i => $a)
                         @php
                             $pokok = $a->rekeningSimpanan->where('produk.kode', 'SP')->sum('saldo');
                             $wajib = $a->rekeningSimpanan->where('produk.kode', 'SW')->sum('saldo');
@@ -49,7 +49,9 @@
                             <td class="px-4 py-3 text-sm text-center font-mono">Rp {{ number_format($sukarela, 0, ',', '.') }}</td>
                             <td class="px-4 py-3 text-sm text-right font-mono font-bold">Rp {{ number_format($total, 0, ',', '.') }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data anggota</td></tr>
+                    @endforelse
                     <tr class="bg-indigo-50 font-bold">
                         <td colspan="6" class="px-4 py-3 text-sm text-right">GRAND TOTAL</td>
                         <td class="px-4 py-3 text-sm text-right font-mono text-indigo-700">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>

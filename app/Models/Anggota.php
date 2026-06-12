@@ -6,13 +6,14 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class Anggota extends Authenticatable
 {
-    use HasFactory, HasUuid, HasApiTokens, Notifiable;
+    use HasFactory, HasUuid, HasApiTokens, Notifiable, \App\Traits\Auditable, SoftDeletes;
 
     protected $table = 'anggota';
 
@@ -21,13 +22,15 @@ class Anggota extends Authenticatable
         'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'email',
         'perusahaan_id', 'gaji_pokok', 'tanggal_gajian',
         'tanggal_mulai_kerja', 'no_pegawai',
+        'departemen', 'jabatan',
         'foto_ktp',
         'foto_selfie',
         'status',
         'tanggal_masuk',
         'tanggal_keluar',
         'alasan_keluar',
-        'password'
+        'password',
+        'created_by', 'updated_by', 'ip_address', 'user_agent',
     ];
 
     protected $hidden = [

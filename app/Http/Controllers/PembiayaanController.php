@@ -135,6 +135,14 @@ class PembiayaanController extends Controller
     }
 
     /**
+     * b. Daftar pengajuan (redirect to registrasi)
+     */
+    public function pengajuan()
+    {
+        return view('pembiayaan.pengajuan');
+    }
+
+    /**
      * c. Registrasi pembiayaan (list pending approval)
      */
     public function registrasi(Request $request)

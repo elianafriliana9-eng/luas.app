@@ -50,7 +50,7 @@
 
             <!-- Upload Form -->
             <section class="bg-white rounded-xl shadow-sm p-6">
-                <form action="{{ route('anggota.import.master.process') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('anggota.import.master.process') }}" method="POST" enctype="multipart/form-data" x-data="{ loading: false }" @submit="loading = true">
                     @csrf
                     <div>
                         <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">File Template.xlsx <span class="text-danger">*</span></label>
@@ -73,10 +73,12 @@
                     </div>
                     <div class="flex justify-end gap-3 mt-6 pt-5 border-t border-slate-100">
                         <a href="{{ route('anggota.index') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
-                        <button type="submit" class="flex items-center gap-2 px-6 py-2.5 bg-amber-600 text-white text-sm font-semibold rounded-xl shadow-md shadow-amber-600/20 hover:bg-amber-700 transition-all active:scale-95"
-                                onclick="return confirm('PERINGATAN: Semua data lama akan dihapus! Lanjutkan?')">
-                            <span class="material-symbols-outlined text-[18px]">upload</span>
-                            Import & Proses
+                        <button type="submit" :disabled="loading"
+                                onclick="return confirm('PERINGATAN: Semua data lama akan dihapus! Lanjutkan?')"
+                                class="flex items-center gap-2 px-6 py-2.5 bg-amber-600 text-white text-sm font-semibold rounded-xl shadow-md shadow-amber-600/20 hover:bg-amber-700 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span x-show="loading" class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                            <span x-show="!loading" class="material-symbols-outlined text-[18px]">upload</span>
+                            <span x-text="loading ? 'Mengimport...' : 'Import & Proses'"></span>
                         </button>
                     </div>
                 </form>

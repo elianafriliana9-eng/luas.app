@@ -21,3 +21,13 @@ Schedule::command('payroll:proses')
 Schedule::command('kolektibilitas:update')
     ->dailyAt('02:00')
     ->appendOutputTo(storage_path('logs/kolektibilitas.log'));
+
+// Bunga simpanan — every 1st of month at 3 AM
+Schedule::command('simpanan:bunga')
+    ->monthlyOn(1, '03:00')
+    ->appendOutputTo(storage_path('logs/bunga-simpanan.log'));
+
+// Auto Roll Over deposito — daily at 4 AM
+Schedule::command('deposito:aro')
+    ->dailyAt('04:00')
+    ->appendOutputTo(storage_path('logs/deposito-aro.log'));

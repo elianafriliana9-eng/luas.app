@@ -177,6 +177,9 @@
                 $pendingKeluar = \Illuminate\Support\Facades\Cache::remember('badge.pending_keluar', 300, fn() =>
                 \App\Models\Anggota::where('status', 'pengajuan_keluar')->count()
             );
+                $pendingAktif = \Illuminate\Support\Facades\Cache::remember('badge.pending_aktif', 300, fn() =>
+                \App\Models\Anggota::where('status', 'pending_aktif')->count()
+            );
             @endphp
             <!-- ═══ MASTER DATA ACCORDION ═══ -->
             <div x-data="{ open: {{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'true' : 'false' }}, subAnggota: {{ request()->routeIs('anggota.*') ? 'true' : 'false' }}, lapAnggota: {{ request()->routeIs('anggota.laporan.*') ? 'true' : 'false' }} }">
@@ -213,6 +216,15 @@
                                 <span>Approval Keluar</span>
                                 @if($pendingKeluar > 0)
                                     <span class="ml-auto px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full leading-none">{{ $pendingKeluar }}</span>
+                                @endif
+                            </a>
+                            @endif
+                            @if(in_array(auth()->user()->role, ['super_admin', 'admin']))
+                            <a href="{{ route('anggota.pending_approval') }}" class="sub-link {{ request()->routeIs('anggota.pending_approval') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">how_to_reg</span>
+                                <span>Approval Anggota Baru</span>
+                                @if($pendingAktif > 0)
+                                    <span class="ml-auto px-1.5 py-0.5 bg-amber-500 text-white text-[10px] font-bold rounded-full leading-none">{{ $pendingAktif }}</span>
                                 @endif
                             </a>
                             @endif
@@ -253,6 +265,12 @@
                                 <span class="material-symbols-outlined text-[16px] flex-shrink-0">dataset</span>
                                 <span>Import Master Data</span>
                             </a>
+                            @if(in_array(auth()->user()->role, ['super_admin', 'admin']))
+                            <a href="{{ route('konfigurasi-coa.index') }}" class="sub-link {{ request()->routeIs('konfigurasi-coa.*') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">account_tree</span>
+                                <span>Konfigurasi COA</span>
+                            </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -400,6 +418,18 @@
                             <a href="{{ route('simpanan.laporan.pinbuk') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.pinbuk') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px]">swap_calls</span> Laporan Pinbuk
                             </a>
+                            <a href="{{ route('simpanan.laporan.saldo') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.saldo') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px]">account_balance</span> Saldo Simpanan
+                            </a>
+                            <a href="{{ route('simpanan.laporan.statement') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.statement') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px]">receipt_long</span> Statement
+                            </a>
+                            <a href="{{ route('simpanan.laporan.blokir') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.blokir') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px]">lock</span> Rekening Blokir
+                            </a>
+                            <a href="{{ route('simpanan.laporan.tutup') }}" class="sub-link {{ request()->routeIs('simpanan.laporan.tutup') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px]">archive</span> Rekening Tutup
+                            </a>
                         </div>
 
                     </div>
@@ -495,7 +525,7 @@
             </a>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="nav-link w-full" style="color: #dc2626;">
+                <button type="submit" onclick="return confirm('Yakin ingin keluar?')" class="nav-link w-full" style="color: #dc2626;">
                     <span class="material-symbols-outlined text-[20px]">logout</span>
                     Keluar
                 </button>

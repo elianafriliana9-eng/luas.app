@@ -23,11 +23,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/perusahaan/{id}', [PerusahaanController::class, 'update'])->name('perusahaan.update');
     Route::delete('/perusahaan/{id}', [PerusahaanController::class, 'destroy'])->name('perusahaan.destroy');
 
+    // Konfigurasi COA (Accounting)
+    Route::get('/konfigurasi-coa', [\App\Http\Controllers\KonfigurasiCoaController::class, 'index'])->name('konfigurasi-coa.index')->middleware('role:super_admin,admin');
+    Route::put('/konfigurasi-coa/{id}', [\App\Http\Controllers\KonfigurasiCoaController::class, 'update'])->name('konfigurasi-coa.update')->middleware('role:super_admin,admin');
+
     Route::get('/anggota', [AnggotaController::class, 'index'])->name('anggota.index');
     Route::get('/anggota/create', [AnggotaController::class, 'create'])->name('anggota.create')->middleware('role:super_admin,admin,teller');
     Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store')->middleware('role:super_admin,admin,teller');
 
     // Static routes (No ID)
+    Route::get('/anggota/pending-approval', [AnggotaController::class, 'pendingApproval'])->name('anggota.pending_approval')->middleware('role:super_admin,admin');
+    Route::post('/anggota/{id}/approve-anggota', [AnggotaController::class, 'approveAnggota'])->name('anggota.approve_anggota')->middleware('role:super_admin,admin');
+    Route::post('/anggota/{id}/reject-anggota', [AnggotaController::class, 'rejectAnggota'])->name('anggota.reject_anggota')->middleware('role:super_admin,admin');
     Route::get('/anggota/approval-keluar', [AnggotaController::class, 'approvalKeluar'])->name('anggota.approval_keluar')->middleware('role:super_admin');
     Route::get('/anggota/saldo', [AnggotaController::class, 'saldo'])->name('anggota.saldo');
     Route::get('/anggota/laporan/saldo', [AnggotaController::class, 'laporanSaldo'])->name('anggota.laporan.saldo');
@@ -47,6 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/anggota/import-master', [AnggotaController::class, 'importMasterProcess'])->name('anggota.import.master.process')->middleware('role:super_admin');
     Route::get('/anggota/download-template', [AnggotaController::class, 'downloadTemplate'])->name('anggota.download_template');
 
+    // PDF Reports
+    Route::get('/anggota/pdf/profil', [AnggotaController::class, 'pdfProfil'])->name('anggota.pdf.profil');
+
     // Routes with {id} parameter (MUST BE AT THE BOTTOM)
     Route::get('/anggota/{id}', [AnggotaController::class, 'show'])->name('anggota.show');
     Route::get('/anggota/{id}/edit', [AnggotaController::class, 'edit'])->name('anggota.edit')->middleware('role:super_admin,admin');
@@ -56,7 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/anggota/{id}/approve-keluar', [AnggotaController::class, 'approveKeluar'])->name('anggota.approve_keluar')->middleware('role:super_admin');
     Route::post('/anggota/{id}/reject-keluar', [AnggotaController::class, 'rejectKeluar'])->name('anggota.reject_keluar')->middleware('role:super_admin');
     Route::get('/anggota/{id}/history', [AnggotaController::class, 'historyTransaksi'])->name('anggota.history');
-    Route::get('/anggota/{id}/export-keluar', [AnggotaController::class, 'exportDataKeluar'])->name('anggota.export_keluar');
+    Route::get('/anggota/{id}/export-keluar', [AnggotaController::class, 'pdfKeluar'])->name('anggota.pdf_keluar');
 
     // Simpanan Routes
     Route::get('/simpanan', [\App\Http\Controllers\SimpananController::class, 'index'])->name('simpanan.index');
@@ -98,6 +108,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/simpanan/export/statement/{id}', [\App\Http\Controllers\SimpananController::class, 'exportStatement'])->name('simpanan.export.statement');
     Route::get('/simpanan/download-template', [\App\Http\Controllers\SimpananController::class, 'downloadTemplate'])->name('simpanan.download_template');
 
+    // PDF Reports
+    Route::get('/simpanan/pdf/statement/{id}', [\App\Http\Controllers\SimpananController::class, 'pdfStatement'])->name('simpanan.pdf.statement');
+    Route::get('/simpanan/pdf/rekap', [\App\Http\Controllers\SimpananController::class, 'pdfRekap'])->name('simpanan.pdf.rekap');
+
     // Blokir & Tutup (admin+)
     Route::get('/simpanan/blokir/{id}', [\App\Http\Controllers\SimpananController::class, 'blokirForm'])->name('simpanan.blokir')->middleware('role:super_admin,admin');
     Route::post('/simpanan/blokir/{id}', [\App\Http\Controllers\SimpananController::class, 'blokirSubmit'])->name('simpanan.blokir.submit')->middleware('role:super_admin,admin');
@@ -114,6 +128,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/simpanan/laporan/setoran', [\App\Http\Controllers\SimpananController::class, 'laporanSetoran'])->name('simpanan.laporan.setoran');
     Route::get('/simpanan/laporan/rekap', [\App\Http\Controllers\SimpananController::class, 'laporanRekap'])->name('simpanan.laporan.rekap');
     Route::get('/simpanan/laporan/pinbuk', [\App\Http\Controllers\SimpananController::class, 'laporanPinbuk'])->name('simpanan.laporan.pinbuk');
+    Route::get('/simpanan/laporan/saldo', [\App\Http\Controllers\SimpananController::class, 'laporanSaldo'])->name('simpanan.laporan.saldo');
+    Route::get('/simpanan/laporan/statement', [\App\Http\Controllers\SimpananController::class, 'laporanStatement'])->name('simpanan.laporan.statement');
+    Route::get('/simpanan/laporan/blokir', [\App\Http\Controllers\SimpananController::class, 'laporanBlokir'])->name('simpanan.laporan.blokir');
+    Route::get('/simpanan/laporan/tutup', [\App\Http\Controllers\SimpananController::class, 'laporanTutup'])->name('simpanan.laporan.tutup');
+
+    // Simpanan Berjangka (Deposito)
+    Route::get('/simpanan-berjangka', [\App\Http\Controllers\SimpananBerjangkaController::class, 'index'])->name('simpanan-berjangka.index');
+    Route::get('/simpanan-berjangka/create', [\App\Http\Controllers\SimpananBerjangkaController::class, 'create'])->name('simpanan-berjangka.create');
+    Route::post('/simpanan-berjangka', [\App\Http\Controllers\SimpananBerjangkaController::class, 'store'])->name('simpanan-berjangka.store');
+    Route::get('/simpanan-berjangka/{id}', [\App\Http\Controllers\SimpananBerjangkaController::class, 'show'])->name('simpanan-berjangka.show');
+    Route::get('/simpanan-berjangka/{id}/cair', [\App\Http\Controllers\SimpananBerjangkaController::class, 'cairForm'])->name('simpanan-berjangka.cair');
+    Route::post('/simpanan-berjangka/{id}/cair', [\App\Http\Controllers\SimpananBerjangkaController::class, 'cairSubmit'])->name('simpanan-berjangka.cair.submit');
 
     // Pembiayaan Routes
     Route::get('/pembiayaan', [\App\Http\Controllers\PembiayaanController::class, 'index'])->name('pembiayaan.index');

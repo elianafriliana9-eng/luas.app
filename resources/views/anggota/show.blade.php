@@ -138,6 +138,14 @@
                     <p class="text-sm font-semibold text-blue-900 font-data mt-0.5">{{ $anggota->no_pegawai ?? '-' }}</p>
                 </div>
                 <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Departemen</p>
+                    <p class="text-sm font-semibold text-blue-900 mt-0.5">{{ $anggota->departemen ?? '-' }}</p>
+                </div>
+                <div>
+                    <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Jabatan</p>
+                    <p class="text-sm font-semibold text-blue-900 mt-0.5">{{ $anggota->jabatan ?? '-' }}</p>
+                </div>
+                <div>
                     <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Perusahaan</p>
                     <p class="text-sm font-semibold text-blue-900 mt-0.5">{{ $anggota->perusahaan?->nama ?? '-' }}</p>
                 </div>

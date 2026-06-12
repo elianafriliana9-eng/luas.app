@@ -1,5 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
+        <nav class="flex items-center gap-1 text-xs text-gray-500 mb-1">
+            <a href="{{ route('dashboard') }}" class="hover:text-indigo-600 transition">Dashboard</a>
+            <span class="material-symbols-outlined text-[12px]">chevron_right</span>
+            <span class="text-indigo-600 font-medium">Anggota</span>
+        </nav>
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Data Anggota') }}</h2>
             <div class="flex gap-2">
@@ -17,7 +22,7 @@
                 <a href="{{ route('anggota.approval_keluar') }}" class="inline-flex items-center px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm rounded-lg transition">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Approval Keluar
-                    @php $pendingKeluar = \App\Models\Anggota::where('status', 'pengajuan_keluar')->count(); @endphp
+                    @php $pendingKeluar = Cache::remember('badge.pending_keluar', 300, fn() => \App\Models\Anggota::where('status', 'pengajuan_keluar')->count()); @endphp
                     @if($pendingKeluar > 0)
                         <span class="ml-1 px-1.5 py-0.5 bg-red-500 text-white text-xs rounded-full">{{ $pendingKeluar }}</span>
                     @endif
@@ -50,6 +55,7 @@
                         <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             <option value="">Semua Status</option>
                             <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
+                            <option value="pending_aktif" {{ request('status') == 'pending_aktif' ? 'selected' : '' }}>Pending Aktif</option>
                             <option value="tidak_aktif" {{ request('status') == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
                             <option value="pengajuan_keluar" {{ request('status') == 'pengajuan_keluar' ? 'selected' : '' }}>Pengajuan Keluar</option>
                             <option value="keluar" {{ request('status') == 'keluar' ? 'selected' : '' }}>Keluar</option>

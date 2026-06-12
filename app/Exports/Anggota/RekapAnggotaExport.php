@@ -34,9 +34,8 @@ class RekapAnggotaExport implements FromArray, WithHeadings, WithStyles, ShouldA
         $totalAnggota = Anggota::count();
         $anggotaAktif = Anggota::where('status', 'aktif')->count();
         $anggotaKeluar = Anggota::where('status', 'keluar')->count();
-        $totalSimpanan = Anggota::sum(function ($a) {
-            return $a->rekeningSimpanan->sum('saldo');
-        });
+        $totalSimpanan = Anggota::leftJoin('rekening_simpanan', 'anggota.id', '=', 'rekening_simpanan.anggota_id')
+            ->sum('rekening_simpanan.saldo');
 
         $perCabang = Anggota::selectRaw('cabang_id, COUNT(*) as total, SUM(CASE WHEN status = "aktif" THEN 1 ELSE 0 END) as aktif')
             ->groupBy('cabang_id')

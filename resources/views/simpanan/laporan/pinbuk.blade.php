@@ -58,7 +58,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         @php $grandTotal = 0; @endphp
-                        @foreach($pinbukList as $i => $pb)
+                        @forelse($pinbukList as $i => $pb)
                             @php $grandTotal += $pb->nominal; @endphp
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-3 text-sm text-slate-500">{{ $i + 1 }}</td>
@@ -83,7 +83,9 @@
                                 </td>
                                 <td class="px-6 py-3 text-sm text-slate-600">{{ $pb->created_at->format('d M Y') }}</td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data pinbuk</td></tr>
+                        @endforelse
                     </tbody>
                     <tfoot>
                         <tr class="bg-primary/5 border-t-2 border-primary/20">

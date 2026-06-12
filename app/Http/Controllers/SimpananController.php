@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Anggota;
 use App\Models\RekeningSimpanan;
-use App\Models\ProdukSimpanan;
 use App\Models\TransaksiSimpanan;
+use App\Models\Cabang;
 use App\Models\Pinbuk;
-use App\Models\Jurnal;
+use App\Models\ProdukSimpanan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\Simpanan\RekeningExport;
 use App\Exports\Simpanan\TransaksiExport;
@@ -122,10 +123,7 @@ class SimpananController extends Controller
                 : $saldoSebelum - $validated['nominal'];
 
             // Update saldo
-            $rekening->saldo = $saldoSesudah;
-            $rekening->save();
-
-            // Create transaksi record
+            // Create transaksi record FIRST (before saldo update for pending)
             $transaksi = TransaksiSimpanan::create([
                 'rekening_id' => $rekening->id,
                 'user_id' => auth()->id(),
@@ -133,17 +131,22 @@ class SimpananController extends Controller
                 'jenis' => $validated['jenis'],
                 'nominal' => $validated['nominal'],
                 'saldo_sebelum' => $saldoSebelum,
-                'saldo_sesudah' => $saldoSesudah,
+                'saldo_sesudah' => $needApproval ? $saldoSebelum : $saldoSesudah,
                 'keterangan' => $validated['keterangan'] ?? ($validated['jenis'] === 'setoran' ? 'Setoran tunai' : 'Penarikan tunai'),
                 'channel' => 'teller',
                 'status_approval' => $needApproval ? 'pending' : 'approved',
                 'approved_by' => $needApproval ? null : auth()->id(),
                 'approved_at' => $needApproval ? null : now(),
+                'created_at' => now(),
             ]);
+
+            // Update saldo for setoran always, penarikan only if approved directly
+            $rekening->saldo = $validated['jenis'] === 'setoran' ? $saldoSesudah : ($needApproval ? $saldoSebelum : $saldoSesudah);
+            $rekening->save();
 
             if ($validated['jenis'] === 'setoran') {
                 $this->buatJurnalSetoran($transaksi);
-            } elseif ($transaksi->status_approval === 'approved') {
+            } elseif (!$needApproval) {
                 $this->buatJurnalPenarikan($transaksi);
             }
 
@@ -235,32 +238,27 @@ class SimpananController extends Controller
 
         DB::beginTransaction();
         try {
+            $rekening = $transaksi->rekening;
+
             if ($request->action === 'approve') {
+                // Update saldo (was NOT changed at store time for pending)
+                $saldoBaru = $rekening->saldo - $transaksi->nominal;
+                $rekening->saldo = $saldoBaru;
+                $rekening->save();
+
                 $transaksi->status_approval = 'approved';
+                $transaksi->saldo_sesudah = $saldoBaru;
                 $transaksi->approved_by = auth()->id();
                 $transaksi->approved_at = now();
                 $transaksi->save();
                 $this->buatJurnalPenarikan($transaksi->fresh());
                 $message = 'Transaksi disetujui.';
             } else {
-                // Reject — reverse saldo
-                $rekening = $transaksi->rekening;
-                $saldoSebelum = $rekening->saldo;
-                $saldoSesudah = $transaksi->jenis === 'setoran'
-                    ? $saldoSebelum - $transaksi->nominal
-                    : $saldoSebelum + $transaksi->nominal;
-
-                $rekening->saldo = $saldoSesudah;
-                $rekening->save();
-
                 $transaksi->status_approval = 'rejected';
-                $transaksi->saldo_sebelum = $saldoSebelum;
-                $transaksi->saldo_sesudah = $saldoSesudah;
                 $transaksi->approved_by = auth()->id();
                 $transaksi->approved_at = now();
                 $transaksi->save();
-
-                $message = 'Transaksi ditolak. Saldo dikembalikan.';
+                $message = 'Transaksi ditolak.';
             }
 
             DB::commit();
@@ -305,15 +303,16 @@ class SimpananController extends Controller
 
         DB::beginTransaction();
         try {
-            // Kurangi sumber
             $sumberSaldoSebelum = $sumber->saldo;
-            $sumber->saldo = $sumberSaldoSebelum - $validated['nominal'];
-            $sumber->save();
-
-            // Tambah tujuan
             $tujuanSaldoSebelum = $tujuan->saldo;
-            $tujuan->saldo = $tujuanSaldoSebelum + $validated['nominal'];
-            $tujuan->save();
+
+            // Update saldo only if approved directly
+            if (!$needApproval) {
+                $sumber->saldo = $sumberSaldoSebelum - $validated['nominal'];
+                $sumber->save();
+                $tujuan->saldo = $tujuanSaldoSebelum + $validated['nominal'];
+                $tujuan->save();
+            }
 
             // Create pinbuk record
             $pinbuk = Pinbuk::create([
@@ -328,6 +327,9 @@ class SimpananController extends Controller
                 'approved_at' => $needApproval ? null : now(),
             ]);
 
+            $saldoSumberSesudah = $needApproval ? $sumberSaldoSebelum : $sumber->saldo;
+            $saldoTujuanSesudah = $needApproval ? $tujuanSaldoSebelum : $tujuan->saldo;
+
             // Create transaksi simpanan for both
             TransaksiSimpanan::create([
                 'rekening_id' => $sumber->id,
@@ -336,7 +338,7 @@ class SimpananController extends Controller
                 'jenis' => 'pinbuk_keluar',
                 'nominal' => $validated['nominal'],
                 'saldo_sebelum' => $sumberSaldoSebelum,
-                'saldo_sesudah' => $sumber->saldo,
+                'saldo_sesudah' => $saldoSumberSesudah,
                 'keterangan' => 'Pinbuk ke ' . $tujuan->no_rekening . ' — ' . ($validated['keterangan'] ?? ''),
                 'channel' => 'teller',
                 'status_approval' => $needApproval ? 'pending' : 'approved',
@@ -351,7 +353,7 @@ class SimpananController extends Controller
                 'jenis' => 'pinbuk_masuk',
                 'nominal' => $validated['nominal'],
                 'saldo_sebelum' => $tujuanSaldoSebelum,
-                'saldo_sesudah' => $tujuan->saldo,
+                'saldo_sesudah' => $saldoTujuanSesudah,
                 'keterangan' => 'Pinbuk dari ' . $sumber->no_rekening . ' — ' . ($validated['keterangan'] ?? ''),
                 'channel' => 'teller',
                 'status_approval' => $needApproval ? 'pending' : 'approved',
@@ -359,7 +361,7 @@ class SimpananController extends Controller
                 'approved_at' => $needApproval ? null : now(),
             ]);
 
-            if ($pinbuk->status_approval === 'approved') {
+            if (!$needApproval) {
                 $this->buatJurnalPinbuk(
                     $sumber->id, $tujuan->id,
                     (float) $validated['nominal'],
@@ -407,6 +409,12 @@ class SimpananController extends Controller
 
         DB::beginTransaction();
         try {
+            // Update saldo (was NOT changed at store time for pending)
+            $pinbuk->rekeningSumber->saldo -= $pinbuk->nominal;
+            $pinbuk->rekeningSumber->save();
+            $pinbuk->rekeningTujuan->saldo += $pinbuk->nominal;
+            $pinbuk->rekeningTujuan->save();
+
             $pinbuk->update([
                 'status_approval' => 'approved',
                 'approved_by' => auth()->id(),
@@ -450,13 +458,7 @@ class SimpananController extends Controller
 
         DB::beginTransaction();
         try {
-            // Reverse saldo (sumber gets back, tujuan gives back)
-            $pinbuk->rekeningSumber->saldo += $pinbuk->nominal;
-            $pinbuk->rekeningSumber->save();
-
-            $pinbuk->rekeningTujuan->saldo -= $pinbuk->nominal;
-            $pinbuk->rekeningTujuan->save();
-
+            // No saldo reversal needed — saldo was NOT changed at store time for pending
             $pinbuk->update([
                 'status_approval' => 'rejected',
                 'approved_by' => auth()->id(),
@@ -472,7 +474,7 @@ class SimpananController extends Controller
                 ]);
 
             DB::commit();
-            return back()->with('success', 'Pinbuk ditolak, saldo dikembalikan.');
+            return back()->with('success', 'Pinbuk ditolak.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Gagal: ' . $e->getMessage());
@@ -564,6 +566,11 @@ class SimpananController extends Controller
             $transaksi->saldo_sebelum = $saldoSebelum;
             $transaksi->saldo_sesudah = $saldoSesudah;
             $transaksi->save();
+
+            // Create reversal journal entry
+            if (in_array($transaksi->jenis_pembatalan, ['setoran', 'penarikan', 'pinbuk_masuk', 'pinbuk_keluar'])) {
+                $this->buatJurnalReversal($transaksi);
+            }
 
             DB::commit();
             return redirect()->route('simpanan.transaksi')->with('success', 'Transaksi berhasil dibatalkan. Saldo dikembalikan.');
@@ -766,6 +773,87 @@ class SimpananController extends Controller
     }
 
     /**
+     * Laporan Saldo Simpanan
+     */
+    public function laporanSaldo(Request $request)
+    {
+        $query = RekeningSimpanan::with(['anggota', 'produk'])->where('status', 'aktif');
+
+        if ($produkId = $request->input('produk_id')) {
+            $query->where('produk_id', $produkId);
+        }
+
+        $rekening = $query->orderByDesc('saldo')->get();
+        $produkList = ProdukSimpanan::where('aktif', true)->get();
+        $cabangList = \App\Models\Cabang::where('aktif', true)->get();
+
+        return view('simpanan.laporan.saldo', compact('rekening', 'produkList', 'cabangList'));
+    }
+
+    /**
+     * Laporan Statement Simpanan (pilih rekening)
+     */
+    public function laporanStatement(Request $request)
+    {
+        $rekeningList = RekeningSimpanan::with(['anggota', 'produk'])
+            ->where('status', 'aktif')
+            ->orderBy('no_rekening')
+            ->get();
+
+        $selectedRekening = null;
+        $transaksi = collect();
+
+        if ($rekeningId = $request->input('rekening_id')) {
+            $selectedRekening = RekeningSimpanan::with(['anggota', 'produk'])->findOrFail($rekeningId);
+
+            $query = TransaksiSimpanan::where('rekening_id', $rekeningId)
+                ->where('dibatalkan', false)
+                ->with(['user']);
+
+            if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+            if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+            $transaksi = $query->orderBy('created_at', 'desc')->get();
+        }
+
+        return view('simpanan.laporan.laporan_statement', compact('rekeningList', 'selectedRekening', 'transaksi'));
+    }
+
+    /**
+     * Laporan Rekening Blokir
+     */
+    public function laporanBlokir(Request $request)
+    {
+        $query = RekeningSimpanan::with(['anggota', 'produk'])->where('status', 'blokir');
+
+        if ($produkId = $request->input('produk_id')) {
+            $query->where('produk_id', $produkId);
+        }
+
+        $rekening = $query->orderBy('updated_at', 'desc')->get();
+        $produkList = ProdukSimpanan::where('aktif', true)->get();
+
+        return view('simpanan.laporan.blokir', compact('rekening', 'produkList'));
+    }
+
+    /**
+     * Laporan Rekening Tutup
+     */
+    public function laporanTutup(Request $request)
+    {
+        $query = RekeningSimpanan::with(['anggota', 'produk'])->where('status', 'tutup');
+
+        if ($produkId = $request->input('produk_id')) {
+            $query->where('produk_id', $produkId);
+        }
+
+        $rekening = $query->orderBy('updated_at', 'desc')->get();
+        $produkList = ProdukSimpanan::where('aktif', true)->get();
+
+        return view('simpanan.laporan.tutup', compact('rekening', 'produkList'));
+    }
+
+    /**
      * h. Export Rekening Simpanan ke Excel
      */
     public function exportRekening(Request $request)
@@ -834,6 +922,34 @@ class SimpananController extends Controller
     {
         $filters = $request->only(['from', 'to']);
         return $this->excelDownload(new StatementExport($id, $filters), 'statement-' . $id . '-' . date('Y-m-d') . '.xlsx');
+    }
+
+    // ─── PDF Reports ─────────────────────────────────────────────────────
+
+    public function pdfStatement($id, Request $request)
+    {
+        $rekening = RekeningSimpanan::with(['anggota', 'produk'])->findOrFail($id);
+        $query = TransaksiSimpanan::where('rekening_id', $id)->where('dibatalkan', false)->orderBy('created_at', 'asc');
+
+        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+        $transaksis = $query->get();
+        $pdf = Pdf::loadView('simpanan.pdf_statement', compact('rekening', 'transaksis'));
+        return $pdf->download('Statement_' . $rekening->no_rekening . '.pdf');
+    }
+
+    public function pdfRekap(Request $request)
+    {
+        $query = RekeningSimpanan::with(['anggota', 'produk'])->where('status', 'aktif');
+
+        if ($produkId = $request->input('produk_id')) $query->where('produk_id', $produkId);
+        if ($cabangId = $request->input('cabang_id')) $query->whereHas('anggota', fn($q) => $q->where('cabang_id', $cabangId));
+
+        $rekenings = $query->orderBy('no_rekening')->get();
+        $total = $rekenings->sum('saldo');
+        $pdf = Pdf::loadView('simpanan.pdf_rekap', compact('rekenings', 'total'));
+        return $pdf->download('Rekap_Simpanan_' . date('Y-m-d') . '.pdf');
     }
 
     /**

@@ -34,7 +34,7 @@
                     <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                 </tr></thead>
                 <tbody class="divide-y">
-                    @foreach($anggota as $i => $a)
+                    @forelse($anggota as $i => $a)
                         <tr class="hover:bg-gray-50">
                             <td class="px-3 py-2 text-sm">{{ $i + 1 }}</td>
                             <td class="px-3 py-2 text-sm font-mono">{{ $a->no_anggota }}</td>
@@ -44,7 +44,9 @@
                             <td class="px-3 py-2 text-sm">{{ $a->perusahaan?->nama ?? '-' }}</td>
                             <td class="px-3 py-2 text-center"><span class="px-2 py-0.5 text-xs rounded-full {{ $a->status==='aktif'?'bg-green-100 text-green-800':'bg-red-100 text-red-800' }}">{{ $a->status }}</span></td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data anggota</td></tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

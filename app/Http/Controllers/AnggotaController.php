@@ -16,6 +16,8 @@ use App\Exports\Anggota\SaldoExport;
 use App\Exports\Anggota\ProfilExport;
 use App\Imports\AnggotaImport;
 use App\Imports\MasterDataImport;
+use App\Http\Requests\StoreAnggotaRequest;
+use App\Http\Requests\UpdateAnggotaRequest;
 
 class AnggotaController extends Controller
 {
@@ -95,28 +97,9 @@ class AnggotaController extends Controller
     /**
      * a. Simpan anggota baru
      */
-    public function store(Request $request)
+    public function store(StoreAnggotaRequest $request)
     {
-        $validated = $request->validate([
-            'cabang_id' => 'required|uuid|exists:cabang,id',
-            'nik' => 'required|string|max:20|unique:anggota,nik',
-            'nama_lengkap' => 'required|string|max:255',
-            'tempat_lahir' => 'required|string|max:100',
-            'tanggal_lahir' => 'required|date|before:today',
-            'jenis_kelamin' => 'required|in:L,P',
-            'alamat' => 'required|string',
-            'no_hp' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255',
-            // Karyawan fields
-            'perusahaan_id' => 'nullable|uuid|exists:perusahaan,id',
-            'gaji_pokok' => 'nullable|numeric|min:0',
-            'tanggal_gajian' => 'nullable|integer|min:1|max:31',
-            'tanggal_mulai_kerja' => 'nullable|date',
-            'no_pegawai' => 'nullable|string|max:50',
-            // Files
-            'foto_ktp' => 'nullable|image|max:2048',
-            'foto_selfie' => 'nullable|image|max:2048',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
         try {
@@ -130,19 +113,26 @@ class AnggotaController extends Controller
 
             // Auto-generate no_anggota
             $validated['no_anggota'] = 'ANG-' . now()->year . '-' . str_pad(Anggota::count() + 1, 4, '0', STR_PAD_LEFT);
-            $validated['status'] = 'aktif';
+            // Teller creates as pending_aktif, admin/super_admin creates as langsung aktif
+            $validated['status'] = in_array(auth()->user()->role, ['super_admin', 'admin']) ? 'aktif' : 'pending_aktif';
             $validated['tanggal_masuk'] = now()->format('Y-m-d');
             $validated['password'] = bcrypt('123456'); // Default password
 
             $anggota = Anggota::create($validated);
 
-            // Auto-create rekening simpanan
-            $this->createRekeningDefault($anggota);
+            // Auto-create rekening simpanan (only if langsung aktif)
+            if ($anggota->status === 'aktif') {
+                $this->createRekeningDefault($anggota);
+            }
 
             DB::commit();
 
+            $msg = $anggota->status === 'pending_aktif'
+                ? 'Anggota berhasil didaftarkan! Menunggu approval admin.'
+                : 'Anggota berhasil ditambahkan!';
+
             return redirect()->route('anggota.show', $anggota->id)
-                ->with('success', 'Anggota berhasil ditambahkan!');
+                ->with('success', $msg);
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->route('anggota.create')
@@ -165,28 +155,11 @@ class AnggotaController extends Controller
     /**
      * Update anggota
      */
-    public function update(Request $request, $id)
+    public function update(UpdateAnggotaRequest $request, $id)
     {
         $anggota = Anggota::findOrFail($id);
 
-        $validated = $request->validate([
-            'cabang_id' => 'required|uuid|exists:cabang,id',
-            'nik' => 'required|string|max:20|unique:anggota,nik,' . $id,
-            'nama_lengkap' => 'required|string|max:255',
-            'tempat_lahir' => 'required|string|max:100',
-            'tanggal_lahir' => 'required|date|before:today',
-            'jenis_kelamin' => 'required|in:L,P',
-            'alamat' => 'required|string',
-            'no_hp' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'perusahaan_id' => 'nullable|uuid|exists:perusahaan,id',
-            'gaji_pokok' => 'nullable|numeric|min:0',
-            'tanggal_gajian' => 'nullable|integer|min:1|max:31',
-            'tanggal_mulai_kerja' => 'nullable|date',
-            'no_pegawai' => 'nullable|string|max:50',
-            'foto_ktp' => 'nullable|image|max:2048',
-            'foto_selfie' => 'nullable|image|max:2048',
-        ]);
+        $validated = $request->validated();
 
         if ($request->hasFile('foto_ktp')) {
             if ($anggota->foto_ktp) Storage::disk('public')->delete($anggota->foto_ktp);
@@ -313,29 +286,74 @@ class AnggotaController extends Controller
         return back()->with('success', 'Pengajuan keluar ditolak. Anggota kembali aktif.');
     }
 
+    // ─── Approval Anggota Baru (Pending Aktif) ─────────────────────────────
+
     /**
-     * Export PDF data anggota keluar
+     * Daftar anggota yang menunggu approval
      */
-    public function exportDataKeluar($id)
+    public function pendingApproval()
     {
-        $anggota = Anggota::with(['cabang', 'rekeningSimpanan.produk', 'pembiayaan'])->findOrFail($id);
-
-        if ($anggota->status !== 'keluar') {
-            return back()->with('error', 'Hanya dapat mengekspor data untuk anggota yang sudah keluar.');
-        }
-
-        $rekeningIds = $anggota->rekeningSimpanan->pluck('id');
-        $historyTransaksi = TransaksiSimpanan::whereIn('rekening_id', $rekeningIds)
-            ->with(['rekening.produk'])
+        $pending = Anggota::where('status', 'pending_aktif')
+            ->with('cabang')
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $pdf = Pdf::loadView('anggota.pdf_keluar', compact('anggota', 'historyTransaksi'));
-        return $pdf->download('Bukti_Penutupan_Keanggotaan_' . $anggota->no_anggota . '.pdf');
+        return view('anggota.pending_approval', compact('pending'));
     }
 
     /**
-     * g. History transaksi simpanan anggota (JSON untuk AJAX)
+     * Approve anggota baru (pending_aktif -> aktif)
+     */
+    public function approveAnggota($id)
+    {
+        $anggota = Anggota::findOrFail($id);
+
+        if ($anggota->status !== 'pending_aktif') {
+            return back()->with('error', 'Status anggota bukan pending_aktif.');
+        }
+
+        DB::beginTransaction();
+        try {
+            $anggota->update([
+                'status' => 'aktif',
+                'tanggal_masuk' => now()->format('Y-m-d'),
+            ]);
+
+            // Buat rekening default
+            $this->createRekeningDefault($anggota);
+
+            DB::commit();
+
+            return redirect()->route('anggota.pending_approval')
+                ->with('success', "Anggota {$anggota->nama_lengkap} berhasil diaktifkan!");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal approve: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Reject anggota baru (pending_aktif -> ditolak)
+     */
+    public function rejectAnggota($id)
+    {
+        $anggota = Anggota::findOrFail($id);
+
+        if ($anggota->status !== 'pending_aktif') {
+            return back()->with('error', 'Status anggota bukan pending_aktif.');
+        }
+
+        $anggota->update([
+            'status' => 'tidak_aktif',
+            'alasan_keluar' => 'Pendaftaran ditolak oleh admin',
+        ]);
+
+        return redirect()->route('anggota.pending_approval')
+            ->with('success', "Anggota {$anggota->nama_lengkap} ditolak.");
+    }
+
+    /**
+     * Export PDF data anggota keluar
      */
     public function historyTransaksi($id)
     {
@@ -547,6 +565,37 @@ class AnggotaController extends Controller
     {
         $filters = $request->only(['from', 'to']);
         return $this->excelDownload(new \App\Exports\Anggota\KeluarAnggotaExport($filters), 'anggota-keluar-' . date('Y-m-d') . '.xlsx');
+    }
+
+    // ─── PDF Reports ─────────────────────────────────────────────────────
+
+    public function pdfProfil(Request $request)
+    {
+        $query = Anggota::with('cabang');
+        if ($status = $request->input('status')) $query->where('status', $status);
+        if ($perusahaanId = $request->input('perusahaan_id')) $query->where('perusahaan_id', $perusahaanId);
+
+        $anggota = $query->orderBy('nama_lengkap')->get();
+        $pdf = Pdf::loadView('anggota.pdf_profil', compact('anggota'));
+        return $pdf->download('Profil_Anggota_' . date('Y-m-d') . '.pdf');
+    }
+
+    public function pdfKeluar($id)
+    {
+        $anggota = Anggota::with(['cabang', 'rekeningSimpanan.produk'])->findOrFail($id);
+
+        if ($anggota->status !== 'keluar') {
+            return back()->with('error', 'Hanya dapat mengekspor data untuk anggota yang sudah keluar.');
+        }
+
+        $rekeningIds = $anggota->rekeningSimpanan->pluck('id');
+        $historyTransaksi = TransaksiSimpanan::whereIn('rekening_id', $rekeningIds)
+            ->with(['rekening.produk'])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        $pdf = Pdf::loadView('anggota.pdf_keluar', compact('anggota', 'historyTransaksi'));
+        return $pdf->download('Bukti_Penutupan_Keanggotaan_' . $anggota->no_anggota . '.pdf');
     }
 
     /**

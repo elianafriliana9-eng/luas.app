@@ -24,13 +24,17 @@
                             <td class="px-6 py-4 text-sm">{{ $a->tanggal_keluar?->format('d M Y') }}</td>
                             <td class="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">{{ $a->alasan_keluar ?? '-' }}</td>
                             <td class="px-6 py-4 text-center flex justify-center gap-2">
-                                <form action="{{ route('anggota.approve_keluar', $a->id) }}" method="POST" class="inline">
+                                <form action="{{ route('anggota.approve_keluar', $a->id) }}" method="POST" class="inline" x-data="{ loading: false }" @submit="loading = true">
                                     @csrf
-                                    <button type="submit" onclick="return confirm('Approve anggota keluar?')" class="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700">Approve</button>
+                                    <button type="submit" :disabled="loading" onclick="return confirm('Approve anggota keluar?')" class="px-3 py-1 bg-green-600 text-white text-xs rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <span x-text="loading ? '...' : 'Approve'">Approve</span>
+                                    </button>
                                 </form>
-                                <form action="{{ route('anggota.reject_keluar', $a->id) }}" method="POST" class="inline">
+                                <form action="{{ route('anggota.reject_keluar', $a->id) }}" method="POST" class="inline" x-data="{ loading: false }" @submit="loading = true">
                                     @csrf
-                                    <button type="submit" onclick="return confirm('Tolak pengajuan keluar?')" class="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700">Tolak</button>
+                                    <button type="submit" :disabled="loading" onclick="return confirm('Tolak pengajuan keluar?')" class="px-3 py-1 bg-red-600 text-white text-xs rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        <span x-text="loading ? '...' : 'Tolak'">Tolak</span>
+                                    </button>
                                 </form>
                             </td>
                         </tr>

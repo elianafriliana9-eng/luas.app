@@ -71,18 +71,20 @@
                                 <td class="px-6 py-4 text-sm text-slate-500 max-w-[200px] truncate">{{ $trx->keterangan }}</td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex justify-center gap-2">
-                                        <form action="{{ route('simpanan.approve', $trx->id) }}" method="POST" class="inline">
+                                        <form action="{{ route('simpanan.approve', $trx->id) }}" method="POST" class="inline" x-data="{ loading: false }" @submit="loading = true">
                                             @csrf <input type="hidden" name="action" value="approve">
-                                            <button type="submit" onclick="return confirm('Setujui transaksi ini?')" class="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-white text-xs font-bold rounded-lg hover:bg-secondary-dark transition-all shadow-sm">
-                                                <span class="material-symbols-outlined text-[14px]">check</span>
-                                                Setujui
+                                            <button type="submit" :disabled="loading" onclick="return confirm('Setujui transaksi ini?')" class="flex items-center gap-1.5 px-3.5 py-2 bg-secondary text-white text-xs font-bold rounded-lg hover:bg-secondary-dark transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                                <span x-show="loading" class="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                                                <span x-show="!loading" class="material-symbols-outlined text-[14px]">check</span>
+                                                <span x-text="loading ? '...' : 'Setujui'"></span>
                                             </button>
                                         </form>
-                                        <form action="{{ route('simpanan.approve', $trx->id) }}" method="POST" class="inline">
+                                        <form action="{{ route('simpanan.approve', $trx->id) }}" method="POST" class="inline" x-data="{ loading: false }" @submit="loading = true">
                                             @csrf <input type="hidden" name="action" value="reject">
-                                            <button type="submit" onclick="return confirm('Tolak transaksi ini? Saldo akan dikembalikan.')" class="flex items-center gap-1.5 px-3.5 py-2 bg-danger text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm">
-                                                <span class="material-symbols-outlined text-[14px]">close</span>
-                                                Tolak
+                                            <button type="submit" :disabled="loading" onclick="return confirm('Tolak transaksi ini? Saldo akan dikembalikan.')" class="flex items-center gap-1.5 px-3.5 py-2 bg-danger text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                                <span x-show="loading" class="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                                                <span x-show="!loading" class="material-symbols-outlined text-[14px]">close</span>
+                                                <span x-text="loading ? '...' : 'Tolak'"></span>
                                             </button>
                                         </form>
                                     </div>

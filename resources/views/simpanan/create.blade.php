@@ -108,7 +108,7 @@
                         <span class="material-symbols-outlined text-[18px] text-primary">edit_note</span>
                         Detail Transaksi
                     </h3>
-                    <form action="{{ route('simpanan.store') }}" method="POST">
+                    <form action="{{ route('simpanan.store') }}" method="POST" x-data="{ loading: false }" @submit="loading = true">
                         @csrf
                         <input type="hidden" name="anggota_id" value="{{ $anggota->id }}">
                         <input type="hidden" name="jenis" value="{{ $jenis }}">
@@ -116,7 +116,7 @@
                         <div class="space-y-5">
                             <div>
                                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Pilih Rekening <span class="text-danger">*</span></label>
-                                <select name="rekening_id" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                                <select name="rekening_id" required class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary @error('rekening_id') border-red-500 @enderror">
                                     <option value="">-- Pilih Rekening --</option>
                                     @foreach($rekeningList as $rek)
                                         <option value="{{ $rek->id }}" {{ old('rekening_id') == $rek->id ? 'selected' : '' }}>
@@ -125,14 +125,16 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @error('rekening_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nominal <span class="text-danger">*</span></label>
                                 <div class="relative">
                                     <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">Rp</span>
-                                    <input type="text" name="nominal" value="{{ old('nominal') }}" required inputmode="numeric" class="input-rupiah w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-lg font-data font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="0" oninput="formatRupiah(this)">
+                                    <input type="text" name="nominal" value="{{ old('nominal') }}" required inputmode="numeric" class="input-rupiah w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-lg font-data font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary @error('nominal') border-red-500 @enderror" placeholder="0" oninput="formatRupiah(this)">
                                 </div>
                                 <p class="text-[11px] text-slate-400 mt-1.5">Minimal Rp 1.000</p>
+                                @error('nominal') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                             </div>
                             <div>
                                 <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Keterangan</label>
@@ -149,9 +151,10 @@
 
                         <div class="flex justify-end gap-3 mt-8 pt-5 border-t border-slate-100">
                             <a href="{{ route('simpanan.index') }}" class="px-5 py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-xl hover:bg-slate-200 transition-all">Batal</a>
-                            <button type="submit" class="flex items-center gap-2 px-6 py-2.5 {{ $jenis === 'setoran' ? 'bg-secondary shadow-secondary/20' : 'bg-danger shadow-danger/20' }} text-white text-sm font-semibold rounded-xl shadow-md hover:opacity-90 transition-all active:scale-95">
-                                <span class="material-symbols-outlined text-[18px]">{{ $jenis === 'setoran' ? 'savings' : 'money_off' }}</span>
-                                {{ $jenis === 'setoran' ? 'Proses Setoran' : 'Proses Penarikan' }}
+                            <button type="submit" :disabled="loading" onclick="return confirm('Yakin ingin memproses transaksi ini?')" class="flex items-center gap-2 px-6 py-2.5 {{ $jenis === 'setoran' ? 'bg-secondary shadow-secondary/20' : 'bg-danger shadow-danger/20' }} text-white text-sm font-semibold rounded-xl shadow-md hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <span x-show="loading" class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                                <span x-show="!loading" class="material-symbols-outlined text-[18px]">{{ $jenis === 'setoran' ? 'savings' : 'money_off' }}</span>
+                                <span x-text="loading ? 'Memproses...' : '{{ $jenis === 'setoran' ? 'Proses Setoran' : 'Proses Penarikan' }}'"></span>
                             </button>
                         </div>
                     </form>

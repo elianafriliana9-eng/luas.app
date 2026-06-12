@@ -4,81 +4,113 @@
 
 ---
 
-## ✅ Sudah Selesai (Committed)
+## ✅ Selesai (Committed)
 
-### 1. Master Data Perusahaan/PT
-- Module CRUD Perusahaan/PT
-- Integrasi PT ke semua anggota (setiap anggota terikat ke PT)
-- Hapus field `departemen` dan `jabatan` dari tabel anggota
+### Modul Anggota
+- CRUD anggota (create, edit, show, list) dengan filter/search
+- Upload KTP + selfie
+- Auto-generate no_anggota
+- Status workflow: `pending_aktif` → `aktif` → `pengajuan_keluar` → `keluar`
+- Approval anggota baru + approval pengajuan keluar
+- Auto-rekening + auto-cicilan simpanan pokok saat approve
+- Approve keluar → auto-withdraw semua simpanan
+- Export Excel (data, saldo, profil, rekap, keluar) — 5 jenis
+- Import Excel (single sheet + master 4-sheet)
+- Download template Excel
+- PDF profil + PDF surat keluar
+- 6 laporan (saldo, profil, rekap, keluar, show, history)
+- Edit/reject anggota keluar
 
-### 2. Fitur Export/Import Anggota
-- Export anggota ke Excel
-- Import anggota dari Excel
-- Template export/download
+### Modul Simpanan
+- 3 produk: Pokok, Wajib, Sukarela
+- Setoran (auto-approve)
+- Penarikan (≤ Rp 1jt auto, > Rp 1jt pending approval)
+- Pinbuk/transfer antar rekening (≤ Rp 1jt auto, > Rp 1jt pending approval)
+- Approval workflow penarikan & pinbuk
+- Blokir/buka blokir rekening
+- Tutup rekening
+- Cancel transaksi (dengan reversal jurnal)
+- Buka rekening baru
+- Statement per rekening
+- Import Excel transaksi + download template
+- 9 laporan (rekap, setoran, penarikan, regist, pinbuk, saldo, statement, blokir, tutup)
+- Export Excel (rekening, transaksi, rekap, setoran, penarikan, regist, pinbuk, statement) — 8 jenis
+- PDF statement + PDF rekap
+- Simpanan Berjangka (Deposito) — CRUD, pencairan, ARO cron — **DIHIDE dari sidebar**
 
-### 3. Simpanan — Pinbuk (Pemindahbukuan)
-- Approval flow pinbuk
-- Fitur pemindahbukuan antar rekening simpanan
+### Modul Pembiayaan (Pinjaman)
+- Simulasi angsuran (flat + anuitas)
+- Pengajuan → Registrasi → Approve → Pencairan
+- Auto-generate jadwal angsuran (sesuai tanggal gajian anggota)
+- Bayar angsuran manual
+- Pelunasan dipercepat
+- Pay Later (bayar sebelum gajian) — request → approve → proses
+- Cetak SP3 + Cetak Perjanjian (HTML print)
+- Kolektibilitas OJK (1–5) auto-update via cron
+- Flag auto_potong_gaji + nominal_potongan + bulan_tersisa_potongan
+- 4 laporan (pengajuan, registrasi, pencairan, pembiayaan aktif)
+- Model Jaminan (collateral) sudah include
 
-### 4. UI Improvements
-- Perbaikan layout & tampilan modul anggota dan simpanan
-- Peningkatan navigasi
+### Modul Payroll
+- Potongan gaji otomatis via cron (`payroll:proses`) — jalan tiap tanggal gajian (25th)
+- Manual trigger dengan opsi `--periode=` dan `--dry-run`
+- Pay Later (early payment) — approval & proses
+- Halaman dashboard payroll + detail per anggota
 
-### 5. Role-Based Access
-- Middleware role (`RoleMiddleware`)
-- Enum role user: `admin`, `teller`, `bendahara`, `manajer`
+### Modul Akuntansi
+- Chart of Accounts (COA) — setup akun header/detail
+- Jurnal double-entry (create, detail, revisi, batal + auto-reversal)
+- Setup Kas + update saldo
+- Buku Besar (ledger per akun)
+- Laporan: kas, neraca saldo (trial balance), neraca (balance sheet)
+- Periode Tutup — cegah jurnal di periode tertutup
+- **Auto-jurnal**: semua transaksi simpanan (setoran, penarikan, pinbuk, bunga) auto-generate jurnal via `SimpananJurnal` trait
+- Konfigurasi COA via DB (mapping transaksi → kode akun)
+- Import transaksi + jurnal otomatis
+- COA fallback hardcoded jika konfigurasi DB kosong
 
----
+### Fitur Lintas Modul
+- **Role-based access**: admin, super_admin, teller, bendahara, manajer
+- **Soft Deletes**: 12 tabel (Anggota, RekeningSimpanan, TransaksiSimpanan, Pembiayaan, dll)
+- **Audit trail**: `created_by`, `updated_by`, `ip_address`, `user_agent` di tabel transaksional
+- **Immutable flag**: TransaksiSimpanan tidak bisa di-ubah setelah approve
+- **UUID primary keys** — no auto-increment
+- **HasUuid + Auditable + SimpananJurnal trait**
+- **Form Request**: StoreAnggotaRequest, UpdateAnggotaRequest, StoreTransaksiRequest, StorePinbukRequest, RekeningBaruRequest
 
-## 🚧 Sedang Dikerjakan (Uncommitted)
+### UI/UX
+- **Phase 1**: Loading state + disabled button + spinner di 14 form finansial
+- **Phase 1b**: confirm() dialog di 12 aksi destruktif + logout
+- **Phase 2a**: Inline @error + red border di semua form anggota & simpanan
+- **Phase 2b**: Searchable dropdown (Alpine.js filter) di pinbuk & rekening_baru
+- **Phase 3a**: Empty states — `@forelse` + `@empty` di semua laporan
+- **Phase 3b**: Breadcrumbs di halaman anggota & simpanan
+- **Phase 3c**: Sidebar badge query optimization (Cache::remember)
+- **Phase 3d**: CSS consistency — emoji → SVG icons
 
-### 1. Master Import (Legacy Data)
-- Import massal data legacy dari Excel (anggota, pembiayaan, simpanan, saldo)
-- Command: `php artisan master:import`
-- Sheet: OST (anggota + pembiayaan), Simpanan Pokok & Wajib, Semua Simpanan
-- Support flag `--reset` untuk hapus data lama, `--file` untuk custom path
+### Testing
+- **173 tests —全部 passing** (327 assertions)
+- AnggotaTest: 9 tests
+- SimpananTest: 65 tests
+- SmokeTest: 74 tests (semua halaman bisa diakses)
+- Auth + Profile tests: 25 tests
+- SQLite in-memory — migration-safe
 
-### 2. Double-Entry Jurnal untuk Simpanan
-- Trait `SimpananJurnal` untuk jurnal otomatis:
-  - Setoran → debit Kas, credit rekening simpanan
-  - Penarikan → debit rekening simpanan, credit Kas
-  - Pinbuk → debit rek sumber, credit rek tujuan
-- Mapping produk ke COA: SIMPOK→21010, SIMWA→21020, SIMSUKA→21030
-
-### 3. Form Request Validation
-- `RekeningBaruRequest` — validasi buka rekening simpanan
-- `StorePinbukRequest` — validasi transfer antar rekening
-- `StoreTransaksiRequest` — validasi setoran/penarikan
-
-### 4. Feature Tests
-- `AnggotaTest` (204 baris) — test CRUD anggota
-- `SimpananTest` (932 baris) — test rekening, transaksi, pinbuk
-
-### 5. UI Components
-- `toast-notification` — notifikasi auto-dismiss dengan Alpine.js
-- `import_master` — halaman upload import data master
-
-### 6. Refactor Seeder
-- Perombakan besar `AnggotaSeeder` (penyesuaian struktur PT)
-- Penyesuaian seeder: User, Pembiayaan, PotonganGaji, RekeningSimpanan, TransaksiSimpanan, dll.
+### Bugfixes
+- PembiayaanController: tambah method `pengajuan()` untuk route `pembiayaan.pengajuan`
+- RekapAnggotaExport: fix Closure bug `Anggota::sum(function(...))` → `leftJoin()->sum()`
+- SmokeTest: tambah `tanggal_buka` di rekening seed, tambah `anggotaKeluar` seed
+- SimpananTest: `test_simpanan_transaksi` → assertRedirect (bukan assertOk)
 
 ---
 
 ## 📋 Belum Dimulai (Backlog)
 
-### Modul Pembiayaan & Payroll
-- [ ] Pengajuan pembiayaan (member → admin)
-- [ ] Approval & pencairan pembiayaan
-- [ ] Jadwal angsuran
-- [ ] Potong gaji otomatis (cron: `payroll:proses`)
-- [ ] Pay Later (bayar sebelum gajian) — approval & proses
-
-### Modul Akuntansi
-- [ ] Jurnal umum
-- [ ] Buku besar
-- [ ] Laporan keuangan (Neraca, Laba/Rugi)
-- [ ] SHU (Sisa Hasil Usaha)
-- [ ] Period lock
+### Modul SHU (Sisa Hasil Usaha)
+- [ ] Perhitungan SHU tahunan
+- [ ] Pembagian SHU per anggota (jasa simpanan + jasa pinjaman)
+- [ ] Approval & finalisasi SHU
+- [ ] Model `ShuPeriode` & `ShuAnggota` sudah siap
 
 ### Modul Sembako (Toko)
 - [ ] POS (Point of Sale)
@@ -87,12 +119,17 @@
 
 ### Flutter Mobile App
 - [ ] Setup project Flutter
-- [ ] API integration
+- [ ] API integration (Sanctum)
 - [ ] Halaman login (NIK + PIN)
 - [ ] Dashboard anggota
 - [ ] Pengajuan pembiayaan
 - [ ] Pay Later
 - [ ] Cek saldo & mutasi simpanan
+
+### Improvement
+- [ ] Multi-level approval (admin → super_admin → executive)
+- [ ] Notifikasi (in-app atau email)
+- [ ] Batas transaksi per user role
 
 ---
 
@@ -100,8 +137,11 @@
 
 | Item | Jumlah |
 |------|--------|
-| Total migrations | ~20 |
-| Total models | ~25 |
-| Total views | ~40 |
-| Tests (baris) | ~1,200 |
-| Uncommitted files | ~15 new + ~38 modified |
+| Total migrations | ~35 |
+| Total models | 26 |
+| Total controllers | 12 |
+| Total views | ~90 |
+| Tests | 173 (327 assertions) |
+| Console commands | 5 |
+| Export classes | 16 |
+| Import classes | 4 |

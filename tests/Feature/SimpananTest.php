@@ -357,7 +357,7 @@ class SimpananTest extends TestCase
         $this->assertNotNull($transaksi->fresh()->approved_at);
     }
 
-    public function test_reject_transaction_reverses_saldo(): void
+    public function test_reject_transaction_leaves_saldo_unchanged(): void
     {
         $this->actingAs($this->admin);
         $saldoAwal = $this->reksukarela->saldo;
@@ -374,8 +374,6 @@ class SimpananTest extends TestCase
             'channel' => 'teller',
             'status_approval' => 'pending',
         ]);
-
-        $this->reksukarela->decrement('saldo', $nominal);
 
         $rekeningId = $this->reksukarela->id;
 

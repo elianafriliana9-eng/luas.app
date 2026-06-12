@@ -6,10 +6,11 @@ use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Pembiayaan extends Model
 {
-    use HasUuid;
+    use HasUuid, SoftDeletes;
 
     protected $table = 'pembiayaan';
 

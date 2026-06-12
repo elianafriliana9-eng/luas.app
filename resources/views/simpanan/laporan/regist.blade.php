@@ -33,7 +33,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
-                        @foreach($rekening as $i => $rek)
+                        @forelse($rekening as $i => $rek)
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-3 text-sm text-slate-500">{{ $i + 1 }}</td>
                                 <td class="px-6 py-3 font-data text-sm font-semibold text-primary">{{ $rek->no_rekening }}</td>
@@ -51,7 +51,9 @@
                                     @endif
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data rekening</td></tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

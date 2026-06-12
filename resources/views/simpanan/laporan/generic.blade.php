@@ -50,7 +50,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-50">
                         @php $grandTotal = 0; @endphp
-                        @foreach($transaksi as $i => $trx)
+                        @forelse($transaksi as $i => $trx)
                             @php $grandTotal += $trx->nominal; @endphp
                             <tr class="hover:bg-slate-50/50 transition-colors">
                                 <td class="px-6 py-3 text-sm text-slate-500">{{ $i + 1 }}</td>
@@ -61,7 +61,9 @@
                                 <td class="px-6 py-3 text-right font-data font-bold text-sm {{ ($title ?? '') === 'Setoran' ? 'text-secondary' : 'text-danger' }}">Rp {{ number_format($trx->nominal, 0, ',', '.') }}</td>
                                 <td class="px-6 py-3 text-sm text-slate-500">{{ $trx->keterangan }}</td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr><td colspan="7" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data transaksi</td></tr>
+                        @endforelse
                     </tbody>
                     <tfoot>
                         <tr class="{{ ($title ?? '') === 'Setoran' ? 'bg-secondary/5 border-t-2 border-secondary/20' : 'bg-danger/5 border-t-2 border-danger/20' }}">
