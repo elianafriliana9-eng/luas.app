@@ -12,7 +12,7 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        $cabangUtama = Cabang::where('kode', 'CBG-JKT')->first();
+        $cabangJkt = Cabang::where('kode', 'CBG-JKT')->first();
         $cabangTgr = Cabang::where('kode', 'CBG-TGR')->first();
         $cabangBks = Cabang::where('kode', 'CBG-BKS')->first();
 
@@ -22,14 +22,14 @@ class UserSeeder extends Seeder
                 'email' => 'superadmin@kopsaku.com',
                 'password' => Hash::make('password'),
                 'role' => 'super_admin',
-                'cabang_id' => $cabangUtama?->id,
+                'cabang_id' => $cabangJkt?->id,
             ],
             [
                 'name' => 'Admin Jakarta',
                 'email' => 'admin@kopsaku.com',
                 'password' => Hash::make('password'),
                 'role' => 'admin',
-                'cabang_id' => $cabangUtama?->id,
+                'cabang_id' => $cabangJkt?->id,
             ],
             [
                 'name' => 'Admin Tangerang',
@@ -50,7 +50,35 @@ class UserSeeder extends Seeder
                 'email' => 'teller@kopsaku.com',
                 'password' => Hash::make('password'),
                 'role' => 'teller',
-                'cabang_id' => $cabangUtama?->id,
+                'cabang_id' => $cabangJkt?->id,
+            ],
+            [
+                'name' => 'Teller Tangerang',
+                'email' => 'teller.tangerang@kopsaku.com',
+                'password' => Hash::make('password'),
+                'role' => 'teller',
+                'cabang_id' => $cabangTgr?->id,
+            ],
+            [
+                'name' => 'Teller Bekasi',
+                'email' => 'teller.bekasi@kopsaku.com',
+                'password' => Hash::make('password'),
+                'role' => 'teller',
+                'cabang_id' => $cabangBks?->id,
+            ],
+            [
+                'name' => 'Account Officer',
+                'email' => 'ao@kopsaku.com',
+                'password' => Hash::make('password'),
+                'role' => 'account_officer',
+                'cabang_id' => $cabangJkt?->id,
+            ],
+            [
+                'name' => 'Akuntan',
+                'email' => 'akuntan@kopsaku.com',
+                'password' => Hash::make('password'),
+                'role' => 'akuntan',
+                'cabang_id' => $cabangJkt?->id,
             ],
         ];
 

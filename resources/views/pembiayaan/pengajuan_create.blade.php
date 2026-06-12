@@ -24,7 +24,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nominal Diajukan <span class="text-red-500">*</span></label>
-                        <input type="number" name="nominal_diajukan" required min="0" step="100000" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="0">
+                        <input type="text" name="nominal_diajukan" required inputmode="numeric" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" placeholder="0" oninput="formatRupiah(this)">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jangka Waktu (Bulan) <span class="text-red-500">*</span></label>

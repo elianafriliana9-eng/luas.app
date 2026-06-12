@@ -10,9 +10,9 @@ class SimpananBerjangkaSeeder extends Seeder
 {
     public function run(): void
     {
-        $ahmad = Anggota::where('nik', '3172010505880003')->first();
-        $teguh = Anggota::where('nik', '3277010107870019')->first();
-        $bambang = Anggota::where('nik', '3283012204860025')->first();
+        $ahmad = Anggota::where('nik', '3172020505880003')->first();
+        $teguh = Anggota::where('nik', '3275010107870011')->first();
+        $bambang = Anggota::where('nik', '3279012204860015')->first();
 
         $deposits = [];
 

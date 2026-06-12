@@ -73,7 +73,7 @@ class AnggotaImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnF
                 RekeningSimpanan::create([
                     'anggota_id' => $anggota->id,
                     'produk_id' => $produk->id,
-                    'no_rekening' => 'REK-' . strtoupper(substr($produk->kode, 0, 3)) . '-' . $anggota->no_anggota,
+                    'no_rekening' => RekeningSimpanan::generateNoRekening($produk, $cabang),
                     'saldo' => 0,
                     'status' => 'aktif',
                     'tanggal_buka' => now(),

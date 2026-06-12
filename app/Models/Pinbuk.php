@@ -10,6 +10,8 @@ class Pinbuk extends Model
 {
     use HasUuid;
 
+    public $timestamps = false;
+
     protected $table = 'pinbuk';
 
     protected $fillable = [

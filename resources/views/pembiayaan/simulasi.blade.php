@@ -12,7 +12,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Nominal Pinjaman</label>
-                        <input type="number" id="nominal" value="{{ $nominal }}" min="0" step="100000" class="w-full border rounded-lg px-3 py-2 text-sm font-mono">
+                        <input type="text" id="nominal" value="{{ $nominal }}" inputmode="numeric" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this)">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Jangka Waktu (Bulan)</label>
@@ -57,7 +57,7 @@
     <script>
     document.getElementById('simulasiForm').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const nominal = document.getElementById('nominal').value;
+        const nominal = unformatRupiah(document.getElementById('nominal').value);
         const jangka = document.getElementById('jangka').value;
         const bunga = document.getElementById('bunga').value;
         const metode = document.getElementById('metode').value;

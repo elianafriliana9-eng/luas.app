@@ -6,7 +6,6 @@ use App\Models\RekeningSimpanan;
 use App\Models\TransaksiSimpanan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class TransaksiSimpananSeeder extends Seeder
@@ -20,19 +19,22 @@ class TransaksiSimpananSeeder extends Seeder
         $sekarang = Carbon::now()->startOfDay();
 
         foreach ($rekenings as $rekening) {
-            $jenis = $rekening->produk->jenis;
+            $jenis = $rekening->produk->kode;
             $tglBuka = Carbon::parse($rekening->tanggal_buka)->startOfDay();
+            $noAnggota = $rekening->anggota->no_anggota;
 
-            if ($jenis === 'pokok') {
+            // SIMPOK — setoran awal Rp 150.000
+            if ($jenis === 'SIMPOK') {
+                $saldoAkhir = (float) $rekening->saldo;
                 TransaksiSimpanan::updateOrCreate(
-                    ['no_transaksi' => 'TRX-S-POKOK-' . $rekening->anggota->no_anggota],
+                    ['no_transaksi' => 'TRX-POKOK-' . $noAnggota],
                     [
                         'rekening_id' => $rekening->id,
                         'user_id' => $user->id,
                         'jenis' => 'setoran',
-                        'nominal' => 100000,
+                        'nominal' => $saldoAkhir,
                         'saldo_sebelum' => 0,
-                        'saldo_sesudah' => 100000,
+                        'saldo_sesudah' => $saldoAkhir,
                         'keterangan' => 'Setoran Simpanan Pokok',
                         'channel' => 'teller',
                         'status_approval' => 'approved',
@@ -41,9 +43,11 @@ class TransaksiSimpananSeeder extends Seeder
                 );
             }
 
-            if ($jenis === 'wajib') {
+            // SIMWA — Rp 50.000/bulan sejak join
+            if ($jenis === 'SIMWA') {
                 $lamaBulan = (int) $tglBuka->diffInMonths($sekarang);
-                $maxTrx = min($lamaBulan, 10); // max 10 bulan transaksi
+                $maxTrx = min($lamaBulan, (int) ((float) $rekening->saldo / 50000));
+                if ($maxTrx > 10) $maxTrx = 10;
                 $saldoJalan = 0;
 
                 for ($i = 0; $i < $maxTrx; $i++) {
@@ -54,9 +58,7 @@ class TransaksiSimpananSeeder extends Seeder
                     $saldoJalan += 50000;
 
                     TransaksiSimpanan::updateOrCreate(
-                        [
-                            'no_transaksi' => 'TRX-S-WAJIB-' . $rekening->anggota->no_anggota . '-' . ($i + 1),
-                        ],
+                        ['no_transaksi' => 'TRX-WAJIB-' . $noAnggota . '-' . str_pad($i + 1, 2, '0', STR_PAD_LEFT)],
                         [
                             'rekening_id' => $rekening->id,
                             'user_id' => $user->id,
@@ -73,39 +75,24 @@ class TransaksiSimpananSeeder extends Seeder
                 }
             }
 
-            if ($jenis === 'sukarela') {
-                $saldoSukarela = (float) $rekening->saldo;
-                if ($saldoSukarela <= 0) continue;
+            // SIMSUKA — nominal tetap (tidak random)
+            if ($jenis === 'SIMSUKA') {
+                $saldoAkhir = (float) $rekening->saldo;
+                if ($saldoAkhir <= 0) continue;
 
-                // Create 3-5 setoran transactions with varying amounts
-                $jumlahTrx = rand(3, 5);
-                $sisaSaldo = $saldoSukarela;
+                // Tentukan jumlah setoran spesifik berdasarkan nominal akhir
+                $setoran = $this->getSetoranSukarela($noAnggota, $saldoAkhir);
                 $saldoJalan = 0;
 
-                for ($i = 0; $i < $jumlahTrx; $i++) {
-                    // Distribute saldo across transactions
-                    if ($i === $jumlahTrx - 1) {
-                        $nominal = $sisaSaldo;
-                    } else {
-                        $maxBagian = (int) ($saldoSukarela / $jumlahTrx) * 2;
-                        $minBagian = (int) ($saldoSukarela / $jumlahTrx) / 2;
-                        $nominal = rand((int) $minBagian, (int) $maxBagian);
-                        if ($nominal > $sisaSaldo) $nominal = $sisaSaldo;
-                        if ($nominal < 100000) $nominal = $sisaSaldo / ($jumlahTrx - $i);
-                    }
-                    $nominal = (int) round($nominal / 1000) * 1000;
-
-                    $tglSetor = $sekarang->copy()->subMonths($jumlahTrx - $i)->addDays(rand(1, 20));
-                    if ($tglSetor->lt($tglBuka)) $tglSetor = $tglBuka->copy()->addDays(rand(1, 5));
+                foreach ($setoran as $i => $nominal) {
+                    $tglSetor = $tglBuka->copy()->addMonths($i * 2);
+                    if ($tglSetor->gt($sekarang)) $tglSetor = $sekarang->copy()->subDays(count($setoran) - $i);
 
                     $saldoSebelum = $saldoJalan;
                     $saldoJalan += $nominal;
-                    $sisaSaldo -= $nominal;
 
                     TransaksiSimpanan::updateOrCreate(
-                        [
-                            'no_transaksi' => 'TRX-S-SUKARELA-' . $rekening->anggota->no_anggota . '-' . ($i + 1),
-                        ],
+                        ['no_transaksi' => 'TRX-SUKARELA-' . $noAnggota . '-' . str_pad($i + 1, 2, '0', STR_PAD_LEFT)],
                         [
                             'rekening_id' => $rekening->id,
                             'user_id' => $user->id,
@@ -122,5 +109,26 @@ class TransaksiSimpananSeeder extends Seeder
                 }
             }
         }
+    }
+
+    private function getSetoranSukarela(string $noAnggota, float $total): array
+    {
+        $daftar = [
+            'ANG-2023-001' => [2000000, 1500000, 1000000, 500000],        // 5jt
+            'ANG-2023-002' => [1500000, 1000000, 500000],                  // 3jt
+            'ANG-2024-003' => [10000000, 8000000, 5000000, 2000000],       // 25jt
+            'ANG-2024-004' => [1000000],                                    // 1jt
+            'ANG-2024-005' => [3000000, 2500000, 2000000],                  // 7.5jt
+            'ANG-2024-006' => [10000000, 10000000, 5000000, 5000000],      // 30jt
+            'ANG-2024-007' => [2000000, 1500000, 1000000, 500000],         // 5jt
+            'ANG-2024-008' => [1000000, 1000000],                           // 2jt
+            'ANG-2024-010' => [500000],                                     // 500rb
+            'ANG-2024-011' => [8000000, 7000000, 5000000],                 // 20jt
+            'ANG-2024-012' => [5000000, 3000000, 2000000],                 // 10jt
+            'ANG-2024-013' => [3000000, 3000000, 2000000],                 // 8jt
+            'ANG-2024-014' => [1000000, 500000],                            // 1.5jt
+        ];
+
+        return $daftar[$noAnggota] ?? [$total];
     }
 }

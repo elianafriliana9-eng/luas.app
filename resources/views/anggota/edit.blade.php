@@ -16,7 +16,8 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('anggota.update', $anggota->id) }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('anggota.update', $anggota->id) }}" method="POST" enctype="multipart/form-data"
+                          x-data="{ loading: false }" x-on:submit="loading = true">
                         @csrf @method('PUT')
 
                         <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">Data Pribadi</h3>
@@ -56,14 +57,17 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok</label><input type="number" name="gaji_pokok" value="{{ old('gaji_pokok', $anggota->gaji_pokok) }}" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
+                            <div><label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok</label><input type="text" name="gaji_pokok" value="{{ old('gaji_pokok', $anggota->gaji_pokok) }}" inputmode="decimal" class="input-rupiah w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" oninput="formatRupiah(this)"></div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Gajian</label><input type="number" name="tanggal_gajian" value="{{ old('tanggal_gajian', $anggota->tanggal_gajian) }}" min="1" max="31" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Mulai Kerja</label><input type="date" name="tanggal_mulai_kerja" value="{{ old('tanggal_mulai_kerja', $anggota->tanggal_mulai_kerja?->format('Y-m-d')) }}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></div>
                         </div>
 
                         <div class="flex justify-end gap-3 pt-4 border-t">
                             <a href="{{ route('anggota.show', $anggota->id) }}" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">Batal</a>
-                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">Update</button>
+                            <button type="submit" :disabled="loading" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2">
+                                <span x-show="loading" class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <span x-text="loading ? 'Menyimpan...' : 'Update'">Update</span>
+                            </button>
                         </div>
                     </form>
                 </div>

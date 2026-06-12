@@ -24,11 +24,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/perusahaan/{id}', [PerusahaanController::class, 'destroy'])->name('perusahaan.destroy');
 
     Route::get('/anggota', [AnggotaController::class, 'index'])->name('anggota.index');
-    Route::get('/anggota/create', [AnggotaController::class, 'create'])->name('anggota.create');
-    Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store');
+    Route::get('/anggota/create', [AnggotaController::class, 'create'])->name('anggota.create')->middleware('role:super_admin,admin,teller');
+    Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store')->middleware('role:super_admin,admin,teller');
 
     // Static routes (No ID)
-    Route::get('/anggota/approval-keluar', [AnggotaController::class, 'approvalKeluar'])->name('anggota.approval_keluar');
+    Route::get('/anggota/approval-keluar', [AnggotaController::class, 'approvalKeluar'])->name('anggota.approval_keluar')->middleware('role:super_admin');
     Route::get('/anggota/saldo', [AnggotaController::class, 'saldo'])->name('anggota.saldo');
     Route::get('/anggota/laporan/saldo', [AnggotaController::class, 'laporanSaldo'])->name('anggota.laporan.saldo');
     Route::get('/anggota/laporan/profil', [AnggotaController::class, 'laporanProfil'])->name('anggota.laporan.profil');
@@ -41,18 +41,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/anggota/export/profil', [AnggotaController::class, 'exportProfil'])->name('anggota.export.profil');
     Route::get('/anggota/export/rekap', [AnggotaController::class, 'exportRekap'])->name('anggota.export.rekap');
     Route::get('/anggota/export/keluar', [AnggotaController::class, 'exportKeluar'])->name('anggota.export.keluar');
-    Route::get('/anggota/import', [AnggotaController::class, 'importForm'])->name('anggota.import');
-    Route::post('/anggota/import', [AnggotaController::class, 'importProcess'])->name('anggota.import.process');
+    Route::get('/anggota/import', [AnggotaController::class, 'importForm'])->name('anggota.import')->middleware('role:super_admin,admin');
+    Route::post('/anggota/import', [AnggotaController::class, 'importProcess'])->name('anggota.import.process')->middleware('role:super_admin,admin');
+    Route::get('/anggota/import-master', [AnggotaController::class, 'importMasterForm'])->name('anggota.import.master')->middleware('role:super_admin');
+    Route::post('/anggota/import-master', [AnggotaController::class, 'importMasterProcess'])->name('anggota.import.master.process')->middleware('role:super_admin');
     Route::get('/anggota/download-template', [AnggotaController::class, 'downloadTemplate'])->name('anggota.download_template');
 
     // Routes with {id} parameter (MUST BE AT THE BOTTOM)
     Route::get('/anggota/{id}', [AnggotaController::class, 'show'])->name('anggota.show');
-    Route::get('/anggota/{id}/edit', [AnggotaController::class, 'edit'])->name('anggota.edit');
-    Route::put('/anggota/{id}', [AnggotaController::class, 'update'])->name('anggota.update');
-    Route::get('/anggota/{id}/keluar', [AnggotaController::class, 'keluarForm'])->name('anggota.keluar');
-    Route::post('/anggota/{id}/keluar', [AnggotaController::class, 'keluarSubmit'])->name('anggota.keluar.submit');
-    Route::post('/anggota/{id}/approve-keluar', [AnggotaController::class, 'approveKeluar'])->name('anggota.approve_keluar');
-    Route::post('/anggota/{id}/reject-keluar', [AnggotaController::class, 'rejectKeluar'])->name('anggota.reject_keluar');
+    Route::get('/anggota/{id}/edit', [AnggotaController::class, 'edit'])->name('anggota.edit')->middleware('role:super_admin,admin');
+    Route::put('/anggota/{id}', [AnggotaController::class, 'update'])->name('anggota.update')->middleware('role:super_admin,admin');
+    Route::get('/anggota/{id}/keluar', [AnggotaController::class, 'keluarForm'])->name('anggota.keluar')->middleware('role:super_admin,admin');
+    Route::post('/anggota/{id}/keluar', [AnggotaController::class, 'keluarSubmit'])->name('anggota.keluar.submit')->middleware('role:super_admin,admin');
+    Route::post('/anggota/{id}/approve-keluar', [AnggotaController::class, 'approveKeluar'])->name('anggota.approve_keluar')->middleware('role:super_admin');
+    Route::post('/anggota/{id}/reject-keluar', [AnggotaController::class, 'rejectKeluar'])->name('anggota.reject_keluar')->middleware('role:super_admin');
     Route::get('/anggota/{id}/history', [AnggotaController::class, 'historyTransaksi'])->name('anggota.history');
     Route::get('/anggota/{id}/export-keluar', [AnggotaController::class, 'exportDataKeluar'])->name('anggota.export_keluar');
 
@@ -61,30 +63,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/simpanan/rekening', [\App\Http\Controllers\SimpananController::class, 'rekening'])->name('simpanan.rekening');
     Route::get('/simpanan/transaksi', [\App\Http\Controllers\SimpananController::class, 'transaksi'])->name('simpanan.transaksi');
 
-    // Input & Transaksi
-    Route::get('/simpanan/create', [\App\Http\Controllers\SimpananController::class, 'create'])->name('simpanan.create');
-    Route::post('/simpanan', [\App\Http\Controllers\SimpananController::class, 'store'])->name('simpanan.store');
-    Route::get('/simpanan/rekening-baru', [\App\Http\Controllers\SimpananController::class, 'rekeningBaruForm'])->name('simpanan.rekening_baru');
-    Route::post('/simpanan/rekening-baru', [\App\Http\Controllers\SimpananController::class, 'rekeningBaruStore'])->name('simpanan.rekening_baru.store');
+    // Input & Transaksi (teller+)
+    Route::get('/simpanan/create', [\App\Http\Controllers\SimpananController::class, 'create'])->name('simpanan.create')->middleware('role:super_admin,admin,teller');
+    Route::post('/simpanan', [\App\Http\Controllers\SimpananController::class, 'store'])->name('simpanan.store')->middleware('role:super_admin,admin,teller');
+    Route::get('/simpanan/rekening-baru', [\App\Http\Controllers\SimpananController::class, 'rekeningBaruForm'])->name('simpanan.rekening_baru')->middleware('role:super_admin,admin,teller');
+    Route::post('/simpanan/rekening-baru', [\App\Http\Controllers\SimpananController::class, 'rekeningBaruStore'])->name('simpanan.rekening_baru.store')->middleware('role:super_admin,admin,teller');
 
-    // Approval
-    Route::get('/simpanan/approval', [\App\Http\Controllers\SimpananController::class, 'approval'])->name('simpanan.approval');
-    Route::post('/simpanan/approve/{id}', [\App\Http\Controllers\SimpananController::class, 'approveTransaksi'])->name('simpanan.approve');
+    // Approval (super_admin only)
+    Route::get('/simpanan/approval', [\App\Http\Controllers\SimpananController::class, 'approval'])->name('simpanan.approval')->middleware('role:super_admin');
+    Route::post('/simpanan/approve/{id}', [\App\Http\Controllers\SimpananController::class, 'approveTransaksi'])->name('simpanan.approve')->middleware('role:super_admin');
 
-    // Pinbuk
-    Route::get('/simpanan/pinbuk', [\App\Http\Controllers\SimpananController::class, 'pinbukForm'])->name('simpanan.pinbuk');
-    Route::post('/simpanan/pinbuk', [\App\Http\Controllers\SimpananController::class, 'pinbukStore'])->name('simpanan.pinbuk.store');
-    Route::get('/simpanan/pinbuk/approval', [\App\Http\Controllers\SimpananController::class, 'pinbukApproval'])->name('simpanan.pinbuk.approval');
-    Route::post('/simpanan/pinbuk/approval/{id}/approve', [\App\Http\Controllers\SimpananController::class, 'pinbukApprove'])->name('simpanan.pinbuk.approve');
-    Route::post('/simpanan/pinbuk/approval/{id}/reject', [\App\Http\Controllers\SimpananController::class, 'pinbukReject'])->name('simpanan.pinbuk.reject');
+    // Pinbuk (teller+)
+    Route::get('/simpanan/pinbuk', [\App\Http\Controllers\SimpananController::class, 'pinbukForm'])->name('simpanan.pinbuk')->middleware('role:super_admin,admin,teller');
+    Route::post('/simpanan/pinbuk', [\App\Http\Controllers\SimpananController::class, 'pinbukStore'])->name('simpanan.pinbuk.store')->middleware('role:super_admin,admin,teller');
+    // Pinbuk Approval (super_admin only)
+    Route::get('/simpanan/pinbuk/approval', [\App\Http\Controllers\SimpananController::class, 'pinbukApproval'])->name('simpanan.pinbuk.approval')->middleware('role:super_admin');
+    Route::post('/simpanan/pinbuk/approval/{id}/approve', [\App\Http\Controllers\SimpananController::class, 'pinbukApprove'])->name('simpanan.pinbuk.approve')->middleware('role:super_admin');
+    Route::post('/simpanan/pinbuk/approval/{id}/reject', [\App\Http\Controllers\SimpananController::class, 'pinbukReject'])->name('simpanan.pinbuk.reject')->middleware('role:super_admin');
 
-    // Cancel
-    Route::get('/simpanan/cancel/{id}', [\App\Http\Controllers\SimpananController::class, 'cancelForm'])->name('simpanan.cancel');
-    Route::post('/simpanan/cancel/{id}', [\App\Http\Controllers\SimpananController::class, 'cancelSubmit'])->name('simpanan.cancel.submit');
+    // Cancel (admin+)
+    Route::get('/simpanan/cancel/{id}', [\App\Http\Controllers\SimpananController::class, 'cancelForm'])->name('simpanan.cancel')->middleware('role:super_admin,admin');
+    Route::post('/simpanan/cancel/{id}', [\App\Http\Controllers\SimpananController::class, 'cancelSubmit'])->name('simpanan.cancel.submit')->middleware('role:super_admin,admin');
 
-    // Upload & Export
-    Route::get('/simpanan/upload', [\App\Http\Controllers\SimpananController::class, 'uploadForm'])->name('simpanan.upload');
-    Route::post('/simpanan/upload', [\App\Http\Controllers\SimpananController::class, 'uploadProcess'])->name('simpanan.upload.process');
+    // Upload (admin+)
+    Route::get('/simpanan/upload', [\App\Http\Controllers\SimpananController::class, 'uploadForm'])->name('simpanan.upload')->middleware('role:super_admin,admin');
+    Route::post('/simpanan/upload', [\App\Http\Controllers\SimpananController::class, 'uploadProcess'])->name('simpanan.upload.process')->middleware('role:super_admin,admin');
     Route::get('/simpanan/export/rekening', [\App\Http\Controllers\SimpananController::class, 'exportRekening'])->name('simpanan.export.rekening');
     Route::get('/simpanan/export/transaksi', [\App\Http\Controllers\SimpananController::class, 'exportTransaksi'])->name('simpanan.export.transaksi');
     Route::get('/simpanan/export/rekap', [\App\Http\Controllers\SimpananController::class, 'exportRekap'])->name('simpanan.export.rekap');
@@ -95,12 +98,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/simpanan/export/statement/{id}', [\App\Http\Controllers\SimpananController::class, 'exportStatement'])->name('simpanan.export.statement');
     Route::get('/simpanan/download-template', [\App\Http\Controllers\SimpananController::class, 'downloadTemplate'])->name('simpanan.download_template');
 
-    // Blokir & Tutup
-    Route::get('/simpanan/blokir/{id}', [\App\Http\Controllers\SimpananController::class, 'blokirForm'])->name('simpanan.blokir');
-    Route::post('/simpanan/blokir/{id}', [\App\Http\Controllers\SimpananController::class, 'blokirSubmit'])->name('simpanan.blokir.submit');
-    Route::post('/simpanan/blokir/{id}/buka', [\App\Http\Controllers\SimpananController::class, 'bukaBlokir'])->name('simpanan.buka_blokir');
-    Route::get('/simpanan/tutup/{id}', [\App\Http\Controllers\SimpananController::class, 'tutupForm'])->name('simpanan.tutup');
-    Route::post('/simpanan/tutup/{id}', [\App\Http\Controllers\SimpananController::class, 'tutupSubmit'])->name('simpanan.tutup.submit');
+    // Blokir & Tutup (admin+)
+    Route::get('/simpanan/blokir/{id}', [\App\Http\Controllers\SimpananController::class, 'blokirForm'])->name('simpanan.blokir')->middleware('role:super_admin,admin');
+    Route::post('/simpanan/blokir/{id}', [\App\Http\Controllers\SimpananController::class, 'blokirSubmit'])->name('simpanan.blokir.submit')->middleware('role:super_admin,admin');
+    Route::post('/simpanan/blokir/{id}/buka', [\App\Http\Controllers\SimpananController::class, 'bukaBlokir'])->name('simpanan.buka_blokir')->middleware('role:super_admin,admin');
+    Route::get('/simpanan/tutup/{id}', [\App\Http\Controllers\SimpananController::class, 'tutupForm'])->name('simpanan.tutup')->middleware('role:super_admin,admin');
+    Route::post('/simpanan/tutup/{id}', [\App\Http\Controllers\SimpananController::class, 'tutupSubmit'])->name('simpanan.tutup.submit')->middleware('role:super_admin,admin');
 
     // Statement
     Route::get('/simpanan/statement/{id}', [\App\Http\Controllers\SimpananController::class, 'statement'])->name('simpanan.statement');

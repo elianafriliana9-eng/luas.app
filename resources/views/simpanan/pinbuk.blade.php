@@ -73,7 +73,7 @@
                             <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nominal <span class="text-danger">*</span></label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">Rp</span>
-                                <input type="number" name="nominal" required min="1000" step="1000" class="w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-lg font-data font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="0">
+                                <input type="text" name="nominal" required inputmode="numeric" class="input-rupiah w-full border border-slate-200 rounded-xl pl-12 pr-4 py-3 text-lg font-data font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary" placeholder="0" oninput="formatRupiah(this)">
                             </div>
                         </div>
 

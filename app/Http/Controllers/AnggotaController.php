@@ -15,6 +15,7 @@ use App\Exports\Anggota\AnggotaExport;
 use App\Exports\Anggota\SaldoExport;
 use App\Exports\Anggota\ProfilExport;
 use App\Imports\AnggotaImport;
+use App\Imports\MasterDataImport;
 
 class AnggotaController extends Controller
 {
@@ -237,8 +238,6 @@ class AnggotaController extends Controller
      */
     public function approvalKeluar()
     {
-        abort_if(auth()->user()->role !== 'super_admin', 403, 'Akses ditolak. Hanya Super Admin yang dapat mengakses halaman ini.');
-
         $pending = Anggota::where('status', 'pengajuan_keluar')
             ->with('cabang')
             ->orderBy('tanggal_keluar', 'asc')
@@ -252,8 +251,6 @@ class AnggotaController extends Controller
      */
     public function approveKeluar($id)
     {
-        abort_if(auth()->user()->role !== 'super_admin', 403, 'Akses ditolak. Hanya Super Admin yang dapat menyetujui.');
-
         $anggota = Anggota::findOrFail($id);
 
         DB::beginTransaction();
@@ -308,8 +305,6 @@ class AnggotaController extends Controller
      */
     public function rejectKeluar($id)
     {
-        abort_if(auth()->user()->role !== 'super_admin', 403, 'Akses ditolak. Hanya Super Admin yang dapat memproses pengajuan ini.');
-
         $anggota = Anggota::findOrFail($id);
         $anggota->update([
             'status' => 'aktif',
@@ -428,9 +423,7 @@ class AnggotaController extends Controller
         $totalAnggota = Anggota::count();
         $anggotaAktif = Anggota::where('status', 'aktif')->count();
         $anggotaKeluar = Anggota::where('status', 'keluar')->count();
-        $totalSimpanan = Anggota::sum(function ($a) {
-            return $a->rekeningSimpanan->sum('saldo');
-        });
+        $totalSimpanan = Anggota::with('rekeningSimpanan')->get()->sum(fn ($a) => $a->rekeningSimpanan->sum('saldo'));
 
         $perCabang = Anggota::selectRaw('cabang_id, COUNT(*) as total, SUM(CASE WHEN status = "aktif" THEN 1 ELSE 0 END) as aktif')
             ->groupBy('cabang_id')
@@ -475,18 +468,11 @@ class AnggotaController extends Controller
     {
         $produkSimpanan = \App\Models\ProdukSimpanan::where('aktif', true)->get();
 
-        $kodeMap = [
-            'SIMPOK' => 'POKOK',
-            'SIMWA' => 'WAJIB',
-            'SIMSUKA' => 'SUKARELA',
-        ];
-
         foreach ($produkSimpanan as $produk) {
-            $prefix = $kodeMap[$produk->kode] ?? strtoupper(substr($produk->kode, 0, 3));
             RekeningSimpanan::create([
                 'anggota_id' => $anggota->id,
                 'produk_id' => $produk->id,
-                'no_rekening' => 'REK-' . $prefix . '-' . $anggota->no_anggota,
+                'no_rekening' => RekeningSimpanan::generateNoRekening($produk, $anggota->cabang),
                 'saldo' => 0,
                 'status' => 'aktif',
                 'tanggal_buka' => now()->format('Y-m-d'),
@@ -604,5 +590,45 @@ class AnggotaController extends Controller
             new \App\Exports\Anggota\TemplateAnggotaExport(),
             'template-import-anggota.xlsx'
         );
+    }
+
+    /**
+     * Form Import Master Data (Template.xlsx format)
+     */
+    public function importMasterForm()
+    {
+        return view('anggota.import_master');
+    }
+
+    /**
+     * Proses Import Master Data dari Template.xlsx (4 sheets)
+     */
+    public function importMasterProcess(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:10240',
+            'reset_data' => 'nullable|boolean',
+        ]);
+
+        $resetData = $request->boolean('reset_data', true);
+
+        try {
+            $import = new MasterDataImport($resetData);
+            Excel::import($import, $request->file('file'));
+
+            $hasil = $import->getHasil();
+
+            $suksesOST = collect($hasil['OST'] ?? [])->where('status', 'berhasil')->count();
+            $gagalOST = collect($hasil['OST'] ?? [])->where('status', 'gagal')->count();
+            $suksesSimpanan = collect(array_merge($hasil['SIMPANAN POKOK DAN WAJIB'] ?? [], $hasil['SEMUA SIMPANAN'] ?? []))->where('status', 'berhasil')->count();
+            $gagalSimpanan = collect(array_merge($hasil['SIMPANAN POKOK DAN WAJIB'] ?? [], $hasil['SEMUA SIMPANAN'] ?? []))->where('status', 'gagal')->count();
+
+            $message = "Import selesai. Anggota: {$suksesOST} berhasil, {$gagalOST} gagal. Rekening: {$suksesSimpanan} berhasil, {$gagalSimpanan} gagal.";
+
+            return redirect()->route('anggota.import.master')
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal import master data: ' . $e->getMessage());
+        }
     }
 }

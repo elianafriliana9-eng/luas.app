@@ -20,9 +20,14 @@ use App\Exports\Simpanan\RegistSimpananExport;
 use App\Exports\Simpanan\PinbukExport;
 use App\Exports\Simpanan\StatementExport;
 use App\Imports\TransaksiImport;
+use App\Http\Requests\Simpanan\StoreTransaksiRequest;
+use App\Http\Requests\Simpanan\StorePinbukRequest;
+use App\Http\Requests\Simpanan\RekeningBaruRequest;
 
 class SimpananController extends Controller
 {
+    use \App\Traits\SimpananJurnal;
+
     /**
      * a. Input simpanan — form setor/tarik
      */
@@ -77,15 +82,9 @@ class SimpananController extends Controller
     /**
      * a. & b. Proses transaksi simpanan
      */
-    public function store(Request $request)
+    public function store(StoreTransaksiRequest $request)
     {
-        $validated = $request->validate([
-            'anggota_id' => 'required|uuid|exists:anggota,id',
-            'rekening_id' => 'required|uuid|exists:rekening_simpanan,id',
-            'jenis' => 'required|in:setoran,penarikan',
-            'nominal' => 'required|numeric|min:1000',
-            'keterangan' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         $rekening = RekeningSimpanan::with('produk')->findOrFail($validated['rekening_id']);
 
@@ -141,6 +140,12 @@ class SimpananController extends Controller
                 'approved_by' => $needApproval ? null : auth()->id(),
                 'approved_at' => $needApproval ? null : now(),
             ]);
+
+            if ($validated['jenis'] === 'setoran') {
+                $this->buatJurnalSetoran($transaksi);
+            } elseif ($transaksi->status_approval === 'approved') {
+                $this->buatJurnalPenarikan($transaksi);
+            }
 
             DB::commit();
 
@@ -208,8 +213,6 @@ class SimpananController extends Controller
      */
     public function approval()
     {
-        abort_if(auth()->user()->role !== 'super_admin', 403, 'Akses ditolak. Hanya Super Admin yang dapat mengakses halaman ini.');
-
         $pending = TransaksiSimpanan::where('dibatalkan', false)
             ->where('status_approval', 'pending')
             ->with(['rekening.anggota', 'rekening.produk', 'user'])
@@ -224,8 +227,6 @@ class SimpananController extends Controller
      */
     public function approveTransaksi(Request $request, $id)
     {
-        abort_if(auth()->user()->role !== 'super_admin', 403, 'Akses ditolak. Hanya Super Admin yang dapat melakukan approval.');
-
         $request->validate([
             'action' => 'required|in:approve,reject',
         ]);
@@ -239,6 +240,7 @@ class SimpananController extends Controller
                 $transaksi->approved_by = auth()->id();
                 $transaksi->approved_at = now();
                 $transaksi->save();
+                $this->buatJurnalPenarikan($transaksi->fresh());
                 $message = 'Transaksi disetujui.';
             } else {
                 // Reject — reverse saldo
@@ -278,14 +280,9 @@ class SimpananController extends Controller
         return view('simpanan.pinbuk', compact('anggota'));
     }
 
-    public function pinbukStore(Request $request)
+    public function pinbukStore(StorePinbukRequest $request)
     {
-        $validated = $request->validate([
-            'rekening_sumber_id' => 'required|uuid|exists:rekening_simpanan,id',
-            'rekening_tujuan_id' => 'required|uuid|exists:rekening_simpanan,id|different:rekening_sumber_id',
-            'nominal' => 'required|numeric|min:1000',
-            'keterangan' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         $sumber = RekeningSimpanan::with('produk')->findOrFail($validated['rekening_sumber_id']);
         $tujuan = RekeningSimpanan::findOrFail($validated['rekening_tujuan_id']);
@@ -362,6 +359,15 @@ class SimpananController extends Controller
                 'approved_at' => $needApproval ? null : now(),
             ]);
 
+            if ($pinbuk->status_approval === 'approved') {
+                $this->buatJurnalPinbuk(
+                    $sumber->id, $tujuan->id,
+                    (float) $validated['nominal'],
+                    auth()->id(),
+                    $pinbuk->no_transaksi
+                );
+            }
+
             DB::commit();
 
             $message = $needApproval
@@ -414,6 +420,14 @@ class SimpananController extends Controller
                     'approved_by' => auth()->id(),
                     'approved_at' => now(),
                 ]);
+
+            $this->buatJurnalPinbuk(
+                $pinbuk->rekening_sumber_id,
+                $pinbuk->rekening_tujuan_id,
+                (float) $pinbuk->nominal,
+                auth()->id(),
+                $pinbuk->no_transaksi
+            );
 
             DB::commit();
             return back()->with('success', 'Pinbuk disetujui.');
@@ -478,12 +492,9 @@ class SimpananController extends Controller
     /**
      * Proses Buka Rekening Baru
      */
-    public function rekeningBaruStore(Request $request)
+    public function rekeningBaruStore(RekeningBaruRequest $request)
     {
-        $validated = $request->validate([
-            'anggota_id' => 'required|uuid|exists:anggota,id',
-            'produk_id' => 'required|uuid|exists:produk_simpanan,id',
-        ]);
+        $validated = $request->validated();
 
         $anggota = Anggota::findOrFail($validated['anggota_id']);
         $produk = ProdukSimpanan::findOrFail($validated['produk_id']);
@@ -497,12 +508,10 @@ class SimpananController extends Controller
             return back()->withErrors(['produk_id' => 'Anggota sudah memiliki rekening ' . $produk->nama . ' yang aktif.'])->withInput();
         }
 
-        $noRekening = 'REK-' . strtoupper(substr($produk->kode, 0, 3)) . '-' . $anggota->no_anggota;
-
         RekeningSimpanan::create([
             'anggota_id' => $anggota->id,
             'produk_id' => $produk->id,
-            'no_rekening' => $noRekening,
+            'no_rekening' => RekeningSimpanan::generateNoRekening($produk, $anggota->cabang),
             'saldo' => 0,
             'status' => 'aktif',
             'tanggal_buka' => now(),
@@ -686,7 +695,7 @@ class SimpananController extends Controller
             $query->whereHas('anggota', fn($q) => $q->where('cabang_id', $cabangId));
         }
 
-        $rekening = $query->orderBy('no_rekening')->get();
+        $rekening = $query->orderByDesc('no_rekening')->get();
         $produkList = ProdukSimpanan::where('aktif', true)->get();
         $cabangList = \App\Models\Cabang::where('aktif', true)->get();
 

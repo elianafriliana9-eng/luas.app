@@ -52,7 +52,7 @@
                                                 <input type="hidden" name="action" id="action{{ $pj->id }}">
                                                 <div>
                                                     <label class="block text-xs font-medium text-gray-500 mb-1">Nominal Disetujui</label>
-                                                    <input type="number" name="nominal_disetujui" value="{{ $pj->nominal_diajukan }}" class="w-full border rounded-lg px-3 py-2 text-sm font-mono">
+                                                    <input type="text" name="nominal_disetujui" value="{{ $pj->nominal_diajukan }}" inputmode="numeric" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this)">
                                                 </div>
                                                 <div>
                                                     <label class="block text-xs font-medium text-gray-500 mb-1">Bunga (%/tahun)</label>

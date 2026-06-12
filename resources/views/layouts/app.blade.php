@@ -101,6 +101,20 @@
             #topbar { left: 0 !important; }
             #main { margin-left: 0 !important; }
         }
+
+        /* ── Print ── */
+        @media print {
+            .no-print, #sidebar, #topbar, .no-print * { display: none !important; }
+            #main { margin-left: 0 !important; padding: 0 !important; }
+            .overflow-x-auto { overflow: visible !important; }
+            table { page-break-inside: auto; font-size: 10pt; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            body { background: white; }
+            .max-w-7xl { max-width: 100% !important; }
+            .shadow-sm, .shadow { box-shadow: none !important; }
+            .rounded-lg, .rounded-xl { border-radius: 0 !important; }
+        }
     </style>
 </head>
 <body class="bg-[#f8fafc] text-[#0f172a] antialiased" x-cloak
@@ -137,8 +151,12 @@
             $isSimpananTrx = request()->routeIs('simpanan.rekening') || request()->routeIs('simpanan.index') || request()->routeIs('simpanan.create') || request()->routeIs('simpanan.pinbuk') || request()->routeIs('simpanan.statement');
             $isSimpananOps = request()->routeIs('simpanan.approval') || request()->routeIs('simpanan.upload') || request()->routeIs('simpanan.blokir*') || request()->routeIs('simpanan.tutup*') || request()->routeIs('simpanan.cancel*') || request()->routeIs('simpanan.pinbuk.approval*');
             $isSimpananLap = request()->routeIs('simpanan.laporan.*');
-            $pendingApproval = \App\Models\TransaksiSimpanan::where('status_approval', 'pending')->where('dibatalkan', false)->count();
-            $pendingPinbuk = \App\Models\Pinbuk::where('status_approval', 'pending')->count();
+            $pendingApproval = \Illuminate\Support\Facades\Cache::remember('badge.pending_approval', 300, fn() =>
+                \App\Models\TransaksiSimpanan::where('status_approval', 'pending')->where('dibatalkan', false)->count()
+            );
+            $pendingPinbuk = \Illuminate\Support\Facades\Cache::remember('badge.pending_pinbuk', 300, fn() =>
+                \App\Models\Pinbuk::where('status_approval', 'pending')->count()
+            );
             
             $jenisSimp = request()->query('jenis_simpanan');
             $isPokok = $isSimpanan && $jenisSimp === 'pokok';
@@ -156,7 +174,9 @@
             </a>
 
             @php
-                $pendingKeluar = \App\Models\Anggota::where('status', 'pengajuan_keluar')->count();
+                $pendingKeluar = \Illuminate\Support\Facades\Cache::remember('badge.pending_keluar', 300, fn() =>
+                \App\Models\Anggota::where('status', 'pengajuan_keluar')->count()
+            );
             @endphp
             <!-- ═══ MASTER DATA ACCORDION ═══ -->
             <div x-data="{ open: {{ request()->routeIs('anggota.*') || request()->routeIs('perusahaan.*') ? 'true' : 'false' }}, subAnggota: {{ request()->routeIs('anggota.*') ? 'true' : 'false' }}, lapAnggota: {{ request()->routeIs('anggota.laporan.*') ? 'true' : 'false' }} }">
@@ -228,6 +248,10 @@
                             <a href="{{ route('anggota.import') }}" class="sub-link {{ request()->routeIs('anggota.import') ? 'active' : '' }}">
                                 <span class="material-symbols-outlined text-[16px] flex-shrink-0">upload_file</span>
                                 <span>Import Anggota</span>
+                            </a>
+                            <a href="{{ route('anggota.import.master') }}" class="sub-link {{ request()->routeIs('anggota.import.master') ? 'active' : '' }}">
+                                <span class="material-symbols-outlined text-[16px] flex-shrink-0">dataset</span>
+                                <span>Import Master Data</span>
                             </a>
                         </div>
                     </div>
@@ -519,10 +543,39 @@
         </div>
     </header>
 
+    <!-- Toast Notification -->
+    <x-toast-notification />
+
     <!-- ════════ MAIN CONTENT ════════ -->
     <main id="main" :class="{ 'full': !sidebarOpen }" class="pt-16 min-h-screen">
         {{ $slot }}
     </main>
 
+    <script>
+    function formatRupiah(el) {
+        var val = el.value;
+        val = val.replace(/[^0-9,]/g, '');
+        var parts = val.split(',');
+        if (parts.length > 2) parts = [parts[0], parts.slice(1).join('')];
+        if (parts[0]) parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        el.value = parts.join(',');
+    }
+
+    function unformatRupiah(val) {
+        return val.replace(/\./g, '').replace(',', '.');
+    }
+
+    document.addEventListener('submit', function(e) {
+        e.target.querySelectorAll('.input-rupiah').forEach(function(input) {
+            input.value = unformatRupiah(input.value);
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.input-rupiah').forEach(function(input) {
+            formatRupiah(input);
+        });
+    });
+    </script>
 </body>
 </html>

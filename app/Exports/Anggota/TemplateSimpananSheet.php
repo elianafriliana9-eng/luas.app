@@ -12,53 +12,35 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
 
-class TemplateAnggotaSheet implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
+class TemplateSimpananSheet implements FromArray, WithHeadings, WithStyles, ShouldAutoSize, WithEvents
 {
     public function headings(): array
     {
         return [
             'No',
+            'No Rekening',
             'PT',
-            'Rekening',
-            'Nama',
-            'Masa Keanggotaan',
             'ID Anggota',
-            'No. KTP',
-            'No. Telepon',
-            'Tempat Lahir',
-            'Tanggal Lahir',
-            'Alamat',
-            'RT/RW',
-            'Desa',
-            'Kecamatan',
-            'Kota/Kab',
-            'Kodepos',
-            'Peruntukan',
-            'Tgl. Droping/Pencairan',
-            'Pokok',
-            'Bunga',
-            'swf',
-            'Jatuh Tempo',
-            'Bayar',
-            'Pembiayaan Ke',
-            'Saldo Pokok',
-            'Saldo Bunga',
-            'Angsuran',
+            'Nama',
+            'Produk',
+            'Aktif',
+            'Saldo',
         ];
     }
 
     public function array(): array
     {
         return [
-            [1, 'mab', '000', 'toto', '1 tahun', '001', '3456766', '0857', 'tegal', '5 juli', 'tegal', '001/001', 'tegal', 'tegal', 'tegal', '1888', 'renovasi', '2026-12-12', 2000000, 180000, 60000, '2026-12-06', 2, 2, 1333333.33, 120000, 373333.33],
+            [1, '000', 'mab', '001', 'toto', 'simpanan pokok', 'aktif', 150000],
+            [2, '000', 'mab', '001', 'toto', 'simpanan wajib', 'aktif', 300000],
+            [3, '000', 'mab', '001', 'toto', 'simpanan sukarela', 'aktif', 45000],
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        $lastCol = 'AA';
+        $lastCol = 'H';
         $lastRow = $sheet->getHighestRow();
 
         $sheet->getStyle("A1:{$lastCol}1")->applyFromArray([
@@ -74,7 +56,7 @@ class TemplateAnggotaSheet implements FromArray, WithHeadings, WithStyles, Shoul
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
         ]);
 
-        $sheet->getStyle('S2:T' . $lastRow)->getNumberFormat()->setFormatCode('#,##0');
+        $sheet->getStyle('H2:H' . $lastRow)->getNumberFormat()->setFormatCode('#,##0');
     }
 
     public function registerEvents(): array
@@ -82,7 +64,7 @@ class TemplateAnggotaSheet implements FromArray, WithHeadings, WithStyles, Shoul
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $sheet->freezePane('A3');
+                $sheet->freezePane('A2');
             },
         ];
     }

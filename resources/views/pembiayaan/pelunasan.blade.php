@@ -18,7 +18,7 @@
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nominal Bayar <span class="text-red-500">*</span></label>
-                    <input type="number" name="nominal_bayar" value="{{ $totalPelunasan }}" required min="0" step="1000" class="w-full border rounded-lg px-3 py-2 text-sm font-mono text-lg">
+                    <input type="text" name="nominal_bayar" value="{{ $totalPelunasan }}" required inputmode="numeric" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono text-lg" oninput="formatRupiah(this)">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Bayar</label><input type="date" name="tanggal_bayar" value="{{ now()->format('Y-m-d') }}" required class="w-full border rounded-lg px-3 py-2 text-sm"></div>

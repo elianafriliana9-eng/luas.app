@@ -20,7 +20,9 @@ return new class extends Migration
         });
 
         // Update enum jenis to include pinbuk
-        DB::statement("ALTER TABLE transaksi_simpanan MODIFY COLUMN jenis ENUM('setoran', 'penarikan', 'pinbuk_masuk', 'pinbuk_keluar', 'bunga', 'koreksi') DEFAULT 'setoran'");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE transaksi_simpanan MODIFY COLUMN jenis ENUM('setoran', 'penarikan', 'pinbuk_masuk', 'pinbuk_keluar', 'bunga', 'koreksi') DEFAULT 'setoran'");
+        }
 
         // Tabel pinbuk (pemindahbukuan)
         Schema::create('pinbuk', function (Blueprint $table) {
@@ -51,6 +53,8 @@ return new class extends Migration
             ]);
         });
 
-        DB::statement("ALTER TABLE transaksi_simpanan MODIFY COLUMN jenis ENUM('setoran', 'penarikan', 'bunga', 'koreksi') DEFAULT 'setoran'");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE transaksi_simpanan MODIFY COLUMN jenis ENUM('setoran', 'penarikan', 'bunga', 'koreksi') DEFAULT 'setoran'");
+        }
     }
 };

@@ -15,7 +15,9 @@ return new class extends Migration
         });
 
         // Update status enum to include 'pengajuan_keluar'
-        DB::statement("ALTER TABLE anggota MODIFY COLUMN status ENUM('aktif', 'tidak_aktif', 'keluar', 'pengajuan_keluar', 'meninggal') DEFAULT 'aktif'");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE anggota MODIFY COLUMN status ENUM('aktif', 'tidak_aktif', 'keluar', 'pengajuan_keluar', 'meninggal') DEFAULT 'aktif'");
+        }
     }
 
     public function down(): void
@@ -23,6 +25,8 @@ return new class extends Migration
         Schema::table('anggota', function (Blueprint $table) {
             $table->dropColumn('alasan_keluar');
         });
-        DB::statement("ALTER TABLE anggota MODIFY COLUMN status ENUM('aktif', 'tidak_aktif', 'keluar', 'meninggal') DEFAULT 'aktif'");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE anggota MODIFY COLUMN status ENUM('aktif', 'tidak_aktif', 'keluar', 'meninggal') DEFAULT 'aktif'");
+        }
     }
 };

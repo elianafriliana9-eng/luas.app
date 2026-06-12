@@ -44,7 +44,7 @@
                                 <h3 class="font-bold text-lg mb-4">Update Saldo: {{ $k->nama_kas }}</h3>
                                 <form action="{{ route('akuntansi.kas.saldo', $k->id) }}" method="POST" class="space-y-3">
                                     @csrf
-                                    <div><label class="block text-xs font-medium text-gray-500 mb-1">Saldo</label><input type="number" name="saldo" value="{{ $k->saldo }}" step="0.01" required class="w-full border rounded-lg px-3 py-2 text-sm font-mono"></div>
+                                    <div><label class="block text-xs font-medium text-gray-500 mb-1">Saldo</label><input type="text" name="saldo" value="{{ $k->saldo }}" inputmode="decimal" required class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this)"></div>
                                     <div class="flex justify-end gap-2 pt-3 border-t"><button type="button" onclick="document.getElementById('saldoModal{{ $k->id }}').classList.add('hidden')" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg">Batal</button><button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">Update</button></div>
                                 </form>
                             </div>

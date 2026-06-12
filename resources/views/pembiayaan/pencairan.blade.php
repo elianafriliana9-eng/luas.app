@@ -14,7 +14,7 @@
                 @csrf
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Nominal Cair <span class="text-red-500">*</span></label>
-                    <input type="number" name="nominal_cair" value="{{ $pembiayaan->nominal_disetujui }}" required min="0" step="100000" class="w-full border rounded-lg px-3 py-2 text-sm font-mono">
+                    <input type="text" name="nominal_cair" value="{{ $pembiayaan->nominal_disetujui }}" required inputmode="numeric" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this)">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

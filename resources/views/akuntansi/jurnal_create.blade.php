@@ -24,14 +24,14 @@
                     <div id="entries" class="divide-y">
                         <div class="entry-row grid grid-cols-12 gap-2 p-3 items-center">
                             <div class="col-span-5"><select name="entries[0][akun_id]" required class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">-- Pilih Akun --</option>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->kode_akun }} - {{ $a->nama_akun }}</option>@endforeach</select></div>
-                            <div class="col-span-3"><input type="number" name="entries[0][debet]" step="0.01" min="0" placeholder="Debet" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="calcTotal()"></div>
-                            <div class="col-span-3"><input type="number" name="entries[0][kredit]" step="0.01" min="0" placeholder="Kredit" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="calcTotal()"></div>
+                            <div class="col-span-3"><input type="text" name="entries[0][debet]" inputmode="decimal" placeholder="Debet" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this);calcTotal()"></div>
+                            <div class="col-span-3"><input type="text" name="entries[0][kredit]" inputmode="decimal" placeholder="Kredit" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this);calcTotal()"></div>
                             <div class="col-span-1"><button type="button" onclick="this.parentElement.parentElement.remove();calcTotal()" class="text-red-500 hover:text-red-700 text-lg">&times;</button></div>
                         </div>
                         <div class="entry-row grid grid-cols-12 gap-2 p-3 items-center">
                             <div class="col-span-5"><select name="entries[1][akun_id]" required class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">-- Pilih Akun --</option>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->kode_akun }} - {{ $a->nama_akun }}</option>@endforeach</select></div>
-                            <div class="col-span-3"><input type="number" name="entries[1][debet]" step="0.01" min="0" placeholder="Debet" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="calcTotal()"></div>
-                            <div class="col-span-3"><input type="number" name="entries[1][kredit]" step="0.01" min="0" placeholder="Kredit" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="calcTotal()"></div>
+                            <div class="col-span-3"><input type="text" name="entries[1][debet]" inputmode="decimal" placeholder="Debet" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this);calcTotal()"></div>
+                            <div class="col-span-3"><input type="text" name="entries[1][kredit]" inputmode="decimal" placeholder="Kredit" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this);calcTotal()"></div>
                             <div class="col-span-1"><button type="button" onclick="this.parentElement.parentElement.remove();calcTotal()" class="text-red-500 hover:text-red-700 text-lg">&times;</button></div>
                         </div>
                     </div>
@@ -55,8 +55,8 @@
     function addRow() {
         const html = `<div class="entry-row grid grid-cols-12 gap-2 p-3 items-center">
             <div class="col-span-5"><select name="entries[${rowCount}][akun_id]" required class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">-- Pilih Akun --</option>@foreach($accounts as $a)<option value="{{ $a->id }}">{{ $a->kode_akun }} - {{ $a->nama_akun }}</option>@endforeach</select></div>
-            <div class="col-span-3"><input type="number" name="entries[${rowCount}][debet]" step="0.01" min="0" placeholder="Debet" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="calcTotal()"></div>
-            <div class="col-span-3"><input type="number" name="entries[${rowCount}][kredit]" step="0.01" min="0" placeholder="Kredit" class="w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="calcTotal()"></div>
+            <div class="col-span-3"><input type="text" name="entries[${rowCount}][debet]" inputmode="decimal" placeholder="Debet" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this);calcTotal()"></div>
+            <div class="col-span-3"><input type="text" name="entries[${rowCount}][kredit]" inputmode="decimal" placeholder="Kredit" class="input-rupiah w-full border rounded-lg px-3 py-2 text-sm font-mono" oninput="formatRupiah(this);calcTotal()"></div>
             <div class="col-span-1"><button type="button" onclick="this.parentElement.parentElement.remove();calcTotal()" class="text-red-500 hover:text-red-700 text-lg">&times;</button></div>
         </div>`;
         document.getElementById('entries').insertAdjacentHTML('beforeend', html);
@@ -64,8 +64,8 @@
     }
     function calcTotal() {
         let td = 0, tk = 0;
-        document.querySelectorAll('input[name$="[debet]"]').forEach(i => td += parseFloat(i.value) || 0);
-        document.querySelectorAll('input[name$="[kredit]"]').forEach(i => tk += parseFloat(i.value) || 0);
+        document.querySelectorAll('input[name$="[debet]"]').forEach(i => td += parseFloat(unformatRupiah(i.value)) || 0);
+        document.querySelectorAll('input[name$="[kredit]"]').forEach(i => tk += parseFloat(unformatRupiah(i.value)) || 0);
         document.getElementById('totalDebet').textContent = 'Rp ' + td.toLocaleString('id-ID');
         document.getElementById('totalKredit').textContent = 'Rp ' + tk.toLocaleString('id-ID');
         const bal = Math.abs(td - tk) < 0.01;
@@ -80,8 +80,8 @@
         const entries = [];
         document.querySelectorAll('.entry-row').forEach(row => {
             const akun = row.querySelector('select').value;
-            const debet = row.querySelector('input[name$="[debet]"]').value;
-            const kredit = row.querySelector('input[name$="[kredit]"]').value;
+            const debet = unformatRupiah(row.querySelector('input[name$="[debet]"]').value);
+            const kredit = unformatRupiah(row.querySelector('input[name$="[kredit]"]').value);
             if (akun && (debet || kredit)) entries.push({akun_id: akun, debet: debet || 0, kredit: kredit || 0});
         });
         if (entries.length < 2) { alert('Minimal 2 baris jurnal!'); return; }

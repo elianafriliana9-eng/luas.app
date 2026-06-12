@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'user', 'kepala_cabang', 'teller', 'account_officer', 'akuntan') DEFAULT 'user'");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE users MODIFY COLUMN role ENUM('super_admin', 'admin', 'user', 'kepala_cabang', 'teller', 'account_officer', 'akuntan') DEFAULT 'user'");
+        }
     }
 
     /**

@@ -18,7 +18,8 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('anggota.store') }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('anggota.store') }}" method="POST" enctype="multipart/form-data"
+                          x-data="{ loading: false }" x-on:submit="loading = true">
                         @csrf
 
                         <!-- Data Pribadi -->
@@ -89,7 +90,7 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Gaji Pokok</label>
-                                <input type="number" name="gaji_pokok" value="{{ old('gaji_pokok') }}" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                <input type="text" name="gaji_pokok" value="{{ old('gaji_pokok') }}" inputmode="decimal" class="input-rupiah w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" oninput="formatRupiah(this)">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Gajian</label>
@@ -117,7 +118,10 @@
                         <!-- Submit -->
                         <div class="flex justify-end gap-3 pt-4 border-t">
                             <a href="{{ route('anggota.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition">Batal</a>
-                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">Simpan Anggota</button>
+                            <button type="submit" :disabled="loading" class="px-6 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center gap-2">
+                                <span x-show="loading" class="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                <span x-text="loading ? 'Menyimpan...' : 'Simpan Anggota'">Simpan Anggota</span>
+                            </button>
                         </div>
                     </form>
                 </div>

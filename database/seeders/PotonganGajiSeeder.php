@@ -14,8 +14,8 @@ class PotonganGajiSeeder extends Seeder
     {
         $budi = Anggota::where('nik', '3171012304900001')->first();
         $siti = Anggota::where('nik', '3271012405920002')->first();
-        $kurniawan = Anggota::where('nik', '3671011807910011')->first();
-        $zainal = Anggota::where('nik', '3281011806880023')->first();
+        $kurniawan = Anggota::where('nik', '3671021807910006')->first();
+        $zainal = Anggota::where('nik', '3276021806880012')->first();
 
         $budiLoan = $budi ? Pembiayaan::where('anggota_id', $budi->id)->first() : null;
         $sitiLoan = $siti ? Pembiayaan::where('anggota_id', $siti->id)->first() : null;
@@ -24,7 +24,7 @@ class PotonganGajiSeeder extends Seeder
 
         $data = [];
 
-        // Budi — 4 bulan potongan gaji
+        // Budi — 4 bulan potongan gaji @ Rp 916.666/bulan
         if ($budi && $budiLoan) {
             for ($i = 1; $i <= 4; $i++) {
                 $jadwal = $budiLoan->jadwalAngsuran()->where('ke', $i)->first();
@@ -45,7 +45,7 @@ class PotonganGajiSeeder extends Seeder
             }
         }
 
-        // Siti — 2 bulan potongan
+        // Siti — 2 bulan potongan @ Rp 875.000/bulan
         if ($siti && $sitiLoan) {
             for ($i = 1; $i <= 2; $i++) {
                 $jadwal = $sitiLoan->jadwalAngsuran()->where('ke', $i)->first();
@@ -66,7 +66,7 @@ class PotonganGajiSeeder extends Seeder
             }
         }
 
-        // Kurniawan — 6 bulan potongan
+        // Kurniawan — 6 bulan potongan @ Rp 1.145.833/bulan
         if ($kurniawan && $kurniawanLoan) {
             for ($i = 1; $i <= 6; $i++) {
                 $jadwal = $kurniawanLoan->jadwalAngsuran()->where('ke', $i)->first();
@@ -87,7 +87,7 @@ class PotonganGajiSeeder extends Seeder
             }
         }
 
-        // Zainal — 3 bulan potongan
+        // Zainal — 3 bulan potongan @ Rp 1.375.000/bulan
         if ($zainal && $zainalLoan) {
             for ($i = 1; $i <= 3; $i++) {
                 $jadwal = $zainalLoan->jadwalAngsuran()->where('ke', $i)->first();
@@ -105,6 +105,28 @@ class PotonganGajiSeeder extends Seeder
                     'keterangan' => 'Potong gaji angsuran ke-' . $i . ' (PMB-26050002)',
                     'processed_at' => $periode->copy()->subDays(2),
                 ];
+            }
+        }
+
+        // Doni Prasetyo — Simpanan Pokok (3 cicilan @ 50rb)
+        $doni = Anggota::where('nik', '3171031507010016')->first();
+        if ($doni) {
+            $periode = Carbon::parse('2026-04-25');
+            for ($i = 1; $i <= 3; $i++) {
+                $gajiDiterima = 6000000 - 50000;
+                $isProcessed = $i === 1;
+                $data[] = [
+                    'anggota_id' => $doni->id,
+                    'periode' => $periode->format('Y-m-d'),
+                    'gaji_bruto' => 6000000,
+                    'nominal_potongan' => 50000,
+                    'gaji_diterima' => $gajiDiterima,
+                    'jenis_potongan' => 'simpanan',
+                    'status' => $isProcessed ? 'diproses' : 'pending',
+                    'keterangan' => 'Cicilan Simpanan Pokok (' . $i . '/3)',
+                    'processed_at' => $isProcessed ? $periode->copy()->subDays(2) : null,
+                ];
+                $periode->addMonth();
             }
         }
 

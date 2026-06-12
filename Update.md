@@ -1,37 +1,107 @@
-# Update — 11 Juni 2026
+# KopSaku — Update Progres
 
-## 1. Master Data: Perusahaan (PT) Module
-- **Migration**: `create_perusahaan_table` (UUID, kode, nama, alamat, telp, email, aktif)
-- **Model**: `Perusahaan` with `HasUuid`, `anggota()` HasMany relation
-- **Controller**: `PerusahaanController` full CRUD with auto-generated kode from nama initials
-- **Views**: `perusahaan/{index,create,edit}.blade.php`
-- **Routes**: 6 routes in `web.php`
-- **Sidebar**: Accordion "Master Data" → Perusahaan (PT) + Anggota
+> Terakhir diperbarui: 12 Juni 2026
 
-## 2. Removed Departemen & Jabatan from Anggota
-- **Migration**: `add_perusahaan_id_to_anggota_table` (add `perusahaan_id` FK, drop `departemen`/`jabatan`)
-- **Anggota Model**: Removed from `$fillable`, added `perusahaan()` BelongsTo
-- **AnggotaController**: Removed validation rules, filters, and queries for departemen/jabatan; added perusahaan filter
-- **Views updated**:
-  - `anggota/{index,create,edit,show}.blade.php` — replaced with Perusahaan dropdown/column
-  - `anggota/laporan/{keluar,profil,rekap}.blade.php` — replaced with Perusahaan
-  - `payroll/{index,detail}.blade.php` — replaced with Perusahaan
-  - `pembiayaan/registrasi.blade.php` — replaced with Perusahaan
-  - `simpanan/{create,rekening_baru}.blade.php` — replaced with Perusahaan
-- **Exports**: `AnggotaExport`, `ProfilExport`, `KeluarAnggotaExport`, `RekapAnggotaExport` — replaced columns
-- **Imports**: `AnggotaImport` — removed departemen/jabatan fields
-- **Templates**: `TemplateAnggotaSheet`, `TemplatePetunjukAnggotaSheet` — removed columns
-- **API**: `MemberController` — removed from dashboard & profile responses
-- **PayrollController**: Removed `orderBy('departemen')`
+---
 
-## 3. Seeder Updates
-- **PerusahaanSeeder**: 3 default PTs (PT Lumbung Artha Sejahtera, PT Karya Mandiri Indonesia, PT Bumi Sejahtera Makmur)
-- **AnggotaSeeder**: All 31 entries updated — `departemen`/`jabatan` replaced with `perusahaan_id => null`
-- **DatabaseSeeder**: Added `PerusahaanSeeder` before `AnggotaSeeder`
+## ✅ Sudah Selesai (Committed)
 
-## 4. Bug Fixes (earlier)
-- PotonganGaji create: added missing `gaji_diterima`, `gaji_bruto` fields
-- RekeningSimpanan create: added missing `tanggal_buka`, fixed duplicate `no_rekening` with kodeMap
-- Catch block: `\Exception` → `\Throwable` to catch TypeError
-- Carbon `day()` type: cast `$tglGajian` to `(int)`
-- Redirect fallback: `back()` → `redirect()->route('anggota.create')`
+### 1. Master Data Perusahaan/PT
+- Module CRUD Perusahaan/PT
+- Integrasi PT ke semua anggota (setiap anggota terikat ke PT)
+- Hapus field `departemen` dan `jabatan` dari tabel anggota
+
+### 2. Fitur Export/Import Anggota
+- Export anggota ke Excel
+- Import anggota dari Excel
+- Template export/download
+
+### 3. Simpanan — Pinbuk (Pemindahbukuan)
+- Approval flow pinbuk
+- Fitur pemindahbukuan antar rekening simpanan
+
+### 4. UI Improvements
+- Perbaikan layout & tampilan modul anggota dan simpanan
+- Peningkatan navigasi
+
+### 5. Role-Based Access
+- Middleware role (`RoleMiddleware`)
+- Enum role user: `admin`, `teller`, `bendahara`, `manajer`
+
+---
+
+## 🚧 Sedang Dikerjakan (Uncommitted)
+
+### 1. Master Import (Legacy Data)
+- Import massal data legacy dari Excel (anggota, pembiayaan, simpanan, saldo)
+- Command: `php artisan master:import`
+- Sheet: OST (anggota + pembiayaan), Simpanan Pokok & Wajib, Semua Simpanan
+- Support flag `--reset` untuk hapus data lama, `--file` untuk custom path
+
+### 2. Double-Entry Jurnal untuk Simpanan
+- Trait `SimpananJurnal` untuk jurnal otomatis:
+  - Setoran → debit Kas, credit rekening simpanan
+  - Penarikan → debit rekening simpanan, credit Kas
+  - Pinbuk → debit rek sumber, credit rek tujuan
+- Mapping produk ke COA: SIMPOK→21010, SIMWA→21020, SIMSUKA→21030
+
+### 3. Form Request Validation
+- `RekeningBaruRequest` — validasi buka rekening simpanan
+- `StorePinbukRequest` — validasi transfer antar rekening
+- `StoreTransaksiRequest` — validasi setoran/penarikan
+
+### 4. Feature Tests
+- `AnggotaTest` (204 baris) — test CRUD anggota
+- `SimpananTest` (932 baris) — test rekening, transaksi, pinbuk
+
+### 5. UI Components
+- `toast-notification` — notifikasi auto-dismiss dengan Alpine.js
+- `import_master` — halaman upload import data master
+
+### 6. Refactor Seeder
+- Perombakan besar `AnggotaSeeder` (penyesuaian struktur PT)
+- Penyesuaian seeder: User, Pembiayaan, PotonganGaji, RekeningSimpanan, TransaksiSimpanan, dll.
+
+---
+
+## 📋 Belum Dimulai (Backlog)
+
+### Modul Pembiayaan & Payroll
+- [ ] Pengajuan pembiayaan (member → admin)
+- [ ] Approval & pencairan pembiayaan
+- [ ] Jadwal angsuran
+- [ ] Potong gaji otomatis (cron: `payroll:proses`)
+- [ ] Pay Later (bayar sebelum gajian) — approval & proses
+
+### Modul Akuntansi
+- [ ] Jurnal umum
+- [ ] Buku besar
+- [ ] Laporan keuangan (Neraca, Laba/Rugi)
+- [ ] SHU (Sisa Hasil Usaha)
+- [ ] Period lock
+
+### Modul Sembako (Toko)
+- [ ] POS (Point of Sale)
+- [ ] Manajemen stok
+- [ ] Transaksi sembako
+
+### Flutter Mobile App
+- [ ] Setup project Flutter
+- [ ] API integration
+- [ ] Halaman login (NIK + PIN)
+- [ ] Dashboard anggota
+- [ ] Pengajuan pembiayaan
+- [ ] Pay Later
+- [ ] Cek saldo & mutasi simpanan
+
+---
+
+## Statistik
+
+| Item | Jumlah |
+|------|--------|
+| Total migrations | ~20 |
+| Total models | ~25 |
+| Total views | ~40 |
+| Tests (baris) | ~1,200 |
+| Uncommitted files | ~15 new + ~38 modified |
