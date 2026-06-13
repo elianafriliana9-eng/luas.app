@@ -36,11 +36,11 @@ class LuasApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1D4ED8),
-          primary: const Color(0xFF1D4ED8),
-          secondary: const Color(0xFF059669),
+          seedColor: const Color(0xFF0D47A1),
+          primary: const Color(0xFF0D47A1),
+          secondary: const Color(0xFF0D47A1), // We can use the dark blue as main accents
         ),
-        textTheme: GoogleFonts.interTextTheme(Theme.of(context).textTheme),
+        textTheme: GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
       ),
       initialRoute: initialRoute,
       onGenerateRoute: (settings) {

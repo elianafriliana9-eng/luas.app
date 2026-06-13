@@ -12,7 +12,7 @@ class CustomBottomNav extends StatelessWidget {
   });
 
   // Web Palette Primary Color
-  static const Color primary = Color(0xFF1D4ED8);
+  static const Color primary = Color(0xFF0D47A1);
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +35,11 @@ class CustomBottomNav extends StatelessWidget {
         onTap: onItemTapped,
         selectedItemColor: primary,
         unselectedItemColor: const Color(0xFF94A3B8), // slate-400
-        selectedLabelStyle: GoogleFonts.inter(
+        selectedLabelStyle: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
-        unselectedLabelStyle: GoogleFonts.inter(
+        unselectedLabelStyle: GoogleFonts.poppins(
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),

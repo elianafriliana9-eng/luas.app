@@ -10,6 +10,7 @@ import 'simpanan_wajib_screen.dart';
 import 'data_anggota_screen.dart';
 import 'history_transaksi_screen.dart';
 import 'pinjaman_anggota_screen.dart';
+import 'semua_simpanan_screen.dart';
 import 'notification_screen.dart';
 import 'setting_screen.dart';
 import 'bayar_screen.dart';
@@ -21,62 +22,33 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen>
-    with SingleTickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   Map<String, dynamic>? _dashboardData;
   String _userName = '';
   bool _isLoading = true;
-
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+  bool _hideSaldo = false;
 
   // Web Palette
-  static const Color primary = Color(0xFF1D4ED8);
-  static const Color primaryLight = Color(0xFF3B82F6);
-  static const Color secondary = Color(0xFF059669);
-  static const Color tertiary = Color(0xFFF59E0B);
-  static const Color danger = Color(0xFFDC2626);
-  static const Color neutralDark = Color(0xFF0F172A);
-  static const Color neutral = Color(0xFF1E293B);
+  static const Color primary = Color(0xFF0D47A1); // Dark blue from Opsi 3
   static const Color surface = Color(0xFFF8FAFC);
+  static const Color textPrimary = Color(0xFF1E293B);
+  static const Color textSecondary = Color(0xFF64748B);
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeOut),
-      ),
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.05),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
-
     _loadInitialData();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _userName = prefs.getString('user_name') ?? 'Anggota';
+      // Format name to uppercase first name as in mockup "BUDI"
+      if (_userName.isNotEmpty) {
+        _userName = _userName.split(' ')[0].toUpperCase();
+      }
     });
     _fetchDashboard();
   }
@@ -89,7 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen>
         _dashboardData = result['data'];
         _isLoading = false;
       });
-      _animationController.forward();
     } else {
       setState(() => _isLoading = false);
       if (mounted) {
@@ -101,11 +72,12 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   String _formatCurrency(dynamic value) {
-    if (value == null) return '0';
+    if (_hideSaldo) return 'Rp •••••••';
+    if (value == null) return 'Rp 0';
     final number = double.tryParse(value.toString()) ?? 0;
     return NumberFormat.currency(
       locale: 'id_ID',
-      symbol: '',
+      symbol: 'Rp ',
       decimalDigits: 0,
     ).format(number).trim();
   }
@@ -157,501 +129,600 @@ class _DashboardScreenState extends State<DashboardScreen>
       );
     }
 
+    // Get Saldo Total from data, or fallback
+    final totalSaldo = _dashboardData?['total_saldo'] ?? 0;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      key: _scaffoldKey,
+      backgroundColor: Colors.white, // Opsi 3 uses full white for the content background
+      drawer: _buildDrawer(),
       bottomNavigationBar: CustomBottomNav(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
       ),
       body: Stack(
         children: [
-          // Dynamic Header Background (Primary Web Palette)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.45,
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [primary, primaryLight],
-                ),
-              ),
-            ),
+          // Blue Background (Back)
+          Container(
+            height: MediaQuery.of(context).size.height * 0.5,
+            color: primary,
           ),
+          // Scrollable Content (Front)
           SafeArea(
             bottom: false,
-            child: Column(
-              children: [
-                _buildHeader(),
-                Expanded(
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildMainContent(),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Header Section (Transparent)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16, left: 24, right: 24, bottom: 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // App Bar
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                _scaffoldKey.currentState?.openDrawer();
+                              },
+                              child: const Icon(Icons.menu, color: Colors.white, size: 28),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationScreen(),
+                                  ),
+                                );
+                              },
+                              child: Stack(
+                                children: [
+                                  const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 28),
+                                  Positioned(
+                                    right: 2,
+                                    top: 2,
+                                    child: Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFEF4444),
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        // Welcome Text
+                        Text(
+                          'Selamat datang,',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          _userName,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Dompet Koperasi
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Dompet Koperasi',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text(
+                                      _formatCurrency(totalSaldo),
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _hideSaldo = !_hideSaldo;
+                                        });
+                                      },
+                                      child: Icon(
+                                        _hideSaldo ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                        color: Colors.white70,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        // Action Buttons (Bayar & Top Up)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const BayarScreen()));
+                                },
+                                icon: const Icon(Icons.qr_code_scanner_rounded, size: 20, color: primary),
+                                label: Text(
+                                  'Bayar',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    color: primary,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: primary,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  // TODO: Navigate to Top Up Screen
+                                },
+                                icon: const Icon(Icons.add_card_rounded, size: 20, color: Colors.white),
+                                label: Text(
+                                  'Top Up',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        clipBehavior: Clip.none,
-        children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationScreen(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    const Icon(
-                      Icons.notifications_rounded,
+                  
+                  // White Body Content (Overlapping the blue background)
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
                       color: Colors.white,
-                      size: 24,
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444), // red-500
-                          shape: BoxShape.circle,
-                        ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Column(
-            children: [
-              Container(
-                width: 76,
-                height: 76,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withValues(alpha: 0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Image.network(
-                  'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Koperasi_Indonesia_Logo.svg/1200px-Koperasi_Indonesia_Logo.svg.png',
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.sync, color: tertiary, size: 40),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'KOPERASI',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 2,
-                ),
-              ),
-              Text(
-                'MAJU BERSAMA',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 28),
-              Text(
-                'Mobile KOPERASI',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Dashboard',
-                style: GoogleFonts.inter(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMainContent() {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(40),
-          topRight: Radius.circular(40),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(40),
-          topRight: Radius.circular(40),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 40),
-          child: Column(
-            children: [
-              _buildProfileCard(),
-              const SizedBox(height: 40),
-              _buildGridMenu(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileCard() {
-    final saldo = _dashboardData?['total_simpanan'] ?? 0;
-    final firstName = _userName.split(' ')[0].toUpperCase();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 1), // slate-100
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(color: primaryLight, width: 2),
-                  ),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          'https://ui-avatars.com/api/?name=$firstName&background=1D4ED8&color=ffffff&bold=true&size=150',
-                        ),
-                        fit: BoxFit.cover,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Saldo Simpanan Header
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Saldo Simpanan',
+                                style: GoogleFonts.poppins(
+                                  color: textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          // Saldo Simpanan Card
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                              border: Border.all(color: Colors.grey.shade100),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildSimpananItem(
+                                  icon: Icons.account_balance_wallet_outlined,
+                                  iconColor: primary,
+                                  title: 'Simpanan Pokok',
+                                  amount: _formatCurrency(_getSaldoByProduk('pokok')),
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpananPokokScreen()));
+                                  },
+                                ),
+                                Divider(color: Colors.grey.shade100, height: 1),
+                                _buildSimpananItem(
+                                  icon: Icons.savings_outlined,
+                                  iconColor: const Color(0xFF059669), // Green
+                                  title: 'Simpanan Wajib',
+                                  amount: _formatCurrency(_getSaldoByProduk('wajib')),
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpananWajibScreen()));
+                                  },
+                                ),
+                                Divider(color: Colors.grey.shade100, height: 1),
+                                _buildSimpananItem(
+                                  icon: Icons.volunteer_activism_outlined,
+                                  iconColor: const Color(0xFFF59E0B), // Orange
+                                  title: 'Simpanan Sukarela',
+                                  amount: _formatCurrency(_getSaldoByProduk('sukarela')),
+                                  onTap: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const SimpananSukarelaScreen()));
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 32),
+                          
+                          // Akses Cepat Header
+                          Text(
+                            'Akses Cepat',
+                            style: GoogleFonts.poppins(
+                              color: textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Akses Cepat Grid
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _buildAksesCepatItem(
+                                icon: Icons.receipt_long_outlined,
+                                title: 'History\nTransaksi',
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryTransaksiScreen()));
+                                },
+                              ),
+                              _buildAksesCepatItem(
+                                icon: Icons.person_outline_rounded,
+                                title: 'Data\nAnggota',
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const DataAnggotaScreen()));
+                                },
+                              ),
+                              _buildAksesCepatItem(
+                                icon: Icons.groups_outlined,
+                                title: 'Pinjaman\nAnggota',
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const PinjamanAnggotaScreen()));
+                                },
+                              ),
+                            ],
+                          ),
+                          
+                          const SizedBox(height: 32),
+                          
+                          // Butuh Dana Tambahan Banner
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF0D47A1), Color(0xFF1E63E9)],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: primary.withValues(alpha: 0.2),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Butuh Dana Tambahan?',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        'Ajukan pinjaman sekarang',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.account_balance_wallet_outlined,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hi, $firstName',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: neutralDark,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'DOMPET KOPERASI',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF64748B), // slate-500
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Rp. ${_formatCurrency(saldo)}',
-                        style: GoogleFonts.jetBrainsMono(
-                          color: primary,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFEE2E2), // red-100
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.exit_to_app_rounded,
-                color: danger,
-                size: 22,
-              ),
-              onPressed: () {},
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGridMenu() {
-    // Menu colors precisely adapted from web Tailwind palette
-    final menus = [
-      {
-        'title': 'Simpanan\nPokok',
-        'value': 'Rp ${_formatCurrency(_getSaldoByProduk('Pokok'))}',
-        'icon_path': 'assets/icons/pokok.png',
-        'iconColor': primary,
-        'bgColor': const Color(0xFFEFF6FF), // blue-50
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SimpananPokokScreen(dashboardData: _dashboardData),
-          ),
-        ),
-      },
-      {
-        'title': 'Simpanan\nWajib',
-        'value': 'Rp ${_formatCurrency(_getSaldoByProduk('Wajib'))}',
-        'icon_path': 'assets/icons/wajib.png',
-        'iconColor': secondary,
-        'bgColor': const Color(0xFFECFDF5), // emerald-50
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SimpananWajibScreen(dashboardData: _dashboardData),
-          ),
-        ),
-      },
-      {
-        'title': 'Simpanan\nSukarela',
-        'value': 'Rp ${_formatCurrency(_getSaldoByProduk('Sukarela'))}',
-        'icon_path': 'assets/icons/sukarela.png',
-        'iconColor': tertiary,
-        'bgColor': const Color(0xFFFFFBEB), // amber-50
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => SimpananSukarelaScreen(dashboardData: _dashboardData),
-          ),
-        ),
-      },
-      {
-        'title': 'History\nTransaksi',
-        'value': null,
-        'icon_path': 'assets/icons/history.png',
-        'iconColor': danger,
-        'bgColor': const Color(0xFFFEF2F2), // red-50
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => HistoryTransaksiScreen(dashboardData: _dashboardData),
-          ),
-        ),
-      },
-      {
-        'title': 'Data\nAnggota',
-        'value': null,
-        'icon_path': 'assets/icons/profile.png',
-        'iconColor': const Color(0xFF7C3AED), // violet-600
-        'bgColor': const Color(0xFFF5F3FF), // violet-50
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const DataAnggotaScreen(),
-          ),
-        ),
-      },
-      {
-        'title': 'Pinjaman\nAnggota',
-        'value': 'Rp ${_formatCurrency(_dashboardData?['total_tagihan'])}',
-        'icon_path': 'assets/icons/group.png',
-        'iconColor': const Color(0xFFF97316), // orange-500
-        'bgColor': const Color(0xFFFFF7ED), // orange-50
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PinjamanAnggotaScreen(dashboardData: _dashboardData),
-          ),
-        ),
-      },
-    ];
-
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.72,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 24,
-      ),
-      itemCount: menus.length,
-      itemBuilder: (context, index) {
-        final menu = menus[index];
-        return TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeOutBack,
-          builder: (context, value, child) {
-            return Transform.scale(
-              scale: value,
-              child: child,
-            );
-          },
-          child: AnimatedMenuCard(menu: menu),
-        );
-      },
-    );
-  }
-}
-
-class AnimatedMenuCard extends StatefulWidget {
-  final Map<String, dynamic> menu;
-
-  const AnimatedMenuCard({super.key, required this.menu});
-
-  @override
-  State<AnimatedMenuCard> createState() => _AnimatedMenuCardState();
-}
-
-class _AnimatedMenuCardState extends State<AnimatedMenuCard> {
-  bool _isPressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final bgColor = widget.menu['bgColor'] as Color;
-    final iconColor = widget.menu['iconColor'] as Color;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: widget.menu['onTap'] as void Function()?,
-      child: AnimatedScale(
-        scale: _isPressed ? 0.92 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Column(
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: iconColor.withValues(alpha: 0.1),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: widget.menu['icon_path'] != null
-                  ? Image.asset(
-                      widget.menu['icon_path'] as String,
-                      width: 26,
-                      height: 26,
-                      fit: BoxFit.contain,
-                    )
-                  : Icon(
-                      widget.menu['icon'] as IconData,
-                      color: iconColor,
-                      size: 26,
-                    ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Container(
+        color: surface,
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(top: 60, bottom: 24, left: 24, right: 24),
+              decoration: const BoxDecoration(
+                color: primary,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.person, size: 36, color: primary),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _userName,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Anggota Aktif',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  _buildDrawerItem(
+                    icon: Icons.info_outline_rounded,
+                    title: 'Tentang Koperasi',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.help_outline_rounded,
+                    title: 'Pusat Bantuan / FAQ',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.description_outlined,
+                    title: 'Syarat & Ketentuan',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.support_agent_rounded,
+                    title: 'Hubungi Kami',
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            _buildDrawerItem(
+              icon: Icons.logout_rounded,
+              title: 'Keluar',
+              textColor: const Color(0xFFEF4444),
+              iconColor: const Color(0xFFEF4444),
+              onTap: () async {
+                Navigator.pop(context);
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.clear();
+                if (mounted) {
+                  Navigator.pushReplacementNamed(context, '/login');
+                }
+              },
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? textColor,
+    Color? iconColor,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: iconColor ?? textSecondary, size: 24),
+      title: Text(
+        title,
+        style: GoogleFonts.poppins(
+          color: textColor ?? textPrimary,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildSimpananItem({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String amount,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.poppins(
+                  color: textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Text(
+              amount,
+              style: GoogleFonts.poppins(
+                color: textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAksesCepatItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.27,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+        decoration: BoxDecoration(
+          color: primary,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: primary.withValues(alpha: 0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 32),
             const SizedBox(height: 12),
             Text(
-              widget.menu['title'] as String,
+              title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                color: const Color(0xFF475569), // slate-600
+              style: GoogleFonts.poppins(
+                color: Colors.white,
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 height: 1.2,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-            if (widget.menu['value'] != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                widget.menu['value'] as String,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.jetBrainsMono(
-                  color: iconColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
           ],
         ),
       ),
