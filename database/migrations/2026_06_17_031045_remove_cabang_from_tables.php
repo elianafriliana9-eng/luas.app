@@ -34,15 +34,19 @@ return new class extends Migration
         }
 
         if (Schema::hasTable('jurnal') && Schema::hasColumn('jurnal', 'cabang_id')) {
-            Schema::table('jurnal', function (Blueprint $table) {
-                try { $table->dropIndex(['tanggal', 'cabang_id']); } catch (\Exception $e) {}
-            });
+            try {
+                Schema::table('jurnal', function (Blueprint $table) {
+                    $table->dropIndex(['tanggal', 'cabang_id']);
+                });
+            } catch (\Exception $e) {}
         }
         
         if (Schema::hasTable('periode_tutup') && Schema::hasColumn('periode_tutup', 'cabang_id')) {
-            Schema::table('periode_tutup', function (Blueprint $table) {
-                try { $table->dropUnique(['cabang_id', 'tahun', 'bulan']); } catch (\Exception $e) {}
-            });
+            try {
+                Schema::table('periode_tutup', function (Blueprint $table) {
+                    $table->dropUnique(['cabang_id', 'tahun', 'bulan']);
+                });
+            } catch (\Exception $e) {}
         }
 
         foreach ($tables as $tableName) {
