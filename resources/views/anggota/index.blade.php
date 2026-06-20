@@ -52,15 +52,7 @@
                             <option value="keluar" {{ request('status') == 'keluar' ? 'selected' : '' }}>Keluar</option>
                         </select>
                     </div>
-                    <div class="min-w-[150px]">
-                        <label class="block text-xs font-medium text-gray-500 mb-1">Cabang</label>
-                        <select name="cabang_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Semua Cabang</option>
-                            @foreach($cabangs as $c)
-                                <option value="{{ $c->id }}" {{ request('cabang_id') == $c->id ? 'selected' : '' }}>{{ $c->nama }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                    
                     <div class="min-w-[150px]">
                         <label class="block text-xs font-medium text-gray-500 mb-1">Perusahaan</label>
                         <select name="perusahaan_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
@@ -101,7 +93,7 @@
                                         <img src="https://ui-avatars.com/api/?name={{ urlencode($a->nama_lengkap) }}&background=E0E7FF&color=4F46E5&size=32" class="w-8 h-8 rounded-full">
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">{{ $a->nama_lengkap }}</div>
-                                            <div class="text-xs text-gray-500">{{ $a->cabang?->nama }}</div>
+                                            
                                         </div>
                                     </div>
                                 </td>

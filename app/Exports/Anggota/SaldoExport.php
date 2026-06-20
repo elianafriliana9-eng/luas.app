@@ -46,10 +46,6 @@ class SaldoExport implements FromQuery, WithHeadings, WithMapping, WithStyles, S
                   ->orWhere('no_anggota', 'like', "%{$s}%");
             });
         }
-        if (!empty($this->filters['cabang_id'])) {
-            $query->where('cabang_id', $this->filters['cabang_id']);
-        }
-
         return $query->orderBy('nama_lengkap');
     }
 
@@ -58,7 +54,6 @@ class SaldoExport implements FromQuery, WithHeadings, WithMapping, WithStyles, S
         return [
             'No. Anggota',
             'Nama',
-            'Cabang',
             'Simpanan Pokok',
             'Simpanan Wajib',
             'Simpanan Sukarela',
@@ -78,7 +73,6 @@ class SaldoExport implements FromQuery, WithHeadings, WithMapping, WithStyles, S
         return [
             $anggota->no_anggota,
             $anggota->nama_lengkap,
-            $anggota->cabang?->nama ?? '-',
             $pokok,
             $wajib,
             $sukarela,

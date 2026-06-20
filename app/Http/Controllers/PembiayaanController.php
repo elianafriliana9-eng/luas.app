@@ -8,11 +8,15 @@ use App\Models\PengajuanPembiayaan;
 use App\Models\ProdukPembiayaan;
 use App\Models\JadwalAngsuran;
 use App\Models\TransaksiPembiayaan;
+use App\Traits\PembiayaanJurnal;
+use App\Exports\GenericExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PembiayaanController extends Controller
 {
+    use PembiayaanJurnal;
     /**
      * a. Simulasi pembiayaan
      */
@@ -329,7 +333,7 @@ class PembiayaanController extends Controller
             $this->generateJadwalSilent($pembiayaan);
 
             // Create transaction record
-            TransaksiPembiayaan::create([
+            $transaksi = TransaksiPembiayaan::create([
                 'pembiayaan_id' => $pembiayaan->id,
                 'no_transaksi' => 'CAIR-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
                 'jenis' => 'pencairan',
@@ -339,6 +343,9 @@ class PembiayaanController extends Controller
                 'total' => $validated['nominal_cair'],
                 'channel' => $validated['metode_cair'],
             ]);
+
+            // Buat Jurnal Akuntansi untuk Pencairan
+            $this->buatJurnalPencairan($transaksi);
 
             DB::commit();
             return redirect()->route('pembiayaan.transaksi')->with('success', 'Pencairan berhasil! Jadwal angsuran otomatis digenerate.');
@@ -422,7 +429,7 @@ class PembiayaanController extends Controller
             $pembiayaan->save();
 
             // Create transaction
-            TransaksiPembiayaan::create([
+            $transaksi = TransaksiPembiayaan::create([
                 'pembiayaan_id' => $pembiayaan->id,
                 'no_transaksi' => 'LUNAS-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
                 'jenis' => 'pelunasan',
@@ -432,6 +439,9 @@ class PembiayaanController extends Controller
                 'total' => $validated['nominal_bayar'],
                 'channel' => $validated['metode_bayar'],
             ]);
+
+            // Buat Jurnal Akuntansi
+            $this->buatJurnalPelunasanAtauAngsuran($transaksi);
 
             DB::commit();
             return redirect()->route('pembiayaan.transaksi')->with('success', 'Pembiayaan berhasil dilunasi!');
@@ -471,7 +481,7 @@ class PembiayaanController extends Controller
             $pembiayaan->save();
 
             // Create transaction
-            TransaksiPembiayaan::create([
+            $transaksi = TransaksiPembiayaan::create([
                 'pembiayaan_id' => $pembiayaan->id,
                 'jadwal_id' => $jadwal->id,
                 'no_transaksi' => 'ANG-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
@@ -482,6 +492,9 @@ class PembiayaanController extends Controller
                 'total' => $jadwal->total,
                 'channel' => 'admin',
             ]);
+
+            // Buat Jurnal Akuntansi
+            $this->buatJurnalPelunasanAtauAngsuran($transaksi);
 
             DB::commit();
             return back()->with('success', 'Angsuran ke-' . $jadwal->ke . ' berhasil dibayar!');
@@ -604,5 +617,105 @@ class PembiayaanController extends Controller
         $transaksi = $query->latest('created_at')->get();
 
         return view('pembiayaan.laporan.pencairan', compact('transaksi'));
+    }
+
+    // --- EXPORT METHODS ---
+
+    public function exportPengajuan(Request $request)
+    {
+        $query = PengajuanPembiayaan::with(['anggota', 'produk']);
+        if ($status = $request->input('status')) $query->where('status_approval', $status);
+        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+        $data = $query->latest('created_at')->get()->map(function($item) {
+            return [
+                'TGL PENGAJUAN' => $item->created_at->format('d/m/Y'),
+                'NO PENGAJUAN' => $item->no_pengajuan,
+                'NAMA ANGGOTA' => $item->anggota->nama_lengkap ?? '-',
+                'PRODUK' => $item->produk->nama ?? '-',
+                'NOMINAL DIAJUKAN' => $item->nominal_diajukan,
+                'JANGKA WAKTU' => $item->jangka_bulan . ' Bulan',
+                'STATUS' => strtoupper($item->status_approval),
+            ];
+        })->toArray();
+
+        return Excel::download(new GenericExport(
+            ['TGL PENGAJUAN', 'NO PENGAJUAN', 'NAMA ANGGOTA', 'PRODUK', 'NOMINAL DIAJUKAN', 'JANGKA WAKTU', 'STATUS'],
+            $data
+        ), 'Laporan_Pengajuan_Pembiayaan_' . date('Ymd') . '.xlsx');
+    }
+
+    public function exportRegistrasi(Request $request)
+    {
+        $query = Pembiayaan::with(['anggota', 'pengajuan.produk']);
+        if ($status = $request->input('status')) $query->where('status', $status);
+        if ($from = $request->input('from')) $query->whereDate('tanggal_akad', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('tanggal_akad', '<=', $to);
+
+        $data = $query->latest('tanggal_akad')->get()->map(function($item) {
+            return [
+                'TGL AKAD' => $item->tanggal_akad ? \Carbon\Carbon::parse($item->tanggal_akad)->format('d/m/Y') : '-',
+                'NO PEMBIAYAAN' => $item->no_pembiayaan,
+                'NAMA ANGGOTA' => $item->anggota->nama_lengkap ?? '-',
+                'NOMINAL' => $item->nominal_disetujui,
+                'TENOR' => $item->jangka_bulan . ' Bln',
+                'ANGSURAN POKOK' => $item->angsuran_pokok,
+                'ANGSURAN MARGIN' => $item->angsuran_bunga,
+                'STATUS' => strtoupper($item->status),
+            ];
+        })->toArray();
+
+        return Excel::download(new GenericExport(
+            ['TGL AKAD', 'NO PEMBIAYAAN', 'NAMA ANGGOTA', 'NOMINAL', 'TENOR', 'ANGSURAN POKOK', 'ANGSURAN MARGIN', 'STATUS'],
+            $data
+        ), 'Laporan_Registrasi_Pembiayaan_' . date('Ymd') . '.xlsx');
+    }
+
+    public function exportPembiayaan(Request $request)
+    {
+        $query = Pembiayaan::with(['anggota']);
+        if ($status = $request->input('status')) $query->where('status', $status);
+        if ($kolektibilitas = $request->input('kolektibilitas')) $query->where('kolektibilitas', $kolektibilitas);
+
+        $data = $query->latest('tanggal_akad')->get()->map(function($item) {
+            return [
+                'NO PEMBIAYAAN' => $item->no_pembiayaan,
+                'NAMA ANGGOTA' => $item->anggota->nama_lengkap ?? '-',
+                'PLAFON' => $item->nominal_disetujui,
+                'SISA POKOK' => $item->saldo_pokok,
+                'SISA MARGIN' => $item->saldo_bunga,
+                'STATUS' => strtoupper($item->status),
+                'KOLEKTIBILITAS' => 'Kol ' . $item->kolektibilitas,
+            ];
+        })->toArray();
+
+        return Excel::download(new GenericExport(
+            ['NO PEMBIAYAAN', 'NAMA ANGGOTA', 'PLAFON', 'SISA POKOK', 'SISA MARGIN', 'STATUS', 'KOLEKTIBILITAS'],
+            $data
+        ), 'Portofolio_Pembiayaan_Aktif_' . date('Ymd') . '.xlsx');
+    }
+
+    public function exportPencairan(Request $request)
+    {
+        $query = TransaksiPembiayaan::where('jenis', 'pencairan')->with(['pembiayaan.anggota']);
+        if ($from = $request->input('from')) $query->whereDate('created_at', '>=', $from);
+        if ($to = $request->input('to')) $query->whereDate('created_at', '<=', $to);
+
+        $data = $query->latest('created_at')->get()->map(function($item) {
+            return [
+                'TGL CAIR' => $item->created_at->format('d/m/Y'),
+                'NO TRANSAKSI' => $item->no_transaksi,
+                'NO PEMBIAYAAN' => $item->pembiayaan->no_pembiayaan ?? '-',
+                'NAMA ANGGOTA' => $item->pembiayaan->anggota->nama_lengkap ?? '-',
+                'NOMINAL CAIR' => $item->total,
+                'METODE' => strtoupper($item->channel),
+            ];
+        })->toArray();
+
+        return Excel::download(new GenericExport(
+            ['TGL CAIR', 'NO TRANSAKSI', 'NO PEMBIAYAAN', 'NAMA ANGGOTA', 'NOMINAL CAIR', 'METODE'],
+            $data
+        ), 'Laporan_Pencairan_Pembiayaan_' . date('Ymd') . '.xlsx');
     }
 }

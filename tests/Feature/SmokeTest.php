@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Anggota;
-use App\Models\Cabang;
 use App\Models\ChartOfAccount;
 use App\Models\Jurnal;
 use App\Models\JurnalDetail;
@@ -29,7 +28,6 @@ class SmokeTest extends TestCase
 
     private User $admin;
     private User $user;
-    private Cabang $cabang;
     private Anggota $anggota;
     private Anggota $anggotaKeluar;
     private RekeningSimpanan $rekPokok;
@@ -45,11 +43,6 @@ class SmokeTest extends TestCase
         $this->admin = User::factory()->create(['role' => 'super_admin']);
         $this->user = User::factory()->create(['role' => 'user']);
 
-        $this->cabang = Cabang::create([
-            'kode' => 'CBG-SMK', 'nama' => 'Cabang Smoke Test',
-            'alamat' => 'Jl. Test No. 1', 'telp' => '021-12345678', 'aktif' => true,
-        ]);
-
         $this->produkPokok = ProdukSimpanan::create([
             'kode' => 'SIMPOK', 'nama' => 'Simpanan Pokok', 'jenis' => 'pokok',
             'bunga_pa' => 0, 'minimal_saldo' => 100000, 'auto_bunga' => false, 'aktif' => true,
@@ -64,7 +57,6 @@ class SmokeTest extends TestCase
         ]);
 
         $this->anggota = Anggota::create([
-            'cabang_id' => $this->cabang->id,
             'no_anggota' => 'SMK-001',
             'nama_lengkap' => 'Anggota Smoke Test',
             'nik' => '9999999999999999',
@@ -80,7 +72,6 @@ class SmokeTest extends TestCase
         ]);
 
         $this->anggotaKeluar = Anggota::create([
-            'cabang_id' => $this->cabang->id,
             'no_anggota' => 'SMK-002',
             'nama_lengkap' => 'Anggota Keluar',
             'nik' => '8888888888888888',

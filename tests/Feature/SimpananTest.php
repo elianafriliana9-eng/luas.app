@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Anggota;
-use App\Models\Cabang;
 use App\Models\Pinbuk;
 use App\Models\ProdukSimpanan;
 use App\Models\RekeningSimpanan;
@@ -18,7 +17,6 @@ class SimpananTest extends TestCase
 
     private User $admin;
     private User $user;
-    private Cabang $cabang;
     private ProdukSimpanan $produkPokok;
     private ProdukSimpanan $produkWajib;
     private ProdukSimpanan $produkSukarela;
@@ -56,7 +54,6 @@ class SimpananTest extends TestCase
         ]);
 
         $this->anggota = Anggota::create([
-            'cabang_id' => $this->cabang->id,
             'no_anggota' => 'ANG-TEST-001',
             'nik' => '3171012304900001',
             'nama_lengkap' => 'Test Anggota',

@@ -25,7 +25,7 @@
                 <th>No. Rekening</th>
                 <th>Anggota</th>
                 <th>Produk</th>
-                <th>Cabang</th>
+                
                 <th class="text-right">Saldo</th>
             </tr>
         </thead>

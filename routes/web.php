@@ -183,6 +183,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pembiayaan/laporan/pembiayaan', [\App\Http\Controllers\PembiayaanController::class, 'laporanPembiayaan'])->name('pembiayaan.laporan.pembiayaan');
     Route::get('/pembiayaan/laporan/pencairan', [\App\Http\Controllers\PembiayaanController::class, 'laporanPencairan'])->name('pembiayaan.laporan.pencairan');
 
+    // Export Excel Laporan
+    Route::get('/pembiayaan/export/pengajuan', [\App\Http\Controllers\PembiayaanController::class, 'exportPengajuan'])->name('pembiayaan.export.pengajuan');
+    Route::get('/pembiayaan/export/registrasi', [\App\Http\Controllers\PembiayaanController::class, 'exportRegistrasi'])->name('pembiayaan.export.registrasi');
+    Route::get('/pembiayaan/export/pembiayaan', [\App\Http\Controllers\PembiayaanController::class, 'exportPembiayaan'])->name('pembiayaan.export.pembiayaan');
+    Route::get('/pembiayaan/export/pencairan', [\App\Http\Controllers\PembiayaanController::class, 'exportPencairan'])->name('pembiayaan.export.pencairan');
+
     // Akuntansi Routes
     Route::get('/akuntansi', [\App\Http\Controllers\AkuntansiController::class, 'index'])->name('akuntansi.index');
     Route::get('/akuntansi/coa', [\App\Http\Controllers\AkuntansiController::class, 'coa'])->name('akuntansi.coa');

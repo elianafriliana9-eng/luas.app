@@ -12,10 +12,7 @@
                     <select name="status" class="w-full border rounded-lg px-3 py-2 text-sm">
                         <option value="">Semua</option><option value="aktif" {{ request('status')=='aktif'?'selected':'' }}>Aktif</option><option value="keluar" {{ request('status')=='keluar'?'selected':'' }}>Keluar</option>
                     </select></div>
-                <div class="min-w-[150px]"><label class="block text-xs font-medium text-gray-500 mb-1">Cabang</label>
-                    <select name="cabang_id" class="w-full border rounded-lg px-3 py-2 text-sm">
-                        <option value="">Semua</option>@foreach($cabangs as $c) <option value="{{ $c->id }}" {{ request('cabang_id')==$c->id?'selected':'' }}>{{ $c->nama }}</option> @endforeach
-                    </select></div>
+                
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">Filter</button>
             </form>
         </div>

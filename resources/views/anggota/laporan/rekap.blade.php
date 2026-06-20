@@ -31,29 +31,6 @@
             </div>
         </div>
 
-        <!-- Per Cabang -->
-        <div class="bg-white rounded-lg shadow-sm">
-            <div class="p-4 border-b"><h3 class="font-semibold text-gray-900">Rekap per Cabang</h3></div>
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50"><tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cabang</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aktif</th>
-                </tr></thead>
-                <tbody class="divide-y">
-                    @forelse($perCabang as $c)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-3 text-sm font-medium">{{ $c->cabang?->nama ?? '-' }}</td>
-                            <td class="px-6 py-3 text-sm text-center font-bold">{{ $c->total }}</td>
-                            <td class="px-6 py-3 text-sm text-center">{{ $c->aktif }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="3" class="px-6 py-12 text-center text-slate-400"><span class="material-symbols-outlined text-[40px] block mb-2">database_off</span>Tidak ada data cabang</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
         <!-- Per Perusahaan -->
         <div class="bg-white rounded-lg shadow-sm">
             <div class="p-4 border-b"><h3 class="font-semibold text-gray-900">Rekap per Perusahaan</h3></div>

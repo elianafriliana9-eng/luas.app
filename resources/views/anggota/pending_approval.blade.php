@@ -29,7 +29,7 @@
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">NIK</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cabang</th>
+                                
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Didaftarkan</th>
                                 <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
@@ -42,7 +42,7 @@
                                     <td class="px-4 py-3 text-sm font-medium text-gray-900">
                                         <a href="{{ route('anggota.show', $a->id) }}" class="text-indigo-600 hover:text-indigo-900">{{ $a->nama_lengkap }}</a>
                                     </td>
-                                    <td class="px-4 py-3 text-sm">{{ $a->cabang->nama ?? '-' }}</td>
+                                    
                                     <td class="px-4 py-3 text-sm text-gray-500">{{ $a->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="px-4 py-3 text-center">
                                         <div class="flex justify-center gap-2">

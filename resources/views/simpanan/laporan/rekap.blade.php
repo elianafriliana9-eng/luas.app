@@ -33,11 +33,7 @@
                     </select>
                 </div>
                 <div class="min-w-[160px]">
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Cabang</label>
-                    <select name="cabang_id" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary">
-                        <option value="">Semua Cabang</option>
-                        @foreach($cabangList as $c) <option value="{{ $c->id }}" {{ request('cabang_id')==$c->id?'selected':'' }}>{{ $c->nama }}</option> @endforeach
-                    </select>
+                    
                 </div>
                 <button type="submit" class="px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-dark transition-all shadow-sm">Filter</button>
             </form>

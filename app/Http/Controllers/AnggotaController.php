@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Anggota;
 use App\Models\RekeningSimpanan;
 use App\Models\TransaksiSimpanan;
-use App\Models\Cabang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +25,7 @@ class AnggotaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Anggota::query()->with('cabang');
+        $query = Anggota::query()->with('perusahaan');
 
         // Filter search
         if ($search = $request->input('search')) {
@@ -43,10 +42,7 @@ class AnggotaController extends Controller
             $query->where('status', $status);
         }
 
-        // Filter cabang
-        if ($cabangId = $request->input('cabang_id')) {
-            $query->where('cabang_id', $cabangId);
-        }
+
 
         // Filter perusahaan
         if ($perusahaanId = $request->input('perusahaan_id')) {
@@ -54,10 +50,9 @@ class AnggotaController extends Controller
         }
 
         $anggota = $query->latest('tanggal_masuk')->paginate(15)->withQueryString();
-        $cabangs = Cabang::where('aktif', true)->get();
         $perusahaans = \App\Models\Perusahaan::where('aktif', true)->orderBy('nama')->get();
 
-        return view('anggota.index', compact('anggota', 'cabangs', 'perusahaans'));
+        return view('anggota.index', compact('anggota', 'perusahaans'));
     }
 
     /**
@@ -65,7 +60,7 @@ class AnggotaController extends Controller
      */
     public function show($id)
     {
-        $anggota = Anggota::with(['cabang', 'rekeningSimpanan.produk', 'pembiayaan.jadwalAngsuran'])->findOrFail($id);
+        $anggota = Anggota::with(['rekeningSimpanan.produk', 'pembiayaan.jadwalAngsuran', 'perusahaan'])->findOrFail($id);
 
         // Total simpanan
         $totalSimpanan = $anggota->rekeningSimpanan->sum('saldo');
@@ -89,9 +84,8 @@ class AnggotaController extends Controller
      */
     public function create()
     {
-        $cabangs = Cabang::where('aktif', true)->get();
         $perusahaans = \App\Models\Perusahaan::where('aktif', true)->orderBy('nama')->get();
-        return view('anggota.create', compact('cabangs', 'perusahaans'));
+        return view('anggota.create', compact('perusahaans'));
     }
 
     /**
@@ -147,9 +141,8 @@ class AnggotaController extends Controller
     public function edit($id)
     {
         $anggota = Anggota::findOrFail($id);
-        $cabangs = Cabang::where('aktif', true)->get();
         $perusahaans = \App\Models\Perusahaan::where('aktif', true)->orderBy('nama')->get();
-        return view('anggota.edit', compact('anggota', 'cabangs', 'perusahaans'));
+        return view('anggota.edit', compact('anggota', 'perusahaans'));
     }
 
     /**
@@ -212,7 +205,7 @@ class AnggotaController extends Controller
     public function approvalKeluar()
     {
         $pending = Anggota::where('status', 'pengajuan_keluar')
-            ->with('cabang')
+            
             ->orderBy('tanggal_keluar', 'asc')
             ->get();
 
@@ -294,7 +287,7 @@ class AnggotaController extends Controller
     public function pendingApproval()
     {
         $pending = Anggota::where('status', 'pending_aktif')
-            ->with('cabang')
+            
             ->orderBy('created_at', 'asc')
             ->get();
 
@@ -373,16 +366,11 @@ class AnggotaController extends Controller
      */
     public function saldo(Request $request)
     {
-        $query = Anggota::with(['cabang', 'rekeningSimpanan.produk']);
+        $query = Anggota::with(['rekeningSimpanan.produk']);
 
         // Filter status
         if ($status = $request->input('status')) {
             $query->where('status', $status);
-        }
-
-        // Filter cabang
-        if ($cabangId = $request->input('cabang_id')) {
-            $query->where('cabang_id', $cabangId);
         }
 
         // Pencarian
@@ -394,9 +382,7 @@ class AnggotaController extends Controller
         }
 
         $anggota = $query->orderBy('nama_lengkap')->paginate(15)->withQueryString();
-        $cabangs = Cabang::where('aktif', true)->get();
-
-        return view('anggota.saldo', compact('anggota', 'cabangs'));
+        return view('anggota.saldo', compact('anggota'));
     }
 
     /**
@@ -404,7 +390,7 @@ class AnggotaController extends Controller
      */
     public function laporanMasuk(Request $request)
     {
-        $query = Anggota::with('cabang')
+        $query = Anggota::query()
             ->where(function ($q) {
                 $q->where('status', 'pending_aktif')
                   ->orWhere(function ($sub) {
@@ -413,14 +399,8 @@ class AnggotaController extends Controller
                   });
             });
 
-        if ($cabangId = $request->input('cabang_id')) {
-            $query->where('cabang_id', $cabangId);
-        }
-
         $anggota = $query->orderBy('created_at', 'desc')->get();
-        $cabangs = Cabang::where('aktif', true)->get();
-
-        return view('anggota.laporan.masuk', compact('anggota', 'cabangs'));
+        return view('anggota.laporan.masuk', compact('anggota'));
     }
 
     /**
@@ -428,7 +408,7 @@ class AnggotaController extends Controller
      */
     public function laporanProfil(Request $request)
     {
-        $query = Anggota::with(['cabang']);
+        $query = Anggota::query();
 
         if ($status = $request->input('status')) {
             $query->where('status', $status);
@@ -453,18 +433,13 @@ class AnggotaController extends Controller
         $anggotaKeluar = Anggota::where('status', 'keluar')->count();
         $totalSimpanan = Anggota::with('rekeningSimpanan')->get()->sum(fn ($a) => $a->rekeningSimpanan->sum('saldo'));
 
-        $perCabang = Anggota::selectRaw('cabang_id, COUNT(*) as total, SUM(CASE WHEN status = "aktif" THEN 1 ELSE 0 END) as aktif')
-            ->groupBy('cabang_id')
-            ->with('cabang')
-            ->get();
-
         $perPerusahaan = \App\Models\Perusahaan::withCount(['anggota' => function ($q) {
             $q->where('status', '!=', 'keluar');
         }])->orderByDesc('anggota_count')->get();
 
         return view('anggota.laporan.rekap', compact(
             'totalAnggota', 'anggotaAktif', 'anggotaKeluar', 'totalSimpanan',
-            'perCabang', 'perPerusahaan'
+            'perPerusahaan'
         ));
     }
 
@@ -474,7 +449,7 @@ class AnggotaController extends Controller
     public function laporanKeluar(Request $request)
     {
         $query = Anggota::where('status', 'keluar')
-            ->with('cabang')
+            
             ->orderBy('tanggal_keluar', 'desc');
 
         if ($from = $request->input('from')) {
@@ -500,7 +475,7 @@ class AnggotaController extends Controller
             RekeningSimpanan::create([
                 'anggota_id' => $anggota->id,
                 'produk_id' => $produk->id,
-                'no_rekening' => RekeningSimpanan::generateNoRekening($produk, $anggota->cabang),
+                'no_rekening' => RekeningSimpanan::generateNoRekening($produk),
                 'saldo' => 0,
                 'status' => 'aktif',
                 'tanggal_buka' => now()->format('Y-m-d'),
@@ -538,7 +513,7 @@ class AnggotaController extends Controller
      */
     public function exportAnggota(Request $request)
     {
-        $filters = $request->only(['search', 'status', 'cabang_id', 'perusahaan_id']);
+        $filters = $request->only(['search', 'status', 'perusahaan_id']);
         return $this->excelDownload(new AnggotaExport($filters), 'data-anggota-' . date('Y-m-d') . '.xlsx');
     }
 
@@ -547,7 +522,7 @@ class AnggotaController extends Controller
      */
     public function exportSaldo(Request $request)
     {
-        $filters = $request->only(['search', 'cabang_id', 'status']);
+        $filters = $request->only(['search', 'status']);
         return $this->excelDownload(new SaldoExport($filters), 'saldo-anggota-' . date('Y-m-d') . '.xlsx');
     }
 
@@ -582,7 +557,7 @@ class AnggotaController extends Controller
     public function pdfProfil(Request $request)
     {
         try {
-            $query = Anggota::with('cabang');
+            $query = Anggota::query();
             if ($status = $request->input('status')) $query->where('status', $status);
             if ($perusahaanId = $request->input('perusahaan_id')) $query->where('perusahaan_id', $perusahaanId);
 
@@ -597,7 +572,7 @@ class AnggotaController extends Controller
     public function pdfKeluar($id)
     {
         try {
-            $anggota = Anggota::with(['cabang', 'rekeningSimpanan.produk'])->findOrFail($id);
+            $anggota = Anggota::with(['rekeningSimpanan.produk'])->findOrFail($id);
 
             if ($anggota->status !== 'keluar') {
                 return back()->with('error', 'Hanya dapat mengekspor data untuk anggota yang sudah keluar.');

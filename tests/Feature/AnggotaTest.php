@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Anggota;
-use App\Models\Cabang;
 use App\Models\PotonganGaji;
 use App\Models\ProdukSimpanan;
 use App\Models\RekeningSimpanan;
@@ -16,8 +15,6 @@ class AnggotaTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
-    private Cabang $cabang;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -44,7 +41,6 @@ class AnggotaTest extends TestCase
     private function anggotaPayload(array $overrides = []): array
     {
         return array_merge([
-            'cabang_id' => $this->cabang->id,
             'nik' => '3171012304900001',
             'nama_lengkap' => 'Test Anggota Baru',
             'tempat_lahir' => 'Jakarta',
@@ -107,7 +103,7 @@ class AnggotaTest extends TestCase
 
         $response = $this->post(route('anggota.store'), []);
 
-        $response->assertSessionHasErrors(['nik', 'nama_lengkap', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'cabang_id']);
+        $response->assertSessionHasErrors(['nik', 'nama_lengkap', 'tempat_lahir', 'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp']);
     }
 
     public function test_store_anggota_rejects_duplicate_nik(): void

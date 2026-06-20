@@ -7,8 +7,7 @@
             @if($errors->any())<div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg"><ul class="list-disc ml-5 text-sm">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
             <form id="jurnalForm" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Cabang</label>
-                        <select name="cabang_id" required class="w-full border rounded-lg px-3 py-2 text-sm">@foreach($cabangList as $c)<option value="{{ $c->id }}">{{ $c->nama }}</option>@endforeach</select></div>
+                    
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label><input type="date" name="tanggal" value="{{ now()->format('Y-m-d') }}" required class="w-full border rounded-lg px-3 py-2 text-sm"></div>
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Jenis</label>
                         <select name="jenis" required class="w-full border rounded-lg px-3 py-2 text-sm"><option value="manual">Manual</option><option value="koreksi">Koreksi</option></select></div>

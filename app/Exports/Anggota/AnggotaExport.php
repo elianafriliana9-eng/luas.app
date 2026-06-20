@@ -33,7 +33,7 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
 
     public function query()
     {
-        $query = Anggota::with('cabang');
+        $query = Anggota::with();
 
         if (!empty($this->filters['search'])) {
             $s = $this->filters['search'];
@@ -45,9 +45,6 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
         }
         if (!empty($this->filters['status'])) {
             $query->where('status', $this->filters['status']);
-        }
-        if (!empty($this->filters['cabang_id'])) {
-            $query->where('cabang_id', $this->filters['cabang_id']);
         }
         if (!empty($this->filters['perusahaan_id'])) {
             $query->where('perusahaan_id', $this->filters['perusahaan_id']);
@@ -63,7 +60,6 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
             'NIK',
             'Nama Lengkap',
             'No. Pegawai',
-            'Cabang',
             'Perusahaan',
             'Gaji Pokok',
             'Tanggal Masuk',
@@ -78,7 +74,6 @@ class AnggotaExport implements FromQuery, WithHeadings, WithMapping, WithStyles,
             $anggota->nik,
             $anggota->nama_lengkap,
             $anggota->no_pegawai ?? '-',
-            $anggota->cabang?->nama ?? '-',
             $anggota->perusahaan?->nama ?? '-',
             $anggota->gaji_pokok,
             $anggota->tanggal_masuk?->format('d/m/Y') ?? '-',

@@ -139,11 +139,10 @@ php artisan test            # 173 tests, 327 assertions
 
 ## ⚠️ JANGAN DISENTUH
 Modul berikut sudah ada kodenya tapi BELUM dipakai oleh perusahaan. JANGAN dikembangkan, diubah, atau diperbaiki.
-- **Modul Pembiayaan** (Pinjaman) — jangan sentuh
 - **Modul Payroll** — jangan sentuh
 
 ## Fokus Pengembangan
-Ke depan hanya fokus di **Modul Anggota** dan **Modul Simpanan**.
+Ke depan fokus pengembangan mencakup **Modul Anggota**, **Modul Simpanan**, dan **Modul Pembiayaan** (Tahap MVP Lanjutan).
 
 ## Rencana Restruktur Menu Anggota (13 Juni 2026)
 

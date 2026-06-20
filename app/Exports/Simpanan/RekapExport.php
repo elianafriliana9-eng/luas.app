@@ -38,10 +38,6 @@ class RekapExport implements FromQuery, WithHeadings, WithMapping, WithStyles, S
         if (!empty($this->filters['produk_id'])) {
             $query->where('produk_id', $this->filters['produk_id']);
         }
-        if (!empty($this->filters['cabang_id'])) {
-            $query->whereHas('anggota', fn($q) => $q->where('cabang_id', $this->filters['cabang_id']));
-        }
-
         return $query->orderBy('no_rekening');
     }
 

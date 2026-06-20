@@ -17,7 +17,6 @@ class ChartOfAccount extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'cabang_id',
         'kode_akun',
         'nama_akun',
         'kelompok',
@@ -35,10 +34,5 @@ class ChartOfAccount extends Model
     public function children()
     {
         return $this->hasMany(ChartOfAccount::class, 'parent_id');
-    }
-
-    public function cabang()
-    {
-        return $this->belongsTo(Cabang::class);
     }
 }

@@ -37,14 +37,7 @@ class RekapAnggotaExport implements FromArray, WithHeadings, WithStyles, ShouldA
         $totalSimpanan = Anggota::leftJoin('rekening_simpanan', 'anggota.id', '=', 'rekening_simpanan.anggota_id')
             ->sum('rekening_simpanan.saldo');
 
-        $perCabang = Anggota::selectRaw('cabang_id, COUNT(*) as total, SUM(CASE WHEN status = "aktif" THEN 1 ELSE 0 END) as aktif')
-            ->groupBy('cabang_id')
-            ->with('cabang')
-            ->get();
-
-        $perPerusahaan = \App\Models\Perusahaan::withCount(['anggota' => function ($q) {
-            $q->where('status', '!=', 'keluar');
-        }])->orderByDesc('anggota_count')->get();
+        
 
         $rows = [];
         $rows[] = ['', '', ''];
@@ -57,12 +50,6 @@ class RekapAnggotaExport implements FromArray, WithHeadings, WithStyles, ShouldA
         $rows[] = ['Total Simpanan', '', $totalSimpanan];
 
         $rows[] = ['', '', ''];
-
-        // Per Cabang
-        $rows[] = ['REKAP PER CABANG', '', ''];
-        foreach ($perCabang as $c) {
-            $rows[] = [$c->cabang?->nama ?? '-', 'Total: ' . $c->total, 'Aktif: ' . $c->aktif];
-        }
 
         $rows[] = ['', '', ''];
 

@@ -18,7 +18,7 @@ class Anggota extends Authenticatable
     protected $table = 'anggota';
 
     protected $fillable = [
-        'cabang_id', 'no_anggota', 'nik', 'nama_lengkap', 'tempat_lahir',
+        'no_anggota', 'nik', 'nama_lengkap', 'tempat_lahir',
         'tanggal_lahir', 'jenis_kelamin', 'alamat', 'no_hp', 'email',
         'perusahaan_id', 'gaji_pokok', 'tanggal_gajian',
         'tanggal_mulai_kerja', 'no_pegawai',
@@ -46,11 +46,6 @@ class Anggota extends Authenticatable
         'gaji_pokok' => 'decimal:2',
         'auto_potong_gaji' => 'boolean',
     ];
-
-    public function cabang(): BelongsTo
-    {
-        return $this->belongsTo(Cabang::class, 'cabang_id');
-    }
 
     public function perusahaan(): BelongsTo
     {

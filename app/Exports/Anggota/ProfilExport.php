@@ -33,7 +33,7 @@ class ProfilExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
 
     public function query()
     {
-        $query = Anggota::with('cabang');
+        $query = Anggota::with();
 
         if (!empty($this->filters['status'])) {
             $query->where('status', $this->filters['status']);
@@ -54,7 +54,6 @@ class ProfilExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
             'NIK',
             'No. HP',
             'Email',
-            'Cabang',
             'Perusahaan',
             'Tanggal Masuk',
             'Status',
@@ -73,7 +72,6 @@ class ProfilExport implements FromQuery, WithHeadings, WithMapping, WithStyles, 
             $anggota->nik,
             $anggota->no_hp ?? '-',
             $anggota->email ?? '-',
-            $anggota->cabang?->nama ?? '-',
             $anggota->perusahaan?->nama ?? '-',
             $anggota->tanggal_masuk?->format('d/m/Y') ?? '-',
             ucfirst(str_replace('_', ' ', $anggota->status)),

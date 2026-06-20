@@ -13,18 +13,13 @@ class PeriodeTutup extends Model
     protected $table = 'periode_tutup';
 
     protected $fillable = [
-        'cabang_id', 'tahun', 'bulan', 'is_closed', 'closed_at', 'closed_by',
+        'tahun', 'bulan', 'is_closed', 'closed_at', 'closed_by',
     ];
 
     protected $casts = [
         'is_closed' => 'boolean',
         'closed_at' => 'datetime',
     ];
-
-    public function cabang(): BelongsTo
-    {
-        return $this->belongsTo(Cabang::class, 'cabang_id');
-    }
 
     public function closedByUser(): BelongsTo
     {

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Anggota;
-use App\Models\Cabang;
 use App\Models\ChartOfAccount;
 use App\Models\Jurnal;
 use App\Models\JurnalDetail;
@@ -20,7 +19,7 @@ class AkuntansiController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Jurnal::with(['details.akun', 'pembuat', 'cabang']);
+        $query = Jurnal::with(['details.akun', 'pembuat']);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -33,12 +32,8 @@ class AkuntansiController extends Controller
         }
         if ($from = $request->input('from')) $query->whereDate('tanggal', '>=', $from);
         if ($to = $request->input('to')) $query->whereDate('tanggal', '<=', $to);
-        if ($cabangId = $request->input('cabang_id')) $query->where('cabang_id', $cabangId);
-
         $jurnals = $query->latest('tanggal')->latest('created_at')->paginate(15)->withQueryString();
-        $cabangList = Cabang::where('aktif', true)->get();
-
-        return view('akuntansi.index', compact('jurnals', 'cabangList'));
+        return view('akuntansi.index', compact('jurnals'));
     }
 
     /**
@@ -49,9 +44,7 @@ class AkuntansiController extends Controller
         $accounts = ChartOfAccount::where('aktif', true)->where('is_header', false)
             ->orderBy('kode_akun')->get();
         $kasList = Kas::where('aktif', true)->get();
-        $cabangList = Cabang::where('aktif', true)->get();
-
-        return view('akuntansi.jurnal_create', compact('accounts', 'kasList', 'cabangList'));
+        return view('akuntansi.jurnal_create', compact('accounts', 'kasList'));
     }
 
     /**
@@ -60,7 +53,6 @@ class AkuntansiController extends Controller
     public function storeJurnal(Request $request)
     {
         $validated = $request->validate([
-            'cabang_id' => 'required|uuid|exists:cabang,id',
             'tanggal' => 'required|date',
             'jenis' => 'required|in:manual,koreksi',
             'keterangan' => 'required|string|max:500',
@@ -86,7 +78,6 @@ class AkuntansiController extends Controller
         DB::beginTransaction();
         try {
             $jurnal = Jurnal::create([
-                'cabang_id' => $validated['cabang_id'],
                 'no_jurnal' => 'JRN-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
                 'tanggal' => $validated['tanggal'],
                 'keterangan' => $validated['keterangan'],
@@ -156,7 +147,6 @@ class AkuntansiController extends Controller
 
             // Create reversal journal
             $reversal = Jurnal::create([
-                'cabang_id' => $jurnal->cabang_id,
                 'no_jurnal' => 'REV-' . now()->format('ymd') . '-' . strtoupper(substr(uniqid(), -6)),
                 'tanggal' => now()->format('Y-m-d'),
                 'keterangan' => 'Pembatalan jurnal ' . $jurnal->no_jurnal . ' — ' . $validated['alasan'],
@@ -333,26 +323,20 @@ class AkuntansiController extends Controller
      */
     public function kas(Request $request)
     {
-        $query = Kas::with(['akun', 'cabang']);
-
-        if ($cabangId = $request->input('cabang_id')) {
-            $query->where('cabang_id', $cabangId);
-        }
+        $query = Kas::with(['akun']);
 
         $kasList = $query->orderBy('kode_kas')->get();
-        $cabangList = Cabang::where('aktif', true)->get();
         $kasAccounts = ChartOfAccount::where('aktif', true)
             ->where('kelompok', 'aset')
             ->where('is_header', false)
             ->orderBy('kode_akun')->get();
 
-        return view('akuntansi.kas', compact('kasList', 'cabangList', 'kasAccounts'));
+        return view('akuntansi.kas', compact('kasList', 'kasAccounts'));
     }
 
     public function storeKas(Request $request)
     {
         $validated = $request->validate([
-            'cabang_id' => 'required|uuid|exists:cabang,id',
             'kode_kas' => 'required|string|max:20|unique:kas,kode_kas',
             'nama_kas' => 'required|string|max:100',
             'akun_id' => 'required|uuid|exists:chart_of_accounts,id',
@@ -381,17 +365,11 @@ class AkuntansiController extends Controller
      */
     public function laporanKas(Request $request)
     {
-        $query = Kas::with(['akun', 'cabang']);
-
-        if ($cabangId = $request->input('cabang_id')) {
-            $query->where('cabang_id', $cabangId);
-        }
+        $query = Kas::with(['akun']);
 
         $kasList = $query->orderBy('kode_kas')->get();
         $totalKas = $kasList->sum('saldo');
-        $cabangList = Cabang::where('aktif', true)->get();
-
-        return view('akuntansi.laporan.kas', compact('kasList', 'totalKas', 'cabangList'));
+        return view('akuntansi.laporan.kas', compact('kasList', 'totalKas'));
     }
 
     /**
@@ -478,7 +456,7 @@ class AkuntansiController extends Controller
      */
     public function detailJurnal($id)
     {
-        $jurnal = Jurnal::with(['details.akun', 'pembuat', 'cabang'])->findOrFail($id);
+        $jurnal = Jurnal::with(['details.akun', 'pembuat'])->findOrFail($id);
         return view('akuntansi.detail', compact('jurnal'));
     }
 

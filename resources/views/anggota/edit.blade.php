@@ -42,12 +42,8 @@
                         <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b">Data Karyawan</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Cabang</label>
-                                <select name="cabang_id" class="w-full border rounded-lg px-3 py-2 text-sm @error('cabang_id') border-red-500 @enderror">
-                                    <option value="">Pilih</option>
-                                    @foreach($cabangs as $c) <option value="{{ $c->id }}" {{ $anggota->cabang_id == $c->id ? 'selected' : '' }}>{{ $c->nama }}</option> @endforeach
-                                </select>
-                                @error('cabang_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+                                
+                                
                             </div>
                             <div><label class="block text-sm font-medium text-gray-700 mb-1">No. Pegawai</label><input type="text" name="no_pegawai" value="{{ old('no_pegawai', $anggota->no_pegawai) }}" class="w-full border rounded-lg px-3 py-2 text-sm @error('no_pegawai') border-red-500 @enderror">@error('no_pegawai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror</div>
                             <div>

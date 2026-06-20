@@ -3,7 +3,7 @@
     <div class="space-y-4">
         <div class="bg-white p-4 rounded-lg shadow-sm no-print">
             <form method="GET" class="flex flex-wrap gap-3 items-end">
-                <div class="min-w-[150px]"><select name="cabang_id" class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">Semua Cabang</option>@foreach($cabangList as $c)<option value="{{ $c->id }}" {{ request('cabang_id')==$c->id?'selected':'' }}>{{ $c->nama }}</option>@endforeach</select></div>
+                
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg">Filter</button>
             </form>
         </div>
@@ -14,7 +14,7 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode Kas</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Kas</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Akun</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cabang</th>
+                    
                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Saldo</th>
                 </tr></thead>
                 <tbody class="divide-y">
@@ -24,7 +24,7 @@
                             <td class="px-4 py-2 text-sm font-mono text-indigo-600">{{ $k->kode_kas }}</td>
                             <td class="px-4 py-2 text-sm font-medium">{{ $k->nama_kas }}</td>
                             <td class="px-4 py-2 text-sm">{{ $k->akun?->kode_akun }} - {{ $k->akun?->nama_akun }}</td>
-                            <td class="px-4 py-2 text-sm">{{ $k->cabang?->nama }}</td>
+                            
                             <td class="px-4 py-2 text-right font-mono font-bold">Rp {{ number_format($k->saldo, 0, ',', '.') }}</td>
                         </tr>
                     @endforeach

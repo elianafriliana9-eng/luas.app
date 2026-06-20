@@ -16,6 +16,9 @@
     <!-- Vite Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         [x-cloak] { display: none !important; }
         .material-symbols-outlined {
@@ -615,5 +618,43 @@
         });
     });
     </script>
+
+    @if(auth()->check() && auth()->user()->is_demo)
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const links = document.querySelectorAll('a');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && !href.includes('dashboard') && !href.includes('logout') && href !== '#') {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Akses Dibatasi',
+                        text: 'Anda berada di mode demo, akses terbatas demi keamanan.',
+                        confirmButtonColor: '#1d4ed8'
+                    });
+                });
+            }
+        });
+
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            const action = form.getAttribute('action');
+            if (!action || !action.includes('logout')) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'Akses Dibatasi',
+                        text: 'Anda berada di mode demo, akses terbatas demi keamanan.',
+                        confirmButtonColor: '#1d4ed8'
+                    });
+                });
+            }
+        });
+    });
+    </script>
+    @endif
 </body>
 </html>

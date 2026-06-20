@@ -32,7 +32,7 @@
             <div><span class="label">No. Anggota</span>: {{ $anggota->no_anggota }}</div>
             <div><span class="label">Nama Lengkap</span>: {{ $anggota->nama_lengkap }}</div>
             <div><span class="label">NIK</span>: {{ $anggota->nik }}</div>
-            <div><span class="label">Cabang</span>: {{ $anggota->cabang?->nama ?? '-' }}</div>
+            
         </div>
         <div class="col-half">
             <div><span class="label">Tgl. Masuk</span>: {{ $anggota->tanggal_masuk?->format('d M Y') ?? '-' }}</div>

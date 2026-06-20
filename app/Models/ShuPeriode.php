@@ -14,7 +14,7 @@ class ShuPeriode extends Model
     protected $table = 'shu_periode';
 
     protected $fillable = [
-        'cabang_id', 'tahun', 'total_shu', 'shu_cadangan', 'shu_anggota',
+        'tahun', 'total_shu', 'shu_cadangan', 'shu_anggota',
         'shu_pengurus', 'shu_karyawan', 'status', 'finalized_at',
     ];
 
@@ -26,11 +26,6 @@ class ShuPeriode extends Model
         'shu_karyawan' => 'decimal:2',
         'finalized_at' => 'datetime',
     ];
-
-    public function cabang(): BelongsTo
-    {
-        return $this->belongsTo(Cabang::class, 'cabang_id');
-    }
 
     public function rincianAnggota(): HasMany
     {

@@ -13,7 +13,7 @@ class Kas extends Model
     protected $table = 'kas';
 
     protected $fillable = [
-        'cabang_id', 'kode_kas', 'nama_kas', 'akun_id',
+        'kode_kas', 'nama_kas', 'akun_id',
         'saldo', 'aktif', 'keterangan',
     ];
 
@@ -21,11 +21,6 @@ class Kas extends Model
         'saldo' => 'decimal:2',
         'aktif' => 'boolean',
     ];
-
-    public function cabang(): BelongsTo
-    {
-        return $this->belongsTo(Cabang::class);
-    }
 
     public function akun(): BelongsTo
     {

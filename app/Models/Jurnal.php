@@ -20,7 +20,6 @@ class Jurnal extends Model
     public const UPDATED_AT = null;
 
     protected $fillable = [
-        'cabang_id',
         'no_jurnal',
         'tanggal',
         'keterangan',
@@ -36,11 +35,6 @@ class Jurnal extends Model
     public function details()
     {
         return $this->hasMany(JurnalDetail::class, 'jurnal_id');
-    }
-
-    public function cabang()
-    {
-        return $this->belongsTo(Cabang::class);
     }
 
     public function pembuat()

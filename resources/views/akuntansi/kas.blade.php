@@ -8,7 +8,7 @@
         @if(session('success'))<div class="p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">{{ session('success') }}</div>@endif
         <div class="bg-white p-4 rounded-xl shadow-sm">
             <form method="GET" class="flex flex-wrap gap-3 items-end">
-                <div class="min-w-[150px]"><select name="cabang_id" class="w-full border rounded-lg px-3 py-2 text-sm"><option value="">Semua Cabang</option>@foreach($cabangList as $c)<option value="{{ $c->id }}" {{ request('cabang_id')==$c->id?'selected':'' }}>{{ $c->nama }}</option>@endforeach</select></div>
+                
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">Filter</button>
             </form>
         </div>
@@ -18,7 +18,7 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Kas</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Akun</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cabang</th>
+                    
                     <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Saldo</th>
                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Aksi</th>
@@ -31,7 +31,7 @@
                             <td class="px-4 py-2 text-sm font-mono text-indigo-600">{{ $k->kode_kas }}</td>
                             <td class="px-4 py-2 text-sm font-medium">{{ $k->nama_kas }}</td>
                             <td class="px-4 py-2 text-sm">{{ $k->akun?->kode_akun }} - {{ $k->akun?->nama_akun }}</td>
-                            <td class="px-4 py-2 text-sm">{{ $k->cabang?->nama }}</td>
+                            
                             <td class="px-4 py-2 text-right font-mono font-bold">Rp {{ number_format($k->saldo, 0, ',', '.') }}</td>
                             <td class="px-4 py-2 text-center"><span class="px-2 py-0.5 text-xs rounded-full {{ $k->aktif ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">{{ $k->aktif ? 'Aktif' : 'Nonaktif' }}</span></td>
                             <td class="px-4 py-2 text-center">
@@ -62,7 +62,7 @@
             <h3 class="font-bold text-lg mb-4">Tambah Kas Baru</h3>
             <form action="{{ route('akuntansi.kas.store') }}" method="POST" class="space-y-3">
                 @csrf
-                <div><label class="block text-xs font-medium text-gray-500 mb-1">Cabang</label><select name="cabang_id" required class="w-full border rounded-lg px-3 py-2 text-sm">@foreach($cabangList as $c)<option value="{{ $c->id }}">{{ $c->nama }}</option>@endforeach</select></div>
+                
                 <div><label class="block text-xs font-medium text-gray-500 mb-1">Kode Kas</label><input type="text" name="kode_kas" required class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="KAS-001"></div>
                 <div><label class="block text-xs font-medium text-gray-500 mb-1">Nama Kas</label><input type="text" name="nama_kas" required class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Kas Kecil"></div>
                 <div><label class="block text-xs font-medium text-gray-500 mb-1">Akun</label><select name="akun_id" required class="w-full border rounded-lg px-3 py-2 text-sm">@foreach($kasAccounts as $a)<option value="{{ $a->id }}">{{ $a->kode_akun }} - {{ $a->nama_akun }}</option>@endforeach</select></div>

@@ -5,7 +5,7 @@
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <h3 class="text-lg font-bold text-gray-900">{{ $jurnal->no_jurnal }}</h3>
-                    <p class="text-sm text-gray-500">{{ $jurnal->tanggal }} | {{ ucfirst($jurnal->jenis) }} | {{ $jurnal->cabang?->nama }}</p>
+                    <p class="text-sm text-gray-500">{{ $jurnal->tanggal }} | {{ ucfirst($jurnal->jenis) }}</p>
                 </div>
                 @if($jurnal->is_cancelled)<span class="px-3 py-1 bg-red-100 text-red-800 text-xs rounded-full font-bold">DIBATALKAN</span>
                 @else<span class="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-bold">AKTIF</span>@endif

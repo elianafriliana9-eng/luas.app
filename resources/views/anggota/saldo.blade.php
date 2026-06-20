@@ -30,13 +30,7 @@
                     <label class="block text-xs font-medium text-gray-500 mb-1">Pencarian</label>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau no. anggota..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                 </div>
-                <div class="min-w-[150px]">
-                    <label class="block text-xs font-medium text-gray-500 mb-1">Cabang</label>
-                    <select name="cabang_id" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                        <option value="">Semua</option>
-                        @foreach($cabangs as $c) <option value="{{ $c->id }}" {{ request('cabang_id') == $c->id ? 'selected' : '' }}>{{ $c->nama }}</option> @endforeach
-                    </select>
-                </div>
+                
                 <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">Filter</button>
             </form>
         </div>

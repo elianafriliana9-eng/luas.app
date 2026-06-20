@@ -24,7 +24,7 @@
                 <th>No. Anggota</th>
                 <th>NIK</th>
                 <th>Nama Lengkap</th>
-                <th>Cabang</th>
+                
                 <th>No. HP</th>
                 <th>Status</th>
                 <th>Tanggal Masuk</th>
@@ -37,7 +37,7 @@
                     <td>{{ $a->no_anggota }}</td>
                     <td>{{ $a->nik }}</td>
                     <td>{{ $a->nama_lengkap }}</td>
-                    <td>{{ $a->cabang->nama ?? '-' }}</td>
+                    
                     <td>{{ $a->no_hp ?? '-' }}</td>
                     <td>{{ $a->status }}</td>
                     <td>{{ $a->tanggal_masuk?->format('d/m/Y') ?? '-' }}</td>

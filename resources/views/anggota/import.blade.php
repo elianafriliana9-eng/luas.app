@@ -95,13 +95,13 @@
                     Format File Excel
                 </h3>
                 <div class="bg-slate-50 rounded-xl p-4 font-data text-xs text-slate-600 overflow-x-auto">
-                    <pre>NIK,Nama Lengkap,Kode Cabang,Tempat Lahir,Tanggal Lahir,Jenis Kelamin,Alamat,No. HP,Email,Departemen,Jabatan,Tanggal Mulai Kerja,No. Pegawai
+                    <pre>NIK,Nama Lengkap,Tempat Lahir,Tanggal Lahir,Jenis Kelamin,Alamat,No. HP,Email,Departemen,Jabatan,Tanggal Mulai Kerja,No. Pegawai
 3171012304900001,Budi Santoso,CBG-JKT,Jakarta,1990-04-23,L,Jl. Merdeka No.1,081234567890,budi@email.com,Produksi,Supervisor,2020-06-01,PEG-001</pre>
                 </div>
                 <div class="mt-3 flex flex-wrap gap-2">
                     <span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full">NIK * wajib</span>
                     <span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full">Nama Lengkap * wajib</span>
-                    <span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full">Kode Cabang * wajib</span>
+                    
                     <span class="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full">lainnya opsional</span>
                 </div>
                 <div class="mt-3">

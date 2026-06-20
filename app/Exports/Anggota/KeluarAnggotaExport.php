@@ -30,7 +30,7 @@ class KeluarAnggotaExport implements FromQuery, WithHeadings, WithMapping, WithS
 
     public function query()
     {
-        $query = Anggota::with('cabang')
+        $query = Anggota::with()
             ->where('status', 'keluar')
             ->orderBy('tanggal_keluar', 'desc');
 
