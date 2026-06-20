@@ -25,6 +25,14 @@ return new class extends Migration
 
         $isSqlite = \Illuminate\Support\Facades\DB::getDriverName() === 'sqlite';
 
+        foreach ($tables as $tableName) {
+            if (Schema::hasColumn($tableName, 'cabang_id')) {
+                if (!$isSqlite) {
+                    try { \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$tableName} DROP FOREIGN KEY {$tableName}_cabang_id_foreign"); } catch (\Exception $e) {}
+                }
+            }
+        }
+
         if (Schema::hasTable('jurnal') && Schema::hasColumn('jurnal', 'cabang_id')) {
             Schema::table('jurnal', function (Blueprint $table) {
                 try { $table->dropIndex(['tanggal', 'cabang_id']); } catch (\Exception $e) {}
@@ -39,10 +47,6 @@ return new class extends Migration
 
         foreach ($tables as $tableName) {
             if (Schema::hasColumn($tableName, 'cabang_id')) {
-                if (!$isSqlite) {
-                    try { \Illuminate\Support\Facades\DB::statement("ALTER TABLE {$tableName} DROP FOREIGN KEY {$tableName}_cabang_id_foreign"); } catch (\Exception $e) {}
-                }
-                
                 Schema::table($tableName, function (Blueprint $table) use ($isSqlite) {
                     if ($isSqlite) {
                         try { $table->dropForeign(['cabang_id']); } catch (\Exception $e) {}
